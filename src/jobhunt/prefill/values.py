@@ -6,7 +6,10 @@ model never picks a value. Each field gets an action:
   fill       code types or picks the value
   recommend  shown next to the field for the user to set (Lever radios and checkboxes)
   human      left for the user on purpose (attestations, consents, unreviewed EEO, essays)
-  skip       optional and unanswered: left blank
+  skip       optional and unanswered, or hidden on the page by another answer: left blank
+
+A field the page reveals only after another answer (``shown_if``) follows that answer: it is
+skipped when the answer being filled hides it, and left to the user when the user answers it.
 
 The validator then checks the sheet against the form spec before any browser opens: every
 required field is present, each choice value is one of the form's own options, text fits its
@@ -25,7 +28,7 @@ from pydantic import BaseModel, Field
 from jobhunt.bank.keys import AnswerContext
 from jobhunt.bank.match import Matcher
 from jobhunt.forms.classify import Classification, FieldResult, fill_value
-from jobhunt.forms.model import FormSpec
+from jobhunt.forms.model import FormField, FormSpec
 from jobhunt.paths import secure_file
 
 Action = Literal["fill", "recommend", "human", "skip"]
@@ -88,6 +91,26 @@ def _action(fr: FieldResult, ats: str) -> tuple[Action, str | None]:
     return "skip", None
 
 
+def _hidden(f: FormField | None, sheet: dict[str, FillField]) -> bool:
+    """True when the value being filled into the revealing field keeps ``f`` hidden."""
+    if not (f and f.shown_if) or (parent := sheet.get(f.shown_if.field)) is None:
+        return False
+    return parent.action == "fill" and parent.value not in f.shown_if.options
+
+
+def _follow(ff: FillField, f: FormField | None, sheet: dict[str, FillField]) -> None:
+    """Apply ``shown_if``: a field hidden by a filled answer is skipped; one revealed only by
+    the user's own answer is theirs too."""
+    if not (f and f.shown_if) or (parent := sheet.get(f.shown_if.field)) is None:
+        return
+    if _hidden(f, sheet):
+        ff.action, ff.value = "skip", None
+        ff.note = f"not shown: your answer to “{parent.label}” sets it"
+    elif parent.action != "fill" and ff.action in ("fill", "recommend"):
+        ff.action, ff.value = "human", None
+        ff.note = f"appears once you answer “{parent.label}”"
+
+
 def build_sheet(
     job_id: int,
     spec: FormSpec,
@@ -105,22 +128,22 @@ def build_sheet(
         if action == "fill" and value is None:
             action, note = ("human" if fr.required else "skip"), "no value to fill"
         f = by_id.get(fr.id)
-        out.append(
-            FillField(
-                id=fr.id,
-                label=fr.label,
-                type=fr.type,
-                required=fr.required,
-                section=fr.section,
-                key=fr.key,
-                action=action,
-                value=_clean(value),
-                human=fr.human,
-                note=note,
-                options=f.options if f else fr.options,
-                max_length=fr.max_length,
-            )
+        ff = FillField(
+            id=fr.id,
+            label=fr.label,
+            type=fr.type,
+            required=fr.required,
+            section=fr.section,
+            key=fr.key,
+            action=action,
+            value=_clean(value),
+            human=fr.human,
+            note=note,
+            options=f.options if f else fr.options,
+            max_length=fr.max_length,
         )
+        _follow(ff, f, {x.id: x for x in out})
+        out.append(ff)
     return AnswerSheet(
         job_id=job_id,
         ats=spec.ats,
@@ -136,7 +159,8 @@ def validate(sheet: AnswerSheet, spec: FormSpec) -> list[Problem]:
     """Check every value against the form itself. An empty list means the sheet may be filled."""
     problems: list[Problem] = []
     fields = {f.id: f for f in spec.fields}
-    sheet_ids = {f.id for f in sheet.fields}
+    by_sheet = {f.id: f for f in sheet.fields}
+    sheet_ids = set(by_sheet)
 
     def bad(fid: str, label: str, msg: str) -> None:
         problems.append(Problem(id=fid, label=label, problem=msg))
@@ -149,7 +173,7 @@ def validate(sheet: AnswerSheet, spec: FormSpec) -> list[Problem]:
         if f is None:
             bad(ff.id, ff.label, "not a field on this form (question ids differ per job)")
             continue
-        if f.required and ff.action == "skip":
+        if f.required and ff.action == "skip" and not _hidden(f, by_sheet):
             bad(ff.id, ff.label, "required but left blank")
         if ff.action not in ("fill", "recommend"):
             continue

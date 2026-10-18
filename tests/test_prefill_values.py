@@ -7,7 +7,8 @@ import stat
 import pytest
 
 from jobhunt.forms.classify import classify
-from jobhunt.forms.model import FormField, FormSpec
+from jobhunt.forms.model import FormField, FormSpec, ShownIf
+from jobhunt.models.answers import DECLINE_EEO
 from jobhunt.prefill.values import build_sheet, read_sheet, validate, write_sheet
 from tests.conftest import PERSONAS
 from tests.test_forms import COMPANY, SPECS, ctx_for
@@ -65,6 +66,58 @@ def test_eeo_left_to_user_until_confirmed(tmp_path):
     for ff in sheet.fields:
         if ff.section == "eeo":
             assert ff.action in ("human", "skip") and ff.value is None
+
+
+def _eeo_sheet(tmp_path, hispanic: str, *, race_required: bool = False):
+    spec = SPECS["gh_A"]()
+    next(f for f in spec.fields if f.id == "race").required = race_required
+    ctx, matcher, _ = ctx_for("intl-sponsorship", "Northwind Robotics")
+    ctx.resume = tmp_path / "resume.pdf"
+    ctx.resume.write_bytes(b"%PDF-1.4 synthetic")
+    ctx.answers.eeo.hispanic_latino = hispanic
+    ctx.answers.eeo.race_ethnicity = "Asian"
+    cls = classify(spec, ctx, matcher, eeo_confirmed=True)
+    sheet = build_sheet(1, spec, cls, ctx, matcher, NOW)
+    return spec, {f.id: f for f in sheet.fields}, sheet
+
+
+@pytest.mark.parametrize(
+    ("hispanic", "option"), [("Yes", "Yes"), (DECLINE_EEO, "Decline To Self Identify")]
+)
+def test_race_is_skipped_when_the_hispanic_answer_hides_it(tmp_path, hispanic, option):
+    spec, by, sheet = _eeo_sheet(tmp_path, hispanic, race_required=True)
+    assert by["hispanic_ethnicity"].action == "fill"
+    assert by["hispanic_ethnicity"].value == option
+    assert by["race"].action == "skip" and by["race"].value is None
+    assert "Hispanic/Latino" in (by["race"].note or "")
+    assert validate(sheet, spec) == []  # required, but the page never shows it
+
+
+def test_race_is_filled_after_hispanic_no(tmp_path):
+    spec, by, sheet = _eeo_sheet(tmp_path, "No")
+    assert by["hispanic_ethnicity"].value == "No"
+    assert by["race"].action == "fill" and by["race"].value == "Asian"
+    ids = [f.id for f in sheet.to_fill()]
+    assert ids.index("hispanic_ethnicity") < ids.index("race")  # revealed before it is filled
+    assert validate(sheet, spec) == []
+
+
+def test_field_revealed_by_the_users_own_answer_is_theirs(tmp_path):
+    spec = FormSpec(
+        ats="greenhouse",
+        fields=[
+            FormField(id="why", label="Why do you want to work here?", type="textarea",
+                      required=True),
+            FormField(id="email", label="Email", type="email", required=True,
+                      shown_if=ShownIf(field="why", options=["anything"])),
+        ],
+    )  # fmt: skip
+    ctx, matcher, eeo = ctx_for("intl-sponsorship", "Northwind Robotics")
+    sheet = build_sheet(1, spec, classify(spec, ctx, matcher, eeo_confirmed=eeo), ctx, matcher, NOW)
+    by = {f.id: f for f in sheet.fields}
+    assert by["why"].action == "human"
+    assert by["email"].action == "human" and by["email"].value is None
+    assert "appears once you answer" in (by["email"].note or "")
 
 
 def test_validator_catches_each_problem(tmp_path):
