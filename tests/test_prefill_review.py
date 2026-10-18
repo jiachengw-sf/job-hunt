@@ -53,3 +53,15 @@ def test_required_problem_is_urgent(browser_context, fx_pages):
     assert "220, 38, 38" in box.evaluate("e => getComputedStyle(e).outlineColor")
     rep = review(1, sheet, outcomes)
     assert rep.needs_you[0].id == "question_100104"
+
+
+def test_unreviewed_hispanic_question_is_outlined(browser_context, fx_pages):
+    sheet = make_sheet("intl-sponsorship", "gh_A", RESUMES / "intl-sponsorship.pdf")
+    hisp = next(f for f in sheet.fields if f.id == "hispanic_ethnicity")
+    assert hisp.action == "human" and hisp.section == "eeo"
+    page, adapter, _, _, outcomes = run_fill(browser_context, fx_pages, "gh_A", sheet)
+    assert next(o for o in outcomes if o.id == "hispanic_ethnicity").status == "left"
+    highlight(page, adapter, sheet, outcomes)
+    note = page.locator(".select__container:has(#hispanic_ethnicity) > [data-jobhunt-note]")
+    assert "self-identification" in note.inner_text()
+    assert page.locator("#race").count() == 0  # the page shows Race only after an answer

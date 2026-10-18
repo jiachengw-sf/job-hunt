@@ -102,6 +102,36 @@ def test_greenhouse_specifics(browser_context, fx):
     assert all(o.status in ("left", "skipped", "filled") for o in eeo)
 
 
+def eeo_sheet(hispanic: str):
+    """gh_A with EEO confirmed and these synthetic Hispanic/Latino and race answers."""
+    spec = SPECS["gh_A"]()
+    spec.url = URLS["gh_A"]
+    ctx, matcher, _ = ctx_for("intl-sponsorship", COMPANY["gh"])
+    ctx.resume = RESUMES / "intl-sponsorship.pdf"
+    ctx.answers.eeo.hispanic_latino = hispanic
+    ctx.answers.eeo.race_ethnicity = "Asian"
+    cls = classify(spec, ctx, matcher, eeo_confirmed=True)
+    sheet = build_sheet(1, spec, cls, ctx, matcher, "2026-10-18T12:00:00Z")
+    assert validate(sheet, spec) == []
+    return sheet
+
+
+def test_greenhouse_race_appears_after_hispanic_no(browser_context, fx):
+    _, _, _, router, outcomes = run_fill(browser_context, fx, "gh_A", eeo_sheet("No"))
+    by = {o.id: o for o in outcomes}
+    assert by["hispanic_ethnicity"].status == "filled"
+    assert by["race"].status == "filled" and by["race"].actual == "Asian"
+    assert not submit_posts(router)
+
+
+def test_greenhouse_race_stays_hidden_after_hispanic_yes(browser_context, fx):
+    page, _, _, _, outcomes = run_fill(browser_context, fx, "gh_A", eeo_sheet("Yes"))
+    by = {o.id: o for o in outcomes}
+    assert by["hispanic_ethnicity"].status == "filled"
+    assert by["race"].status == "skipped"  # the page sets it; never looked for
+    assert page.locator("#race").count() == 0
+
+
 def test_greenhouse_rejects_unaccepted_resume_type(browser_context, fx, tmp_path):
     md = tmp_path / "resume.md"
     md.write_text("# Synthetic resume\n")

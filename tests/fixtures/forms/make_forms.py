@@ -502,11 +502,20 @@ def _gh_field(q: dict) -> str:
     return f'<div class="field-wrapper">{_gh_label(name, label, req)}<input id="{name}" class="input input__single-line" aria-label="{_esc(label)}" aria-required="{str(req).lower()}" type="text" maxlength="255"></div>'
 
 
+def _gh_eeo(q: dict) -> str:
+    """Like the live page: Race is asked as Hispanic/Latino first, and only No reveals it."""
+    if q["fields"][0]["name"] != "race":
+        return _gh_field(q)
+    hisp = _gh_select("hispanic_ethnicity", "Are you Hispanic/Latino?", bool(q.get("required")),
+                      ["Yes", "No", "Decline To Self Identify"])  # fmt: skip
+    return f'{hisp}<template id="fx-race">{_gh_field(q)}</template>'
+
+
 def gh_page(job: dict) -> str:
     parts = [_gh_field(q) for q in job["questions"]]
     parts += [_gh_field(q) for q in job.get("location_questions") or []]
     eeo = [
-        _gh_field(q) for block in job.get("compliance") or [] for q in block.get("questions") or []
+        _gh_eeo(q) for block in job.get("compliance") or [] for q in block.get("questions") or []
     ]
     return (
         f"<!doctype html><html><head><meta charset=\"utf-8\"><title>Job Application for {_esc(job['title'])} at {_esc(job['company_name'])}</title></head>"

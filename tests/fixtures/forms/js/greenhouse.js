@@ -67,8 +67,21 @@
       }
     }
     close(container);
+    if (container.querySelector('input[role=combobox]').id === 'hispanic_ethnicity') {
+      revealRace(container, text === 'No');
+    }
   }
-  document.querySelectorAll('.select__container').forEach(c => {
+  // Race exists only once Hispanic/Latino is answered No, as on the live page.
+  function revealRace(hisp, show) {
+    const race = document.getElementById('race');
+    if (race && !show) race.closest('.select__container').remove();
+    if (!race && show) {
+      const tpl = document.getElementById('fx-race');
+      hisp.insertAdjacentElement('afterend', tpl.content.firstElementChild.cloneNode(true));
+      bind(hisp.nextElementSibling);
+    }
+  }
+  function bind(c) {
     const input = c.querySelector('input[role=combobox]');
     input.addEventListener('click', () => render(c));
     input.addEventListener('focus', () => render(c));
@@ -77,7 +90,8 @@
       else render(c);
     });
     input.addEventListener('keydown', e => { if (e.key === 'Escape') close(c); });
-  });
+  }
+  document.querySelectorAll('.select__container').forEach(bind);
   document.addEventListener('mousedown', e => {
     document.querySelectorAll('.select__container').forEach(c => {
       if (!c.contains(e.target)) close(c);

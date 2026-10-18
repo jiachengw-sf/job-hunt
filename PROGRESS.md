@@ -287,7 +287,7 @@ not a person at the keyboard.
     sensitive questions and points to the form.
 - **Form readers (`forms/`).** Every reader is read-only.
   - Greenhouse: `jobs/{id}?questions=true`, including the location, compliance and demographic
-    blocks.
+    blocks, plus the page-only Hispanic/Latino question before Race (`shown_if`).
   - Lever: the server-rendered `/apply` page. Card templates are authoritative for custom
     questions, and the CAPTCHA on Submit is noted.
   - Ashby: the hosted page builds its form in JavaScript (an assumption in the plan was wrong
@@ -491,10 +491,13 @@ Verified runs (2026-10-18):
   - CAPTCHA and bot-check widgets (hCaptcha config, reCAPTCHA reload, Cloudflare challenge
     platform) are allowed to load so the human's own submit works. jobhunt never solves or
     touches them.
-- **Known gap:** Greenhouse's API lists the EEO `race` question, but the page first shows "Are
-  you Hispanic/Latino?" (`hispanic_ethnicity`) and reveals Race only after an answer. That
-  field isn't in the form spec, so it is left alone but not outlined. Fix it in the Greenhouse
-  reader, or flag page fields missing from the spec.
+- **Fixed: Greenhouse Hispanic/Latino.** The API lists only the EEO `race` question; the page
+  first asks "Are you Hispanic/Latino?" (`hispanic_ethnicity`: Yes / No / Decline To Self
+  Identify) and shows Race only after No. The reader now adds that field before Race, and Race
+  carries `shown_if`. answers.json skips Race when the filled answer hides it, and unreviewed
+  EEO leaves both to the user, with the Hispanic question outlined.
+- **Open:** other page-only fields the APIs don't list would still go unflagged. A check for
+  page fields missing from the spec isn't built.
 - **Not verified live:** the confirmation pages, since nothing may be submitted.
   - Greenhouse's `application_id=` comes from the spec.
   - Lever's `/thanks` and Ashby's success container are educated guesses with text fallbacks.
