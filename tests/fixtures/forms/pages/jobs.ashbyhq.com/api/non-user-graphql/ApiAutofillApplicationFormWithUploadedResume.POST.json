@@ -1,0 +1,12 @@
+{
+ "json": {
+  "data": {
+   "autofill": {
+    "name": "Parsed Resume Name",
+    "email": "parsed.resume@example.com",
+    "phone": "617-555-0199",
+    "org": "Parsed Company"
+   }
+  }
+ }
+}

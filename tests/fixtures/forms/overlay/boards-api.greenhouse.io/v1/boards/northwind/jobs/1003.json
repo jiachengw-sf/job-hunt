@@ -186,7 +186,41 @@
    ]
   }
  ],
- "location_questions": [],
+ "location_questions": [
+  {
+   "required": true,
+   "label": "Latitude",
+   "fields": [
+    {
+     "name": "latitude",
+     "type": "input_hidden",
+     "values": []
+    }
+   ]
+  },
+  {
+   "required": true,
+   "label": "Longitude",
+   "fields": [
+    {
+     "name": "longitude",
+     "type": "input_hidden",
+     "values": []
+    }
+   ]
+  },
+  {
+   "required": true,
+   "label": "Location (City)",
+   "fields": [
+    {
+     "name": "location",
+     "type": "input_text",
+     "values": []
+    }
+   ]
+  }
+ ],
  "compliance": [
   {
    "type": "eeoc",
