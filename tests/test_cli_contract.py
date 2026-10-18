@@ -24,8 +24,21 @@ def test_envelope_shape(cli):
     Envelope.model_validate(env)
 
 
+def _leaf_names(group, prefix=""):
+    import click
+
+    out = set()
+    for name, cmd in group.commands.items():
+        full = f"{prefix}{name}"
+        if isinstance(cmd, click.Group):
+            out |= _leaf_names(cmd, full + " ")
+        else:
+            out.add(full)
+    return out
+
+
 def test_every_command_registered_and_has_short_help():
-    assert set(cli_group.commands) == set(REGISTRY)
+    assert _leaf_names(cli_group) == set(REGISTRY)
     for name, spec in REGISTRY.items():
         assert spec.summary and spec.summary != name, f"{name} needs a docstring"
         assert len(spec.summary) <= 90, f"{name} summary is too long for short --help"
@@ -42,8 +55,9 @@ def test_writing_commands_have_dry_run():
 def test_no_submit_command_exists():
     """Non-negotiable #1: no code path submits an application."""
     banned = {"submit", "apply-submit", "send", "auto-apply"}
-    assert not banned & set(cli_group.commands)
-    for name in cli_group.commands:
+    names = _leaf_names(cli_group)
+    assert not banned & {w for n in names for w in n.split()}
+    for name in names:
         assert "submit" not in name
 
 
@@ -62,14 +76,14 @@ def test_unknown_option_is_usage_error_envelope(cli):
 def test_help_works_for_every_command(capsys):
     assert run(["--help"]) == 0
     for name in REGISTRY:
-        assert run([name, "--help"]) == 0
+        assert run([*name.split(), "--help"]) == 0
     out = capsys.readouterr().out
     assert "doctor" in out
 
 
 @pytest.mark.parametrize("name", sorted(REGISTRY))
 def test_schema_for_each_command(cli, name):
-    code, env, _ = cli("schema", name)
+    code, env, _ = cli("schema", *name.split())
     assert code == 0
     data = env["data"]
     assert data["name"] == name

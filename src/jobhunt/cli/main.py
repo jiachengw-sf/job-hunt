@@ -147,15 +147,17 @@ def _exit_codes() -> dict[str, str]:
 
 
 @agent_command(cli, "schema", output=SchemaIndex)
-@click.argument("command", required=False)
+@click.argument("command_words", nargs=-1)
 @click.option(
     "--all", "all_", is_flag=True, help="Every command's schemas (large: use with --out)."
 )
-def schema_cmd(command: str | None, all_: bool) -> Result:
+def schema_cmd(command_words: tuple[str, ...], all_: bool) -> Result:
     """Export input and output JSON schemas for commands.
 
-    No argument lists commands; `schema <command>` gives one command's schemas.
+    No argument lists commands; `schema <command>` gives one command's schemas (sub-commands
+    as `schema profile set`).
     """
+    command = " ".join(command_words) or None
     if command and all_:
         raise ValidationFailed("Pass a command name or --all, not both.")
     if all_:

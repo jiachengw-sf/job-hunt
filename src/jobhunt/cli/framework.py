@@ -61,6 +61,31 @@ class CommandSpec:
 
 REGISTRY: dict[str, CommandSpec] = {}
 
+# Help for command groups ("jobhunt profile set" lives in the "profile" group).
+GROUP_HELP = {
+    "resume": "Resumes: add one and get a draft profile.",
+    "profile": "Your profile (resume content): confirm the draft, set or show values.",
+    "setup": "Onboarding: the local form for preferences and screening answers.",
+    "answers": "The answer bank: show, add, edit, confirm wordings, list new questions.",
+}
+
+
+def _group_for(root: click.Group, path: list[str]) -> click.Group:
+    g = root
+    for part in path:
+        sub = g.commands.get(part)
+        if sub is None:
+            sub = click.Group(
+                part,
+                help=GROUP_HELP.get(part, part),
+                context_settings={"help_option_names": ["-h", "--help"], "max_content_width": 100},
+            )
+            g.add_command(sub)
+        assert isinstance(sub, click.Group), f"{part} is a command, not a group"
+        g = sub
+    return g
+
+
 HumanRenderer = Callable[[Envelope], str]
 
 
@@ -98,7 +123,7 @@ def error_envelope(err: JobhuntError) -> Envelope:
 
 def _serialize(data: Any) -> Any:
     if isinstance(data, BaseModel):
-        return data.model_dump(mode="json")
+        return data.model_dump(mode="json", by_alias=True)
     return data
 
 
@@ -159,15 +184,16 @@ def agent_command(
                     ["--dry-run"], is_flag=True, help="Show what would change; write nothing."
                 )
             )
+        *parents, leaf = name.split(" ")
         cmd = click.Command(
-            name,
+            leaf,
             callback=callback,
             params=params,
             help=doc,
             short_help=summary,
             context_settings={"help_option_names": ["-h", "--help"], "max_content_width": 100},
         )
-        group.add_command(cmd)
+        _group_for(group, parents).add_command(cmd)
         REGISTRY[name] = CommandSpec(name, summary, output, writes, cmd)
         return cmd
 
