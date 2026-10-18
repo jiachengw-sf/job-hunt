@@ -1,0 +1,62 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Length 1097 >>
+stream
+BT
+/F1 10 Tf
+13 TL
+50 760 Td
+(Jordan Mockley) Tj T*
+() Tj T*
+(jordan.mockley@example.com | \(617\) 555-0145) Tj T*
+() Tj T*
+(Education) Tj T*
+() Tj T*
+(Coastal Plains University - B.S. Statistics, minor in Economics, expected May 2027) Tj T*
+(Coursework: Regression Analysis, Probability, Database Systems, Econometrics) Tj T*
+() Tj T*
+(Experience) Tj T*
+() Tj T*
+(Harborline Credit Union - Data Analyst Intern, Jun 2026 - Aug 2026) Tj T*
+(- Built weekly Tableau dashboards of member account openings for the marketing team) Tj T*
+(- Wrote SQL queries against the member data warehouse to answer ad-hoc questions) Tj T*
+() Tj T*
+(Coastal Plains University Athletics - Student Analyst, Sep 2025 - present) Tj T*
+(- Track player workload data in Excel and summarize trends for coaching staff) Tj T*
+() Tj T*
+(Projects) Tj T*
+() Tj T*
+(City Bike Demand - Python, pandas, scikit-learn) Tj T*
+(- Modeled daily bike-share demand from public weather and ridership data with linear regression) Tj T*
+() Tj T*
+(Skills) Tj T*
+() Tj T*
+(SQL, Python \(pandas\), R, Excel, Tableau, A/B testing basics) Tj T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000185 00000 n 
+0000001334 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1460
+%%EOF

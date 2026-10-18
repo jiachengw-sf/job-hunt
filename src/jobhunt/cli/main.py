@@ -25,6 +25,7 @@ from jobhunt.cli.framework import (
     input_schema,
     output_schema,
 )
+from jobhunt.cli.onboarding import register as register_onboarding
 from jobhunt.doctor import DoctorReport, doctor
 from jobhunt.envelope import Envelope, ErrorInfo
 from jobhunt.errors import EXIT_CODE_MEANINGS, ExitCode, NotFound, ValidationFailed
@@ -190,6 +191,7 @@ def schema_cmd(command_words: tuple[str, ...], all_: bool) -> Result:
 
 register_discovery(cli)
 register_fit(cli)
+register_onboarding(cli)
 
 
 # --- entry point ----------------------------------------------------------------------------

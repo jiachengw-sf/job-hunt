@@ -1,0 +1,63 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Length 1115 >>
+stream
+BT
+/F1 10 Tf
+13 TL
+50 760 Td
+(Riley Fixture) Tj T*
+() Tj T*
+(riley.fixture@example.com | \(312\) 555-0101 | github.com/riley-fixture-example) Tj T*
+() Tj T*
+(Education) Tj T*
+() Tj T*
+(Northfield State University - B.S. Computer Science, expected May 2030) Tj T*
+(Coursework: Intro to Programming \(Python\), Data Structures, Discrete Mathematics) Tj T*
+() Tj T*
+(Projects) Tj T*
+() Tj T*
+(Campus Bus Tracker - Python, Flask, SQLite) Tj T*
+(- Built a web app that shows live campus shuttle arrivals using the transit agency's public feed) Tj T*
+(- Wrote unit tests with pytest covering the arrival-time parser) Tj T*
+() Tj T*
+(Sudoku Solver - Java) Tj T*
+(- Implemented a backtracking solver that solves standard puzzles in under one second) Tj T*
+() Tj T*
+(Experience) Tj T*
+() Tj T*
+(Northfield State University Library - Student Technology Assistant, Sep 2026 - present) Tj T*
+(- Help students troubleshoot laptops and printers at the library help desk) Tj T*
+(- Maintain a shared FAQ document used by 12 student staff) Tj T*
+() Tj T*
+(Skills) Tj T*
+() Tj T*
+(Python, Java, HTML/CSS, Git, SQL \(basic\)) Tj T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000185 00000 n 
+0000001352 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1478
+%%EOF

@@ -1,0 +1,61 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Length 1140 >>
+stream
+BT
+/F1 10 Tf
+13 TL
+50 760 Td
+(Sam Stubbs) Tj T*
+() Tj T*
+(sam.stubbs@example.com | \(720\) 555-0177 | github.com/sam-stubbs-example) Tj T*
+() Tj T*
+(Experience) Tj T*
+() Tj T*
+(Parcelwise - Senior Backend Engineer, Mar 2022 - present) Tj T*
+(- Lead a team of 4 engineers owning the shipment-tracking API \(Go, PostgreSQL, Kafka\)) Tj T*
+(- Cut p99 latency of the tracking endpoint from 900 ms to 180 ms by redesigning the cache layer) Tj T*
+(- Designed the event schema migration that moved 2 billion rows with no downtime) Tj T*
+() Tj T*
+(Ledgerly - Backend Engineer, Jun 2018 - Feb 2022) Tj T*
+(- Built payment reconciliation services in Python and Java) Tj T*
+(- On-call for the ledger service; wrote the runbooks the team still uses) Tj T*
+() Tj T*
+(Ledgerly - Software Engineer I, Jul 2016 - May 2018) Tj T*
+(- Maintained internal admin tools in Django) Tj T*
+() Tj T*
+(Education) Tj T*
+() Tj T*
+(Granite Valley University - B.S. Computer Engineering, 2016) Tj T*
+() Tj T*
+(Skills) Tj T*
+() Tj T*
+(Go, Python, Java, PostgreSQL, Kafka, Redis, AWS \(ECS, RDS, SQS\), Terraform, gRPC, observability \(Prometheus, OpenTelemetry\)) Tj T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000185 00000 n 
+0000001377 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1503
+%%EOF

@@ -1,0 +1,66 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Length 1326 >>
+stream
+BT
+/F1 10 Tf
+13 TL
+50 760 Td
+(Mei Testwell) Tj T*
+() Tj T*
+(mei.testwell@example.com | \(617\) 555-0122 | linkedin.com/in/mei-testwell-example) Tj T*
+() Tj T*
+(Education) Tj T*
+() Tj T*
+(Lakeview Institute of Technology - M.S. Computer Science, expected Dec 2027) Tj T*
+(Coursework: Machine Learning, Distributed Systems, Algorithms) Tj T*
+() Tj T*
+(Riverside University - B.Eng. Software Engineering, 2025) Tj T*
+() Tj T*
+(Experience) Tj T*
+() Tj T*
+(Brightpath Analytics - Software Engineering Intern, Jun 2026 - Aug 2026) Tj T*
+(- Built a Python service that cleans and validates partner CSV uploads before ingestion) Tj T*
+(- Reduced failed nightly imports from about 20 a week to 3 by adding schema checks) Tj T*
+() Tj T*
+(Riverside University ML Lab - Research Assistant, Jan 2024 - May 2025) Tj T*
+(- Trained image-classification models in PyTorch for a crop-disease dataset) Tj T*
+(- Co-authored a workshop paper on data augmentation for small agricultural datasets) Tj T*
+() Tj T*
+(Projects) Tj T*
+() Tj T*
+(Raft KV Store - Go) Tj T*
+(- Implemented a replicated key-value store using the Raft consensus algorithm for a distributed systems course) Tj T*
+() Tj T*
+(Skills) Tj T*
+() Tj T*
+(Python, Go, PyTorch, SQL, Docker, Kubernetes \(basic\), Linux) Tj T*
+(Languages: English \(fluent\), Mandarin \(native\)) Tj T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000185 00000 n 
+0000001563 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1689
+%%EOF

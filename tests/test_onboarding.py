@@ -1,17 +1,21 @@
-"""Onboarding: the local preferences/answers form and its server."""
+"""Onboarding: resume -> draft profile, profile edits, the local form and its server."""
 
 from __future__ import annotations
 
+import json
 import threading
 import urllib.error
 import urllib.parse
 import urllib.request
+from pathlib import Path
 
 import pytest
 import yaml
 
+from jobhunt.errors import ExitCode
 from jobhunt.models import Answers, Preferences, Profile
 from jobhunt.onboarding import form as F
+from jobhunt.onboarding import resume as rs
 from jobhunt.onboarding import server
 from jobhunt.paths import get_paths
 from tests.conftest import PERSONAS, PERSONAS_DIR, REPO
@@ -21,6 +25,90 @@ RESUMES = REPO / "tests" / "fixtures" / "resumes"
 
 def persona_contact(persona: str) -> dict:
     return yaml.safe_load((PERSONAS_DIR / persona / "answers.yaml").read_text())["identity"]
+
+
+@pytest.mark.parametrize("persona", PERSONAS)
+@pytest.mark.parametrize("ext", ["pdf", "docx", "md"])
+def test_resume_text_contact_and_draft(persona, ext):
+    path = PERSONAS_DIR / persona / "resume.md" if ext == "md" else RESUMES / f"{persona}.{ext}"
+    text = rs.extract_text(path)
+    c = rs.find_contact(text)
+    ident = persona_contact(persona)
+    assert c.email == ident["email"]
+    assert c.phone and c.phone[-4:] == ident["phone"][-4:]
+    assert c.name and c.name.split()[0] == ident["legal_first_name"]
+    red = rs.redact(text, c)
+    assert ident["email"] not in red and c.phone not in red and c.name not in red
+    draft = rs.draft_profile(text, c, path.name)
+    truth = Profile.model_validate(
+        yaml.safe_load((PERSONAS_DIR / persona / "profile.yaml").read_text())
+    )
+    assert [e["school"] for e in draft["education"]] == [e.school for e in truth.education]
+    assert [(e["org"], e["title"]) for e in draft["experience"]] == [
+        (e.org, e.title) for e in truth.experience
+    ]
+    assert draft["skills"]
+
+
+def test_unsupported_resume_format(tmp_path):
+    f = tmp_path / "cv.rtf"
+    f.write_text("{\\rtf1}")
+    from jobhunt.errors import ValidationFailed
+
+    with pytest.raises(ValidationFailed):
+        rs.extract_text(f)
+
+
+def test_resume_add_profile_confirm_and_set(cli, isolated_home):
+    code, env, _ = cli("resume", "add", str(RESUMES / "senior-backend.pdf"))
+    assert code == ExitCode.OK, env
+    d = env["data"]
+    assert d["contact_found"]["email"] and d["contact_found"]["phone"]
+    blob = json.dumps(env)
+    ident = persona_contact("senior-backend")
+    assert ident["email"] not in blob and ident["phone"][-4:] not in blob
+    paths = get_paths()
+    assert (paths.resume_dir / "senior-backend.pdf").exists()
+    redacted = Path(d["redacted_text"]).read_text()
+    assert ident["email"] not in redacted
+    # contact details wait for the form, owner-only
+    contact = json.loads(server.contact_path(paths).read_text())
+    assert contact["email"] == ident["email"]
+    # an unreviewed draft can't be confirmed
+    code, env, _ = cli("profile", "confirm")
+    assert code == ExitCode.CONFIG and env["error"]["details"]["placeholders"]
+    for p in env["error"]["details"]["placeholders"]:
+        code, e2, _ = cli("profile", "set", "--draft", p, "Reviewed by the user")
+        assert code == ExitCode.OK, e2
+    code, env, _ = cli("profile", "confirm")
+    assert code == ExitCode.OK, env
+    prof = Profile.model_validate(yaml.safe_load(paths.profile.read_text()))
+    assert prof.resumes[0].file == "senior-backend.pdf" and prof.resumes[0].default
+    # set: list index, append, list literal, validation
+    code, env, _ = cli("profile", "set", "experience[0].title", "Principal Backend Engineer")
+    assert code == ExitCode.OK and env["data"]["changed"]["before"] == "Senior Backend Engineer"
+    code, _, _ = cli("profile", "set", "--append", "skills.skills", "Rust")
+    assert code == ExitCode.OK
+    code, _, _ = cli("profile", "set", "projects", "[not, a, project]")
+    assert code == ExitCode.VALIDATION
+    code, _, _ = cli("profile", "set", "experience[9].title", "x")
+    assert code == ExitCode.VALIDATION
+    prof = Profile.model_validate(yaml.safe_load(paths.profile.read_text()))
+    assert prof.experience[0].title == "Principal Backend Engineer"
+    assert "Rust" in prof.skills["skills"]
+    # a second resume joins the confirmed profile instead of redrafting
+    code, env, _ = cli(
+        "resume", "add", str(RESUMES / "senior-backend.docx"), "--label", "docx copy"
+    )
+    assert code == ExitCode.OK and env["data"]["draft"] is None
+    prof = Profile.model_validate(yaml.safe_load(paths.profile.read_text()))
+    assert [r.file for r in prof.resumes if r.default] == ["senior-backend.docx"]
+
+
+def test_resume_add_dry_run_writes_nothing(cli, isolated_home):
+    code, _env, _ = cli("resume", "add", str(RESUMES / "first-year-intern.docx"), "--dry-run")
+    assert code == ExitCode.OK
+    assert not isolated_home.exists() or not any(isolated_home.rglob("*.docx"))
 
 
 # --- the form -------------------------------------------------------------------------------
@@ -193,3 +281,24 @@ def test_server_token_host_origin_and_save(running_server):
     bad = urllib.parse.urlencode({"token": token, "p:timing.earliest_start": "soon"}).encode()
     code, page, _ = _req(f"{base}/save", bad, {"Origin": base})
     assert code == 400 and "Not saved yet" in page
+
+
+def test_setup_form_launch_status_stop(cli, persona_home):
+    persona_home("newgrad-analyst")
+    code, env, _ = cli("setup", "form")
+    try:
+        assert code == ExitCode.OK, env
+        d = env["data"]
+        assert d["running"] and d["url"].startswith("http://127.0.0.1:")
+        assert env["hints"]["user_actions"]
+        code, _page, _ = _req(d["url"])
+        assert code == 200
+        # a second start reuses the running server
+        _, env2, _ = cli("setup", "form")
+        assert env2["data"]["url"] == d["url"]
+        _, st, _ = cli("setup", "form", "--status")
+        assert st["data"]["status"] == "waiting"
+    finally:
+        _, stopped, _ = cli("setup", "form", "--stop")
+    assert stopped["data"]["running"] is False
+    assert stopped["data"]["status"] in ("stopped", "saved_and_stopped")
