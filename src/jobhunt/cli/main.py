@@ -13,6 +13,7 @@ import click
 from pydantic import BaseModel, Field
 
 from jobhunt import __version__
+from jobhunt.cli.answers import register as register_answers
 from jobhunt.cli.discovery import register as register_discovery
 from jobhunt.cli.fit import register as register_fit
 from jobhunt.cli.framework import (
@@ -192,6 +193,7 @@ def schema_cmd(command_words: tuple[str, ...], all_: bool) -> Result:
 register_discovery(cli)
 register_fit(cli)
 register_onboarding(cli)
+register_answers(cli)
 
 
 # --- entry point ----------------------------------------------------------------------------
