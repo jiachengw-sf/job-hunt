@@ -55,6 +55,7 @@ class AnswerSheet(BaseModel):
     url: str | None
     built_at: str
     captcha_at_submit: bool = False
+    phone_country: str | None = Field(None, description="ISO alpha-2, set before the number.")
     fields: list[FillField] = Field(default_factory=list)
 
     def to_fill(self) -> list[FillField]:
@@ -126,6 +127,7 @@ def build_sheet(
         url=spec.url,
         built_at=now,
         captcha_at_submit=spec.captcha_at_submit,
+        phone_country=ctx.answers.identity.phone_country,
         fields=out,
     )
 
