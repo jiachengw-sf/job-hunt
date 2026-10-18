@@ -81,6 +81,11 @@ class Paths:
         return self.work / "packets"
 
     @property
+    def prefill(self) -> Path:
+        """Per-job answers.json (owner-only) and the pre-fill driver's state."""
+        return self.work / "prefill"
+
+    @property
     def onboarding(self) -> Path:
         """Resume text (redacted), the draft profile, and the form's state."""
         return self.work / "onboarding"
@@ -115,6 +120,7 @@ class Paths:
             self.results,
             self.screens,
             self.packets,
+            self.prefill,
             self.onboarding,
             self.out,
             self.cache,

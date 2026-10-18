@@ -267,9 +267,10 @@ def classify(
     return c
 
 
-def display_value(fr: FieldResult, ctx: AnswerContext, matcher: Matcher) -> str | None:
-    """The text to paste or pick for an answered field (computed locally, for the packet and the
-    pre-fill engine; never put in an envelope)."""
+def fill_value(fr: FieldResult, ctx: AnswerContext, matcher: Matcher) -> str | list[str] | None:
+    """The value for an answered field, as the form takes it: the form's own option text(s) for
+    choice fields (a list for multi-selects and checkboxes), the full path for files, else text.
+    Computed locally for the packet and the pre-fill engine; never put in an envelope."""
     if fr.resolution != "answered" or not fr.key:
         return None
     spec = BUILTIN.get(fr.key)
@@ -278,7 +279,7 @@ def display_value(fr: FieldResult, ctx: AnswerContext, matcher: Matcher) -> str 
     if value in (None, "", []):
         return None
     if spec and spec.kind == "file":
-        return Path(str(value)).name
+        return str(value)
     if fr.type == "boolean":
         return {"yes": "Yes", "no": "No"}.get(str(value), str(value))
     if fr.options and fr.type in ("select", "multiselect", "radio", "checkbox"):
@@ -290,5 +291,20 @@ def display_value(fr: FieldResult, ctx: AnswerContext, matcher: Matcher) -> str 
         chosen = [p for p in picked if p]
         if not chosen and (value == DECLINE_EEO or value in DECLINE_ALIASES):
             chosen = [o for o in fr.options if _DECLINE_RE.search(normalize(o))][:1]
-        return "; ".join(chosen) or None
+        if not chosen:
+            return None
+        return chosen if fr.type in ("multiselect", "checkbox") else chosen[0]
     return ", ".join(value) if isinstance(value, list) else str(value)
+
+
+def display_value(fr: FieldResult, ctx: AnswerContext, matcher: Matcher) -> str | None:
+    """The text to paste or pick for an answered field (file fields show the file name)."""
+    value = fill_value(fr, ctx, matcher)
+    if value is None:
+        return None
+    if isinstance(value, list):
+        return "; ".join(value)
+    spec = BUILTIN.get(fr.key or "")
+    if spec and spec.kind == "file":
+        return Path(value).name
+    return value
