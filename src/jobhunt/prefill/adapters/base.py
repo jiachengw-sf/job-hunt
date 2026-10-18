@@ -145,6 +145,15 @@ def value_text(ff: FillField) -> str:
     return v or ""
 
 
+# Bot-check and CAPTCHA widgets load as they normally would, so the human's own submit later
+# isn't broken by a widget the fill starved. jobhunt never solves or touches them.
+WIDGETS = (
+    r"^POST https://(api2?\.)?hcaptcha\.com/checksiteconfig\?",
+    r"^POST https://www\.(google|recaptcha)\.(com|net)/recaptcha/(enterprise|api2)/(reload|clr)\?",
+    r"^POST https://[^/]+/cdn-cgi/challenge-platform/",
+)
+
+
 class Adapter:
     """Base adapter. Subclasses set the class attributes and the per-type hooks."""
 
@@ -157,7 +166,7 @@ class Adapter:
         self.parse_wait_s = parse_wait_s
 
     def guard(self) -> RouteGuard:
-        return RouteGuard.of(allow=self.allow, submit=self.submit)
+        return RouteGuard.of(allow=(*self.allow, *WIDGETS), submit=self.submit)
 
     # --- page hooks (subclasses) ------------------------------------------------------------
 
@@ -276,6 +285,12 @@ class Adapter:
             return None
 
     # --- helpers for subclasses --------------------------------------------------------------
+
+    @staticmethod
+    def settle(page: Any, timeout_ms: int = 10_000) -> None:
+        """Let the page's scripts hydrate: server-rendered widgets ignore input until then."""
+        with contextlib.suppress(Exception):
+            page.wait_for_load_state("networkidle", timeout=timeout_ms)
 
     @staticmethod
     def first(locator: Any, what: str) -> Any:

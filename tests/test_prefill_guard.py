@@ -195,3 +195,34 @@ def test_no_submit_request_leaves_during_fill_then_human_can_submit(ats):
     with page.expect_navigation():
         page.locator("#go").click()  # the human's click, not the engine's
     assert ("POST", "https://ats.test/submit") in seen
+
+
+GQL = "https://jobs.ashbyhq.com/api/non-user-graphql?op="
+GH_S3 = "https://grnhse-prod-jben-us-west-2.s3.us-west-2.amazonaws.com/"
+
+
+@pytest.mark.parametrize(
+    ("ats", "url", "ok"),
+    [
+        ("greenhouse", GH_S3, True),  # resume upload
+        ("greenhouse", "https://job-boards.greenhouse.io/acme/jobs/123", False),
+        ("greenhouse", "https://boards-api.greenhouse.io/v1/boards/acme/jobs/123", False),
+        ("greenhouse", "https://c.spl.greenhouse.io/snowplow/tp2", False),
+        ("greenhouse", "https://evil-bucket.s3.amazonaws.com/", False),
+        ("lever", "https://jobs.lever.co/parseResume", True),
+        ("lever", "https://jobs.lever.co/acme/0b1c/apply", False),
+        ("lever", "https://jobs.eu.lever.co/acme/0b1c/apply", False),
+        ("lever", "https://api.hcaptcha.com/checksiteconfig?v=1&host=jobs.lever.co", True),
+        ("ashby", GQL + "ApiJobPosting", True),
+        ("ashby", GQL + "ApiSetFormValue", True),  # draft autosave
+        ("ashby", GQL + "ApiSetFormValueToFile", True),
+        ("ashby", GQL + "ApiSubmitSingleApplicationFormAction", False),
+        ("ashby", GQL + "ApiJobPosting&x=submit", False),
+        ("ashby", GQL + "ApiSomethingNew", False),  # default deny
+        ("ashby", "https://jobs.ashbyhq.com/api/applicationForm/submit", False),
+    ],
+)
+def test_adapter_guards(ats, url, ok):
+    from jobhunt.prefill.adapters import adapter_for
+
+    assert adapter_for(ats).guard().permits("POST", url) is ok

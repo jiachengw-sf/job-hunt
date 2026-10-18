@@ -7,7 +7,8 @@ Verified against live forms (2026-10-18):
   ``#react-select-ID-option-N``; the chosen value shows in ``.select__single-value``.
 - The location field (API name ``location``) is ``#candidate-location``, an autocomplete that
   only counts once an option is clicked.
-- Phone: a country combobox ``#country`` inside ``.phone-input`` is set before ``#phone``.
+- Phone: a country combobox ``#country`` inside ``.phone-input`` is set before ``#phone``; its
+  list opens only once you type, and only after the page has hydrated.
 - The resume goes through ``input#resume[type=file]``; the page uploads it to Greenhouse's S3
   bucket (allowed), and every POST to greenhouse.io is blocked during the fill.
 - After the human submits, the URL gains ``application_id=``.
@@ -17,6 +18,7 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
+from jobhunt.bank.keys import country_names
 from jobhunt.prefill.adapters.base import (
     Adapter,
     FieldMissing,
@@ -46,6 +48,7 @@ class Greenhouse(Adapter):
 
     def ready(self, page: Any) -> None:
         self.first(page.locator("#application-form, form"), "the application form")
+        self.settle(page)
 
     def confirmed(self, page: Any) -> bool:
         return "application_id=" in page.url or "/confirmation" in page.url
@@ -88,8 +91,11 @@ class Greenhouse(Adapter):
             return []
         out = FieldOutcome(id="phone_country", label="Phone country", type="select",
                            required=False, status="filled")  # fmt: skip
+        names = country_names(sheet.phone_country)
         try:
             safe_click(box.first)
+            if names:  # live forms open the list only once you type
+                box.first.press_sequentially(names[0])
             opts = page.locator('[id^="react-select-country-option-"]')
             opts.first.wait_for(state="visible", timeout=5_000)
             texts = [t.strip() for t in opts.all_inner_texts()]

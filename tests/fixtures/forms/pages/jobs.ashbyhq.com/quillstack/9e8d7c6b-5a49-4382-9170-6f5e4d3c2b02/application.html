@@ -5,6 +5,12 @@
   const post = (op, body) => fetch(GQL + op, {method: 'POST', body: JSON.stringify(body || {}),
     headers: {'content-type': 'application/json'}});
 
+  // Ashby saves the draft server-side as fields change.
+  document.querySelectorAll('[data-field-path] input, [data-field-path] textarea').forEach(el => {
+    if (el.type === 'file') return;
+    el.addEventListener('change', () => post('ApiSetFormValue', {path: el.name || el.id}));
+  });
+
   document.querySelectorAll('button[data-option]').forEach(b => {
     b.addEventListener('click', () => {
       b.parentElement.querySelectorAll('button[data-option]').forEach(o =>
@@ -45,6 +51,8 @@
     const body = new FormData();
     body.append('file', f);
     await fetch(document.body.dataset.uploadUrl, {method: 'POST', body});
+    const linked = await post('ApiSetFormValueToFile', {path: '_systemfield_resume'});
+    if (!linked.ok) throw new Error('not attached');
     entry.querySelector('.fx-file-name').textContent = f.name;
     const r = await post('ApiAutofillApplicationFormWithUploadedResume', {});
     const parsed = (await r.json()).data.autofill;

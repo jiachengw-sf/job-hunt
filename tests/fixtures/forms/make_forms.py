@@ -624,6 +624,8 @@ def write_pages() -> None:
         f"{gql}/ApiAutofillApplicationFormWithUploadedResume.POST.json",
         {"json": {"data": {"autofill": PARSED}}},
     )
+    for op in ("ApiSetFormValue", "ApiSetFormValueToFile"):  # draft autosave
+        _endpoint(f"{gql}/{op}.POST.json", {"json": {"data": {"saved": True}}})
     _endpoint(
         f"{gql}/ApiSubmitSingleApplicationFormAction.POST.json",
         {"json": {"data": {"submitted": True}}},

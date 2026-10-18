@@ -38,6 +38,7 @@ class Lever(Adapter):
 
     def ready(self, page: Any) -> None:
         self.first(page.locator("#application-form, form"), "the application form")
+        self.settle(page)
 
     def confirmed(self, page: Any) -> bool:
         if re.search(r"/thanks/?(\?|$)", page.url):

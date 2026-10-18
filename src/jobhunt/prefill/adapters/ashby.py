@@ -7,8 +7,9 @@ Verified against live forms (2026-10-18):
   ``ApiAutocompleteGeoLocation``). An upload runs ``ApiCreateFileUploadHandle`` → S3 →
   ``ApiAutofillApplicationFormWithUploadedResume``, and the autofill overwrites fields. So the
   resume goes **first**, the engine waits for the parse to finish, then fills or overwrites.
-  Those operations are allowed; anything else, and any operation named like a submit, is
-  blocked during the fill.
+  Ashby also saves the draft as fields change (``ApiSetFormValue``, ``ApiSetFormValueToFile``
+  attaches the upload). Those operations are allowed; anything else, and any operation named
+  like a submit, is blocked during the fill.
 - Yes/no questions are ``button[data-option=yes|no]`` toggles (``aria-pressed``). Single selects
   are radio groups and multi-selects checkbox groups, each option with its own ``<label>``.
 - Location is a combobox in the ``_systemfield_location`` entry.
@@ -30,6 +31,9 @@ _OPS = (
     "ApiAutocompleteGeoLocation",
     "ApiCreateFileUploadHandle",
     "ApiAutofillApplicationFormWithUploadedResume",
+    # Ashby saves the draft server-side as fields change; these are not submits
+    "ApiSetFormValue",
+    "ApiSetFormValueToFile",
 )
 _DONE = re.compile(
     r"application (?:was )?(?:successfully )?submitted|thank(?:s| you) for applying", re.I
