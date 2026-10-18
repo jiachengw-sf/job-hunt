@@ -89,13 +89,16 @@ def test_resume_add_profile_confirm_and_set(cli, isolated_home):
     assert code == ExitCode.OK and env["data"]["changed"]["before"] == "Senior Backend Engineer"
     code, _, _ = cli("profile", "set", "--append", "skills.skills", "Rust")
     assert code == ExitCode.OK
+    code, _, _ = cli("profile", "set", "--append", "skills.tools", "Docker")
+    code, _, _ = cli("profile", "set", "skills.tools", "null")  # removes the key
+    assert code == ExitCode.OK
     code, _, _ = cli("profile", "set", "projects", "[not, a, project]")
     assert code == ExitCode.VALIDATION
     code, _, _ = cli("profile", "set", "experience[9].title", "x")
     assert code == ExitCode.VALIDATION
     prof = Profile.model_validate(yaml.safe_load(paths.profile.read_text()))
     assert prof.experience[0].title == "Principal Backend Engineer"
-    assert "Rust" in prof.skills["skills"]
+    assert "Rust" in prof.skills["skills"] and "tools" not in prof.skills
     # a second resume joins the confirmed profile instead of redrafting
     code, env, _ = cli(
         "resume", "add", str(RESUMES / "senior-backend.docx"), "--label", "docx copy"

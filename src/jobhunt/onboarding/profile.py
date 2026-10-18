@@ -83,7 +83,10 @@ def set_value(
     else:
         if not isinstance(cur, dict):
             raise ValidationFailed(f"{path}: not inside a mapping.")
-        cur[last] = value
+        if value is None:
+            cur.pop(last, None)  # null removes the key (its default applies)
+        else:
+            cur[last] = value
     return out
 
 
