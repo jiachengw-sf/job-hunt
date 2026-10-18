@@ -333,6 +333,7 @@ FIELD_NAMES: dict[str, str] = {
 
 SENSITIVE_LABEL_RE = re.compile(
     r"\b(authori[sz]ed|authori[sz]ation|sponsor|visa|citizen|permanent resident|green card|"
+    r"immigration|f-?1\b|j-?1\b|h-?1b|opt\b|cpt\b|work permit|nationality|"
     r"clearance|salary|compensation|pay expectation|gender|race|ethnic|hispanic|latino|"
     r"veteran|disabilit|sexual orientation|transgender|criminal|convicted|felony|background "
     r"check|drug test|date of birth|social security|ssn|age\b|18 years)",

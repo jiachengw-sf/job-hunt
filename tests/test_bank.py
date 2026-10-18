@@ -85,9 +85,11 @@ def test_choose_option_yes_no_and_ambiguity():
 
 def test_sensitive_labels():
     for s in ["Will you require visa sponsorship?", "Gender", "What are your salary expectations?",
-              "Have you ever been convicted of a felony?", "Are you a U.S. citizen?"]:  # fmt: skip
+              "Have you ever been convicted of a felony?", "Are you a U.S. citizen?",
+              "Are you currently in F-1 status?", "Will you need H-1B transfer?"]:  # fmt: skip
         assert is_sensitive_label(s), s
     assert not is_sensitive_label("How did you hear about us?")
+    assert not is_sensitive_label("What is your option for start dates?")  # "opt" as a word only
 
 
 @pytest.mark.parametrize("persona", PERSONAS)
