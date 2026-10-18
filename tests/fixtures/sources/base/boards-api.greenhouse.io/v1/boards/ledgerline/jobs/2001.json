@@ -1,0 +1,33 @@
+{
+ "id": 2001,
+ "internal_job_id": 502001,
+ "title": "Data Analyst, New Grad 2027",
+ "absolute_url": "https://job-boards.greenhouse.io/ledgerline/jobs/2001",
+ "location": {
+  "name": "Chicago, IL"
+ },
+ "company_name": "Ledgerline Financial",
+ "first_published": "2026-10-05T09:00:00-05:00",
+ "updated_at": "2026-10-15T09:00:00-04:00",
+ "requisition_id": "R2001",
+ "application_deadline": null,
+ "content": "&lt;p&gt;Build dashboards in SQL and Tableau for the lending team.&lt;/p&gt;&lt;p&gt;Start date: July 2027.&lt;/p&gt;",
+ "departments": [
+  {
+   "id": 1,
+   "name": "Engineering",
+   "child_ids": [],
+   "parent_id": null
+  }
+ ],
+ "offices": [],
+ "metadata": null,
+ "pay_input_ranges": [
+  {
+   "min_cents": 8500000,
+   "max_cents": 9500000,
+   "currency_type": "USD",
+   "title": "Annual base salary"
+  }
+ ]
+}

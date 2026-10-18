@@ -48,6 +48,8 @@ def persona_home(isolated_home: Path):
         src = PERSONAS_DIR / name
         for f in ("profile.yaml", "preferences.yaml", "answers.yaml"):
             shutil.copy(src / f, isolated_home / f)
+        if (src / "watchlist.yaml").exists():
+            shutil.copy(src / "watchlist.yaml", isolated_home / "watchlist.yaml")
         (isolated_home / "resume").mkdir(exist_ok=True)
         shutil.copy(src / "resume.md", isolated_home / "resume" / "resume.md")
         return isolated_home

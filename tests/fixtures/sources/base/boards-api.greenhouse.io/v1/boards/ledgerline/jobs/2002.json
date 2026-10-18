@@ -1,0 +1,26 @@
+{
+ "id": 2002,
+ "internal_job_id": 502002,
+ "title": "Business Analyst I",
+ "absolute_url": "https://job-boards.greenhouse.io/ledgerline/jobs/2002",
+ "location": {
+  "name": "Chicago, IL; New York, NY"
+ },
+ "company_name": "Ledgerline Financial",
+ "first_published": "2026-09-15T09:00:00-05:00",
+ "updated_at": "2026-10-15T09:00:00-04:00",
+ "requisition_id": "R2002",
+ "application_deadline": null,
+ "content": "&lt;p&gt;Partner with product managers to size opportunities. Excel and SQL required.&lt;/p&gt;",
+ "departments": [
+  {
+   "id": 1,
+   "name": "Engineering",
+   "child_ids": [],
+   "parent_id": null
+  }
+ ],
+ "offices": [],
+ "metadata": null,
+ "pay_input_ranges": []
+}

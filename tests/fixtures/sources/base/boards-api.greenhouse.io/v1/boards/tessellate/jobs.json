@@ -1,0 +1,99 @@
+{
+ "jobs": [
+  {
+   "id": 3001,
+   "internal_job_id": 503001,
+   "title": "Senior Backend Engineer",
+   "absolute_url": "https://job-boards.greenhouse.io/tessellate/jobs/3001",
+   "location": {
+    "name": "Remote - US"
+   },
+   "company_name": "Tessellate",
+   "first_published": "2026-10-10T09:00:00-07:00",
+   "updated_at": "2026-10-15T09:00:00-04:00",
+   "requisition_id": "R3001",
+   "application_deadline": null,
+   "content": "&lt;p&gt;Tessellate runs payments infrastructure. You will own Go and Postgres services that move money reliably, lead design reviews, and mentor engineers. 8+ years of backend experience.&lt;/p&gt;",
+   "departments": [
+    {
+     "id": 1,
+     "name": "Engineering",
+     "child_ids": [],
+     "parent_id": null
+    }
+   ],
+   "offices": [],
+   "metadata": null,
+   "pay_input_ranges": [
+    {
+     "min_cents": 19000000,
+     "max_cents": 23000000,
+     "currency_type": "USD",
+     "title": "Base"
+    }
+   ]
+  },
+  {
+   "id": 3002,
+   "internal_job_id": 503002,
+   "title": "Staff Software Engineer, Platform",
+   "absolute_url": "https://job-boards.greenhouse.io/tessellate/jobs/3002",
+   "location": {
+    "name": "Remote - US"
+   },
+   "company_name": "Tessellate",
+   "first_published": "2026-10-02T09:00:00-07:00",
+   "updated_at": "2026-10-15T09:00:00-04:00",
+   "requisition_id": "R3002",
+   "application_deadline": null,
+   "content": "&lt;p&gt;Set technical direction for the platform group. 12+ years of experience.&lt;/p&gt;",
+   "departments": [
+    {
+     "id": 1,
+     "name": "Engineering",
+     "child_ids": [],
+     "parent_id": null
+    }
+   ],
+   "offices": [],
+   "metadata": null,
+   "pay_input_ranges": []
+  },
+  {
+   "id": 3003,
+   "internal_job_id": 503003,
+   "title": "Senior Backend Engineer",
+   "absolute_url": "https://job-boards.greenhouse.io/tessellate/jobs/3003",
+   "location": {
+    "name": "Austin, TX"
+   },
+   "company_name": "Tessellate",
+   "first_published": "2026-10-10T09:00:00-07:00",
+   "updated_at": "2026-10-15T09:00:00-04:00",
+   "requisition_id": "R3003",
+   "application_deadline": null,
+   "content": "&lt;p&gt;Tessellate runs payments infrastructure. You will own Go and Postgres services that move money reliably, lead design reviews, and mentor engineers. 8+ years of backend experience.&lt;/p&gt;",
+   "departments": [
+    {
+     "id": 1,
+     "name": "Engineering",
+     "child_ids": [],
+     "parent_id": null
+    }
+   ],
+   "offices": [],
+   "metadata": null,
+   "pay_input_ranges": [
+    {
+     "min_cents": 19000000,
+     "max_cents": 23000000,
+     "currency_type": "USD",
+     "title": "Base"
+    }
+   ]
+  }
+ ],
+ "meta": {
+  "total": 3
+ }
+}

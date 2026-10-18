@@ -1,0 +1,11 @@
+version: 1
+companies:
+  - name: Tessellate
+    careers_url: https://job-boards.greenhouse.io/tessellate
+  - name: Driftwood Labs
+    careers_url: https://jobs.lever.co/driftwood
+  - name: Kitewire
+    careers_url: https://jobs.ashbyhq.com/kitewire
+  - name: Brightpath Health
+    careers_url: https://brightpath.example/careers
+    notes: Custom careers page; no ATS detected.

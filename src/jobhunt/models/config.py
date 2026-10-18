@@ -25,6 +25,28 @@ class HttpConfig(Strict):
     max_retries: int = Field(4, ge=0, le=10)
 
 
+class SimplifyConfig(Strict):
+    enabled: bool = True
+    branch: str = "dev"
+    internship_repo: str = Field(
+        "Summer2027-Internships", description="Used when preferences seek internships or co-ops."
+    )
+    new_grad_repo: str = Field(
+        "New-Grad-Positions", description="Used when preferences seek new-grad or entry roles."
+    )
+
+
+class DiscoveryConfig(Strict):
+    simplify: SimplifyConfig = Field(default_factory=SimplifyConfig)
+    old_posting_days: int = Field(60, ge=1, description="Flag postings older than this.")
+    repost_max_distance: int = Field(
+        3, ge=0, le=16, description="SimHash bits that may differ for a repost match."
+    )
+    empty_run_warn_after: int = Field(
+        3, ge=1, description="Warn when a source returns nothing this many runs in a row."
+    )
+
+
 class ScheduleConfig(Strict):
     interval_hours: float = Field(4, gt=0)
 
@@ -76,6 +98,7 @@ class Config(Strict):
     version: Literal[1] = 1
     tracker: TrackerConfig = Field(default_factory=TrackerConfig)
     http: HttpConfig
+    discovery: DiscoveryConfig = Field(default_factory=DiscoveryConfig)
     schedule: ScheduleConfig = Field(default_factory=ScheduleConfig)
     fit: FitConfig = Field(default_factory=FitConfig)
     volume_guard: VolumeGuardConfig = Field(default_factory=VolumeGuardConfig)

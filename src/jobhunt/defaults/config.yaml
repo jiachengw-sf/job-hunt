@@ -16,6 +16,16 @@ http:
   timeout_seconds: 20
   max_retries: 4
 
+discovery:
+  simplify:
+    enabled: true
+    branch: dev
+    internship_repo: Summer2027-Internships   # chosen when preferences seek internships / co-ops
+    new_grad_repo: New-Grad-Positions         # chosen when preferences seek new-grad / entry roles
+  old_posting_days: 60       # signal: posting date older than this
+  repost_max_distance: 3     # signal: SimHash bits that may differ for a repost
+  empty_run_warn_after: 3    # warn when a source returns nothing this many runs in a row
+
 schedule:
   interval_hours: 4     # recruiting-season default; new postings matter most in their first 48-96h
 

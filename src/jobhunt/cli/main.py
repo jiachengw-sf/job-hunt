@@ -13,6 +13,7 @@ import click
 from pydantic import BaseModel, Field
 
 from jobhunt import __version__
+from jobhunt.cli.discovery import register as register_discovery
 from jobhunt.cli.framework import (
     REGISTRY,
     Result,
@@ -180,6 +181,11 @@ def schema_cmd(command: str | None, all_: bool) -> Result:
         exit_codes=_exit_codes(),
     )
     return Result(data=index, next_actions=["Run `jobhunt schema <command>` for its full schema."])
+
+
+# --- discovery ------------------------------------------------------------------------------
+
+register_discovery(cli)
 
 
 # --- entry point ----------------------------------------------------------------------------

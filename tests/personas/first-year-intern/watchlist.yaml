@@ -1,0 +1,10 @@
+version: 1
+companies:
+  - name: Bluefin Analytics
+    careers_url: https://jobs.lever.co/bluefin
+  - name: Quillstack
+    ats: ashby
+    board_token: quillstack
+  - name: Harborlight Bank
+    careers_url: https://harborlight.wd5.myworkdayjobs.com/en-US/careers
+    notes: Workday; not readable yet, tracked for coverage.

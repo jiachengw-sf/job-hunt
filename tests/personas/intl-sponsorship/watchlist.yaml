@@ -1,0 +1,6 @@
+version: 1
+companies:
+  - name: Northwind Robotics
+    careers_url: https://job-boards.greenhouse.io/northwind
+  - name: Quillstack
+    careers_url: https://jobs.ashbyhq.com/quillstack

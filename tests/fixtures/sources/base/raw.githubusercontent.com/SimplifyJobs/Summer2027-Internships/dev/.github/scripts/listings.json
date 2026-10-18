@@ -1,0 +1,256 @@
+[
+ {
+  "source": "Simplify",
+  "category": "Software",
+  "company_name": "Northwind Robotics",
+  "id": "00000000-0000-4000-8000-000000000001",
+  "title": "Software Engineering Intern, Summer 2027",
+  "active": true,
+  "terms": [
+   "Summer 2027"
+  ],
+  "date_updated": 1790902800,
+  "date_posted": 1790899200,
+  "url": "https://job-boards.greenhouse.io/northwind/jobs/1001?gh_src=simplify",
+  "locations": [
+   "Boston, MA"
+  ],
+  "company_url": "https://simplify.jobs/c/example",
+  "is_visible": true,
+  "sponsorship": "Other",
+  "degrees": [
+   "Bachelor's"
+  ]
+ },
+ {
+  "source": "Simplify",
+  "category": "Software",
+  "company_name": "Bluefin Analytics",
+  "id": "00000000-0000-4000-8000-000000000002",
+  "title": "Software Engineer Intern",
+  "active": true,
+  "terms": [
+   "Summer 2027"
+  ],
+  "date_updated": 1791075600,
+  "date_posted": 1791072000,
+  "url": "https://jobs.lever.co/bluefin/4d1c2e7a-0b6f-4c1e-9a7d-2f3b5c6d7e02/apply?lever-source=Simplify",
+  "locations": [
+   "New York, NY"
+  ],
+  "company_url": "https://simplify.jobs/c/example",
+  "is_visible": true,
+  "sponsorship": "Other",
+  "degrees": [
+   "Bachelor's"
+  ]
+ },
+ {
+  "source": "Simplify",
+  "category": "Software",
+  "company_name": "Quillstack",
+  "id": "00000000-0000-4000-8000-000000000003",
+  "title": "Product Engineering Intern",
+  "active": true,
+  "terms": [
+   "Summer 2027"
+  ],
+  "date_updated": 1791853200,
+  "date_posted": 1791849600,
+  "url": "https://jobs.ashbyhq.com/quillstack/9e8d7c6b-5a49-4382-9170-6f5e4d3c2b01/application?utm_source=Simplify",
+  "locations": [
+   "San Francisco, CA",
+   "Seattle, WA"
+  ],
+  "company_url": "https://simplify.jobs/c/example",
+  "is_visible": true,
+  "sponsorship": "Other",
+  "degrees": [
+   "Bachelor's"
+  ]
+ },
+ {
+  "source": "Simplify",
+  "category": "Software",
+  "company_name": "Harborlight Bank",
+  "id": "00000000-0000-4000-8000-000000000004",
+  "title": "Technology Intern - Summer 2027",
+  "active": true,
+  "terms": [
+   "Summer 2027"
+  ],
+  "date_updated": 1791248400,
+  "date_posted": 1791244800,
+  "url": "https://harborlight.wd5.myworkdayjobs.com/en-US/careers/job/Charlotte-NC/Technology-Intern_R-10023?utm_source=Simplify",
+  "locations": [
+   "Charlotte, NC"
+  ],
+  "company_url": "https://simplify.jobs/c/example",
+  "is_visible": true,
+  "sponsorship": "Other",
+  "degrees": [
+   "Bachelor's"
+  ]
+ },
+ {
+  "source": "Simplify",
+  "category": "Software",
+  "company_name": "Harborlight Bank",
+  "id": "00000000-0000-4000-8000-000000000005",
+  "title": "Technology Intern - Summer 2027",
+  "active": true,
+  "terms": [
+   "Summer 2027"
+  ],
+  "date_updated": 1791248400,
+  "date_posted": 1791244800,
+  "url": "https://harborlight.wd5.myworkdayjobs.com/en-US/careers/job/Charlotte-NC/Technology-Intern_R-10023",
+  "locations": [
+   "Wilmington, DE"
+  ],
+  "company_url": "https://simplify.jobs/c/example",
+  "is_visible": true,
+  "sponsorship": "Other",
+  "degrees": [
+   "Bachelor's"
+  ]
+ },
+ {
+  "source": "Simplify",
+  "category": "Software",
+  "company_name": "Cobalt Freight",
+  "id": "00000000-0000-4000-8000-000000000006",
+  "title": "Software Intern",
+  "active": true,
+  "terms": [
+   "Summer 2027"
+  ],
+  "date_updated": 1791507600,
+  "date_posted": 1791504000,
+  "url": "https://careers-cobaltfreight.icims.com/jobs/5521/software-intern/job?iis=Simplify",
+  "locations": [
+   "Memphis, TN"
+  ],
+  "company_url": "https://simplify.jobs/c/example",
+  "is_visible": true,
+  "sponsorship": "Other",
+  "degrees": [
+   "Bachelor's"
+  ]
+ },
+ {
+  "source": "Simplify",
+  "category": "Software",
+  "company_name": "Old Closed Co",
+  "id": "00000000-0000-4000-8000-000000000007",
+  "title": "Intern",
+  "active": false,
+  "terms": [
+   "Summer 2027"
+  ],
+  "date_updated": 1780275600,
+  "date_posted": 1780272000,
+  "url": "https://job-boards.greenhouse.io/oldclosed/jobs/9",
+  "locations": [
+   "Austin, TX"
+  ],
+  "company_url": "https://simplify.jobs/c/example",
+  "is_visible": true,
+  "sponsorship": "Other",
+  "degrees": [
+   "Bachelor's"
+  ]
+ },
+ {
+  "source": "Simplify",
+  "category": "Software",
+  "company_name": "Hidden Co",
+  "id": "00000000-0000-4000-8000-000000000008",
+  "title": "Intern",
+  "active": true,
+  "terms": [
+   "Summer 2027"
+  ],
+  "date_updated": 1790816400,
+  "date_posted": 1790812800,
+  "url": "https://jobs.lever.co/hidden/00000000-0000-4000-8000-000000000000",
+  "locations": [
+   "Austin, TX"
+  ],
+  "company_url": "https://simplify.jobs/c/example",
+  "is_visible": false,
+  "sponsorship": "Other",
+  "degrees": [
+   "Bachelor's"
+  ]
+ },
+ {
+  "source": "Simplify",
+  "category": "Software",
+  "company_name": "Pinecrest Systems",
+  "id": "00000000-0000-4000-8000-000000000009",
+  "title": "IT Intern",
+  "active": true,
+  "terms": [
+   "Summer 2025"
+  ],
+  "date_updated": 1738371600,
+  "date_posted": 1738368000,
+  "url": "https://pinecrest.taleo.net/careersection/2/jobdetail.ftl?job=000123",
+  "locations": [
+   "Denver, CO"
+  ],
+  "company_url": "https://simplify.jobs/c/example",
+  "is_visible": true,
+  "sponsorship": "Other",
+  "degrees": [
+   "Bachelor's"
+  ]
+ },
+ {
+  "source": "Simplify",
+  "category": "Software",
+  "company_name": "Northwind Robotics",
+  "id": "00000000-0000-4000-8000-000000000010",
+  "title": "Robotics Intern",
+  "active": true,
+  "terms": [
+   "Summer 2027"
+  ],
+  "date_updated": 1788224400,
+  "date_posted": 1788220800,
+  "url": "https://job-boards.greenhouse.io/northwind/jobs/1099",
+  "locations": [
+   "Boston, MA"
+  ],
+  "company_url": "https://simplify.jobs/c/example",
+  "is_visible": true,
+  "sponsorship": "Other",
+  "degrees": [
+   "Bachelor's"
+  ]
+ },
+ {
+  "source": "Simplify",
+  "category": "Software",
+  "company_name": "Mapleleaf Energy",
+  "id": "00000000-0000-4000-8000-000000000011",
+  "title": "Grid Analytics Intern",
+  "active": true,
+  "terms": [
+   "Summer 2027"
+  ],
+  "date_updated": 1791680400,
+  "date_posted": 1791676800,
+  "url": "https://careers.mapleleaf-energy.example/jobs/intern-123?ref=simplify",
+  "locations": [
+   "Toronto, ON"
+  ],
+  "company_url": "https://simplify.jobs/c/example",
+  "is_visible": true,
+  "sponsorship": "Other",
+  "degrees": [
+   "Bachelor's"
+  ]
+ }
+]

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import re
 import sqlite3
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from importlib import resources
 from pathlib import Path
@@ -46,6 +48,29 @@ def connect(path: Path) -> sqlite3.Connection:
     conn.execute("PRAGMA journal_mode = WAL")
     secure_file(path)
     return conn
+
+
+@contextmanager
+def open_store(path: Path, *, dry_run: bool = False) -> Iterator[sqlite3.Connection]:
+    """The migrated store. With ``dry_run`` the caller works on an in-memory copy, so nothing it
+    does reaches the file (the file is not even created)."""
+    if dry_run:
+        conn = sqlite3.connect(":memory:", isolation_level=None)
+        if path.exists():
+            src = sqlite3.connect(path)
+            try:
+                src.backup(conn)
+            finally:
+                src.close()
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA foreign_keys = ON")
+    else:
+        conn = connect(path)
+    try:
+        migrate(conn)
+        yield conn
+    finally:
+        conn.close()
 
 
 def current_version(conn: sqlite3.Connection) -> int:

@@ -42,3 +42,7 @@ jobs:
           export JOBHUNT_HOME="$RUNNER_TEMP/jobhunt-home"
           uv run jobhunt doctor --fix --offline --human
           uv run jobhunt schema --all --out "$RUNNER_TEMP/schema.json"
+          cp tests/personas/intl-sponsorship/*.yaml "$JOBHUNT_HOME/"
+          cp tests/personas/intl-sponsorship/resume.md "$JOBHUNT_HOME/resume/"
+          uv run jobhunt fetch --fixtures tests/fixtures/sources/base --human
+          uv run jobhunt fetch --fixtures tests/fixtures/sources/base --human

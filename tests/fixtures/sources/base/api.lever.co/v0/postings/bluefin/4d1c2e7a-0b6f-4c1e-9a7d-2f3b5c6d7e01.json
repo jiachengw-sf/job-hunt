@@ -1,0 +1,34 @@
+{
+ "id": "4d1c2e7a-0b6f-4c1e-9a7d-2f3b5c6d7e01",
+ "text": "Data Science Intern",
+ "hostedUrl": "https://jobs.lever.co/bluefin/4d1c2e7a-0b6f-4c1e-9a7d-2f3b5c6d7e01",
+ "applyUrl": "https://jobs.lever.co/bluefin/4d1c2e7a-0b6f-4c1e-9a7d-2f3b5c6d7e01/apply",
+ "createdAt": 1789862400000,
+ "categories": {
+  "commitment": "Intern",
+  "location": "New York, NY",
+  "team": "Engineering",
+  "allLocations": [
+   "New York, NY",
+   "Chicago, IL"
+  ]
+ },
+ "country": "US",
+ "workplaceType": "hybrid",
+ "descriptionPlain": "Model customer churn with Python and SQL. Summer 2027.",
+ "description": "<div>Model customer churn with Python and SQL. Summer 2027.</div>",
+ "lists": [
+  {
+   "text": "What you'll do",
+   "content": "<li>Ship features</li><li>Write tests</li>"
+  }
+ ],
+ "additionalPlain": "Bluefin is an equal opportunity employer.",
+ "additional": "<div>Bluefin is an equal opportunity employer.</div>",
+ "salaryRange": {
+  "min": 40,
+  "max": 45,
+  "currency": "USD",
+  "interval": "per-hour-wage"
+ }
+}

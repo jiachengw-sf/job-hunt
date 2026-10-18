@@ -1,0 +1,26 @@
+{
+ "id": 1004,
+ "internal_job_id": 501004,
+ "title": "Hardware Test Intern",
+ "absolute_url": "https://job-boards.greenhouse.io/northwind/jobs/1004",
+ "location": {
+  "name": "Boston, MA"
+ },
+ "company_name": "Northwind Robotics",
+ "first_published": null,
+ "updated_at": "2026-10-15T09:00:00-04:00",
+ "requisition_id": "R1004",
+ "application_deadline": null,
+ "content": "&lt;p&gt;Help test robot drive units in our Boston lab. Summer 2027.&lt;/p&gt;",
+ "departments": [
+  {
+   "id": 1,
+   "name": "Engineering",
+   "child_ids": [],
+   "parent_id": null
+  }
+ ],
+ "offices": [],
+ "metadata": null,
+ "pay_input_ranges": []
+}

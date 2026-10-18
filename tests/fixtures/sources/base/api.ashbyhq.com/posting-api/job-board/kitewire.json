@@ -1,0 +1,26 @@
+{
+ "apiVersion": "1",
+ "jobs": [
+  {
+   "id": "1f2e3d4c-5b6a-4798-8695-a4b3c2d1e001",
+   "title": "Senior Backend Engineer (Remote)",
+   "department": "Engineering",
+   "team": "Engineering",
+   "employmentType": "FullTime",
+   "location": "Remote - US",
+   "secondaryLocations": [],
+   "publishedAt": "2026-10-14T16:00:00.000+00:00",
+   "isListed": true,
+   "isRemote": true,
+   "workplaceType": "Remote",
+   "jobUrl": "https://jobs.ashbyhq.com/kitewire/1f2e3d4c-5b6a-4798-8695-a4b3c2d1e001",
+   "applyUrl": "https://jobs.ashbyhq.com/kitewire/1f2e3d4c-5b6a-4798-8695-a4b3c2d1e001/application",
+   "descriptionPlain": "Design event-driven services in Kotlin. 8+ years of backend experience.",
+   "descriptionHtml": "<p>Design event-driven services in Kotlin. 8+ years of backend experience.</p>",
+   "compensation": {
+    "compensationTierSummary": null,
+    "summaryComponents": []
+   }
+  }
+ ]
+}

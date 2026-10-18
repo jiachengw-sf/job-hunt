@@ -1,0 +1,29 @@
+[
+ {
+  "id": "4d1c2e7a-0b6f-4c1e-9a7d-2f3b5c6d7e02",
+  "text": "Software Engineer Intern",
+  "hostedUrl": "https://jobs.lever.co/bluefin/4d1c2e7a-0b6f-4c1e-9a7d-2f3b5c6d7e02",
+  "applyUrl": "https://jobs.lever.co/bluefin/4d1c2e7a-0b6f-4c1e-9a7d-2f3b5c6d7e02/apply",
+  "createdAt": 1790985600000,
+  "categories": {
+   "commitment": "Intern",
+   "location": "New York, NY",
+   "team": "Engineering",
+   "allLocations": [
+    "New York, NY"
+   ]
+  },
+  "country": "US",
+  "workplaceType": "hybrid",
+  "descriptionPlain": "Build our analytics web app in TypeScript. Summer 2027.",
+  "description": "<div>Build our analytics web app in TypeScript. Summer 2027.</div>",
+  "lists": [
+   {
+    "text": "What you'll do",
+    "content": "<li>Ship features</li><li>Write tests</li>"
+   }
+  ],
+  "additionalPlain": "Bluefin is an equal opportunity employer.",
+  "additional": "<div>Bluefin is an equal opportunity employer.</div>"
+ }
+]

@@ -1,0 +1,26 @@
+{
+ "id": 2003,
+ "internal_job_id": 502003,
+ "title": "Financial Analyst (2027 Start)",
+ "absolute_url": "https://job-boards.greenhouse.io/ledgerline/jobs/2003",
+ "location": {
+  "name": "New York, NY"
+ },
+ "company_name": "Ledgerline Financial",
+ "first_published": "2026-08-01T09:00:00-04:00",
+ "updated_at": "2026-10-15T09:00:00-04:00",
+ "requisition_id": "R2003",
+ "application_deadline": null,
+ "content": "&lt;p&gt;FP&A rotational role for 2027 graduates.&lt;/p&gt;",
+ "departments": [
+  {
+   "id": 1,
+   "name": "Engineering",
+   "child_ids": [],
+   "parent_id": null
+  }
+ ],
+ "offices": [],
+ "metadata": null,
+ "pay_input_ranges": []
+}

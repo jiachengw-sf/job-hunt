@@ -71,7 +71,9 @@ src/jobhunt/
   locking.py      the only inter-process lock
   envelope.py     JSON envelope, output cap, pagination
   errors.py       exit codes and error types
-  http.py         access to public job sources
+  http.py         access to public job sources (per-host throttle, conditional GETs, backoff)
+  discovery/      sources (Simplify, Greenhouse, Lever, Ashby), ATS resolver, ingest pipeline,
+                  legitimacy signals
   doctor.py       environment checks
   models/         pydantic models for config, profile, preferences, answers, watchlist
   store/          SQLite schema + numbered migrations (events table is append-only)
@@ -79,6 +81,7 @@ src/jobhunt/
   defaults/       system-layer config templates
   devtools/       pii_scan (CI personal-data check)
 tests/personas/   four synthetic users — use these, never real data
+tests/fixtures/sources/  offline snapshots of every source (`jobhunt fetch --fixtures <dir>`)
 ```
 
 ## Working on the code

@@ -15,7 +15,7 @@ from pydantic import ValidationError as PydanticValidationError
 
 from jobhunt import __version__
 from jobhunt.errors import ConfigError, OnboardingIncomplete
-from jobhunt.models import Answers, Config, Preferences, Profile
+from jobhunt.models import Answers, Config, Preferences, Profile, Watchlist
 from jobhunt.paths import Paths, get_paths, package_file
 
 M = TypeVar("M", bound=BaseModel)
@@ -129,6 +129,20 @@ def load_user_file(kind: str, paths: Paths | None = None) -> BaseModel:
             next_actions=[f"Fill in or remove those keys in {path}."],
         )
     return validate(model, data, path)
+
+
+def load_watchlist(paths: Paths | None = None) -> Watchlist:
+    """watchlist.yaml is optional: a missing file is an empty watchlist."""
+    paths = paths or get_paths()
+    if not paths.watchlist.exists():
+        return Watchlist()
+    data = read_yaml(paths.watchlist)
+    if ph := find_placeholders(data):
+        raise ConfigError(
+            f"{paths.watchlist} still has placeholder values at: {', '.join(ph[:10])}",
+            next_actions=[f"Fill in or remove those keys in {paths.watchlist}."],
+        )
+    return validate(Watchlist, data, paths.watchlist)
 
 
 def onboarding_status(paths: Paths | None = None) -> dict[str, str]:

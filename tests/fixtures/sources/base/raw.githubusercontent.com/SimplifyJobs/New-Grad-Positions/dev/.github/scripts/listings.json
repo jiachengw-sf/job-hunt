@@ -1,0 +1,86 @@
+[
+ {
+  "source": "Simplify",
+  "category": "Software",
+  "company_name": "Ledgerline Financial",
+  "id": "00000000-0000-4000-8000-000000000101",
+  "title": "Data Analyst, New Grad 2027",
+  "active": true,
+  "terms": [],
+  "date_updated": 1791162000,
+  "date_posted": 1791158400,
+  "url": "https://boards.greenhouse.io/ledgerline/jobs/2001",
+  "locations": [
+   "Chicago, IL"
+  ],
+  "company_url": "https://simplify.jobs/c/example",
+  "is_visible": true,
+  "sponsorship": "Other",
+  "degrees": [
+   "Bachelor's"
+  ]
+ },
+ {
+  "source": "Simplify",
+  "category": "Software",
+  "company_name": "Harborlight Bank",
+  "id": "00000000-0000-4000-8000-000000000102",
+  "title": "Analyst Development Program 2027",
+  "active": true,
+  "terms": [],
+  "date_updated": 1790730000,
+  "date_posted": 1790726400,
+  "url": "https://harborlight.wd5.myworkdayjobs.com/en-US/careers/job/Charlotte-NC/Analyst-Program_R-10031",
+  "locations": [
+   "Charlotte, NC"
+  ],
+  "company_url": "https://simplify.jobs/c/example",
+  "is_visible": true,
+  "sponsorship": "Other",
+  "degrees": [
+   "Bachelor's"
+  ]
+ },
+ {
+  "source": "Simplify",
+  "category": "Software",
+  "company_name": "Saltmarsh Media",
+  "id": "00000000-0000-4000-8000-000000000103",
+  "title": "Junior Data Analyst",
+  "active": true,
+  "terms": [],
+  "date_updated": 1791421200,
+  "date_posted": 1791417600,
+  "url": "https://jobs.smartrecruiters.com/SaltmarshMedia/744000012345-junior-data-analyst",
+  "locations": [
+   "Remote in USA"
+  ],
+  "company_url": "https://simplify.jobs/c/example",
+  "is_visible": true,
+  "sponsorship": "Other",
+  "degrees": [
+   "Bachelor's"
+  ]
+ },
+ {
+  "source": "Simplify",
+  "category": "Software",
+  "company_name": "Old Closed Co",
+  "id": "00000000-0000-4000-8000-000000000104",
+  "title": "Analyst",
+  "active": false,
+  "terms": [],
+  "date_updated": 1777597200,
+  "date_posted": 1777593600,
+  "url": "https://jobs.lever.co/oldclosed/11111111-0000-4000-8000-000000000000",
+  "locations": [
+   "Austin, TX"
+  ],
+  "company_url": "https://simplify.jobs/c/example",
+  "is_visible": true,
+  "sponsorship": "Other",
+  "degrees": [
+   "Bachelor's"
+  ]
+ }
+]

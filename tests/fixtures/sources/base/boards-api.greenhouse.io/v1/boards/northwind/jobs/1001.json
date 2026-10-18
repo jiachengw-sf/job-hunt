@@ -1,0 +1,33 @@
+{
+ "id": 1001,
+ "internal_job_id": 501001,
+ "title": "Software Engineering Intern, Summer 2027",
+ "absolute_url": "https://job-boards.greenhouse.io/northwind/jobs/1001",
+ "location": {
+  "name": "Boston, MA"
+ },
+ "company_name": "Northwind Robotics",
+ "first_published": "2026-10-01T10:00:00-04:00",
+ "updated_at": "2026-10-15T09:00:00-04:00",
+ "requisition_id": "R1001",
+ "application_deadline": null,
+ "content": "&lt;p&gt;Northwind Robotics builds warehouse robots. You will write production code with a mentor, ship a project end to end, and present it to the team at the end of the summer.&lt;/p&gt;&lt;p&gt;Python or C++ required.&lt;/p&gt;",
+ "departments": [
+  {
+   "id": 1,
+   "name": "Engineering",
+   "child_ids": [],
+   "parent_id": null
+  }
+ ],
+ "offices": [],
+ "metadata": null,
+ "pay_input_ranges": [
+  {
+   "min_cents": 4200,
+   "max_cents": 4800,
+   "currency_type": "USD",
+   "title": "Hourly pay"
+  }
+ ]
+}
