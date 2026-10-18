@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 from jobhunt import __version__
 from jobhunt.cli.answers import register as register_answers
+from jobhunt.cli.apply import register as register_apply
 from jobhunt.cli.discovery import register as register_discovery
 from jobhunt.cli.fit import register as register_fit
 from jobhunt.cli.framework import (
@@ -194,6 +195,7 @@ register_discovery(cli)
 register_fit(cli)
 register_onboarding(cli)
 register_answers(cli)
+register_apply(cli)
 
 
 # --- entry point ----------------------------------------------------------------------------
