@@ -64,3 +64,4 @@ ignore = ["RUF012", "RUF001", "RUF002", "RUF003"]  # en dashes and curly quotes 
 [tool.ruff.lint.per-file-ignores]
 # declaration tables (one question / form field per line) and inline page CSS/JS
 "src/jobhunt/bank/keys.py" = ["E501"]
+"tests/fixtures/forms/make_forms.py" = ["E501"]

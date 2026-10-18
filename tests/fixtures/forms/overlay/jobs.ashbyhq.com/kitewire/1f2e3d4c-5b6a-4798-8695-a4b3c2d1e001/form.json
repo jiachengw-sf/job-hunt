@@ -1,0 +1,217 @@
+{
+ "jobPosting": {
+  "id": "1f2e3d4c-5b6a-4798-8695-a4b3c2d1e001",
+  "title": "Synthetic posting",
+  "descriptionHtml": "<p>Kitewire synthetic posting.</p><p>Requirements:</p><ul><li>Experience with Python</li></ul>",
+  "applicationForm": {
+   "sections": [
+    {
+     "title": null,
+     "fieldEntries": [
+      {
+       "id": "entry__systemfield_name",
+       "field": {
+        "id": "_systemfield_name",
+        "path": "_systemfield_name",
+        "title": "Name",
+        "type": "String",
+        "isNullable": false
+       },
+       "isRequired": true,
+       "descriptionHtml": null,
+       "isHidden": null
+      },
+      {
+       "id": "entry__systemfield_email",
+       "field": {
+        "id": "_systemfield_email",
+        "path": "_systemfield_email",
+        "title": "Email",
+        "type": "Email",
+        "isNullable": false
+       },
+       "isRequired": true,
+       "descriptionHtml": null,
+       "isHidden": null
+      },
+      {
+       "id": "entry_1f2e3d4c-phone",
+       "field": {
+        "id": "1f2e3d4c-phone",
+        "path": "1f2e3d4c-phone",
+        "title": "Phone",
+        "type": "Phone",
+        "isNullable": true
+       },
+       "isRequired": false,
+       "descriptionHtml": null,
+       "isHidden": null
+      },
+      {
+       "id": "entry__systemfield_resume",
+       "field": {
+        "id": "_systemfield_resume",
+        "path": "_systemfield_resume",
+        "title": "Resume",
+        "type": "File",
+        "isNullable": false
+       },
+       "isRequired": true,
+       "descriptionHtml": null,
+       "isHidden": null
+      },
+      {
+       "id": "entry_1f2e3d4c-linkedin",
+       "field": {
+        "id": "1f2e3d4c-linkedin",
+        "path": "1f2e3d4c-linkedin",
+        "title": "LinkedIn Profile",
+        "type": "String",
+        "isNullable": true
+       },
+       "isRequired": false,
+       "descriptionHtml": null,
+       "isHidden": null
+      },
+      {
+       "id": "entry_1f2e3d4c-auth",
+       "field": {
+        "id": "1f2e3d4c-auth",
+        "path": "1f2e3d4c-auth",
+        "title": "Are you legally authorized to work in the United States?",
+        "type": "Boolean",
+        "isNullable": false
+       },
+       "isRequired": true,
+       "descriptionHtml": null,
+       "isHidden": null
+      },
+      {
+       "id": "entry_1f2e3d4c-spons",
+       "field": {
+        "id": "1f2e3d4c-spons",
+        "path": "1f2e3d4c-spons",
+        "title": "Will you now or in the future require visa sponsorship?",
+        "type": "Boolean",
+        "isNullable": false
+       },
+       "isRequired": true,
+       "descriptionHtml": null,
+       "isHidden": null
+      },
+      {
+       "id": "entry_1f2e3d4c-heard",
+       "field": {
+        "id": "1f2e3d4c-heard",
+        "path": "1f2e3d4c-heard",
+        "title": "How did you hear about this opportunity?",
+        "type": "ValueSelect",
+        "isNullable": true,
+        "selectableValues": [
+         {
+          "label": "Job board",
+          "value": "Job board"
+         },
+         {
+          "label": "Company website",
+          "value": "Company website"
+         },
+         {
+          "label": "Referral",
+          "value": "Referral"
+         },
+         {
+          "label": "University career center",
+          "value": "University career center"
+         },
+         {
+          "label": "Other",
+          "value": "Other"
+         }
+        ]
+       },
+       "isRequired": false,
+       "descriptionHtml": null,
+       "isHidden": null
+      },
+      {
+       "id": "entry_1f2e3d4c-why",
+       "field": {
+        "id": "1f2e3d4c-why",
+        "path": "1f2e3d4c-why",
+        "title": "Why do you want to work at Kitewire?",
+        "type": "LongText",
+        "isNullable": false
+       },
+       "isRequired": true,
+       "descriptionHtml": null,
+       "isHidden": null
+      }
+     ]
+    }
+   ]
+  },
+  "surveyForms": [
+   {
+    "sections": [
+     {
+      "descriptionHtml": "<p>U.S. EQUAL EMPLOYMENT OPPORTUNITY INFORMATION (voluntary)</p>",
+      "fieldEntries": [
+       {
+        "id": "entry__systemfield_eeoc_gender",
+        "field": {
+         "id": "_systemfield_eeoc_gender",
+         "path": "_systemfield_eeoc_gender",
+         "title": "Gender",
+         "type": "ValueSelect",
+         "isNullable": true,
+         "selectableValues": [
+          {
+           "label": "Male",
+           "value": "Male"
+          },
+          {
+           "label": "Female",
+           "value": "Female"
+          },
+          {
+           "label": "Decline to self-identify",
+           "value": "Decline to self-identify"
+          }
+         ]
+        },
+        "isRequired": false,
+        "descriptionHtml": null,
+        "isHidden": null
+       },
+       {
+        "id": "entry__systemfield_eeoc_veteran_status",
+        "field": {
+         "id": "_systemfield_eeoc_veteran_status",
+         "path": "_systemfield_eeoc_veteran_status",
+         "title": "Veteran Status",
+         "type": "ValueSelect",
+         "isNullable": true,
+         "selectableValues": [
+          {
+           "label": "I am not a protected veteran",
+           "value": "I am not a protected veteran"
+          },
+          {
+           "label": "I decline to self-identify for protected veteran status",
+           "value": "I decline to self-identify for protected veteran status"
+          }
+         ]
+        },
+        "isRequired": false,
+        "descriptionHtml": null,
+        "isHidden": null
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "shouldAskForTextingConsent": false
+ }
+}

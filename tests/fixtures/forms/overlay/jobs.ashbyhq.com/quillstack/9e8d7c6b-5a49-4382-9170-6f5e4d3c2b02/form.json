@@ -1,0 +1,217 @@
+{
+ "jobPosting": {
+  "id": "9e8d7c6b-5a49-4382-9170-6f5e4d3c2b02",
+  "title": "Synthetic posting",
+  "descriptionHtml": "<p>Quillstack synthetic posting.</p><p>Requirements:</p><ul><li>Experience with Python</li></ul>",
+  "applicationForm": {
+   "sections": [
+    {
+     "title": null,
+     "fieldEntries": [
+      {
+       "id": "entry__systemfield_name",
+       "field": {
+        "id": "_systemfield_name",
+        "path": "_systemfield_name",
+        "title": "Name",
+        "type": "String",
+        "isNullable": false
+       },
+       "isRequired": true,
+       "descriptionHtml": null,
+       "isHidden": null
+      },
+      {
+       "id": "entry__systemfield_email",
+       "field": {
+        "id": "_systemfield_email",
+        "path": "_systemfield_email",
+        "title": "Email",
+        "type": "Email",
+        "isNullable": false
+       },
+       "isRequired": true,
+       "descriptionHtml": null,
+       "isHidden": null
+      },
+      {
+       "id": "entry_9e8d7c6b-phone",
+       "field": {
+        "id": "9e8d7c6b-phone",
+        "path": "9e8d7c6b-phone",
+        "title": "Phone",
+        "type": "Phone",
+        "isNullable": true
+       },
+       "isRequired": false,
+       "descriptionHtml": null,
+       "isHidden": null
+      },
+      {
+       "id": "entry__systemfield_resume",
+       "field": {
+        "id": "_systemfield_resume",
+        "path": "_systemfield_resume",
+        "title": "Resume",
+        "type": "File",
+        "isNullable": false
+       },
+       "isRequired": true,
+       "descriptionHtml": null,
+       "isHidden": null
+      },
+      {
+       "id": "entry_9e8d7c6b-linkedin",
+       "field": {
+        "id": "9e8d7c6b-linkedin",
+        "path": "9e8d7c6b-linkedin",
+        "title": "LinkedIn Profile",
+        "type": "String",
+        "isNullable": true
+       },
+       "isRequired": false,
+       "descriptionHtml": null,
+       "isHidden": null
+      },
+      {
+       "id": "entry_9e8d7c6b-auth",
+       "field": {
+        "id": "9e8d7c6b-auth",
+        "path": "9e8d7c6b-auth",
+        "title": "Are you legally authorized to work in the United States?",
+        "type": "Boolean",
+        "isNullable": false
+       },
+       "isRequired": true,
+       "descriptionHtml": null,
+       "isHidden": null
+      },
+      {
+       "id": "entry_9e8d7c6b-spons",
+       "field": {
+        "id": "9e8d7c6b-spons",
+        "path": "9e8d7c6b-spons",
+        "title": "Will you now or in the future require visa sponsorship?",
+        "type": "Boolean",
+        "isNullable": false
+       },
+       "isRequired": true,
+       "descriptionHtml": null,
+       "isHidden": null
+      },
+      {
+       "id": "entry_9e8d7c6b-heard",
+       "field": {
+        "id": "9e8d7c6b-heard",
+        "path": "9e8d7c6b-heard",
+        "title": "How did you hear about this opportunity?",
+        "type": "ValueSelect",
+        "isNullable": true,
+        "selectableValues": [
+         {
+          "label": "Job board",
+          "value": "Job board"
+         },
+         {
+          "label": "Company website",
+          "value": "Company website"
+         },
+         {
+          "label": "Referral",
+          "value": "Referral"
+         },
+         {
+          "label": "University career center",
+          "value": "University career center"
+         },
+         {
+          "label": "Other",
+          "value": "Other"
+         }
+        ]
+       },
+       "isRequired": false,
+       "descriptionHtml": null,
+       "isHidden": null
+      },
+      {
+       "id": "entry_9e8d7c6b-lic",
+       "field": {
+        "id": "9e8d7c6b-lic",
+        "path": "9e8d7c6b-lic",
+        "title": "Do you have a valid driver's license?",
+        "type": "Boolean",
+        "isNullable": false
+       },
+       "isRequired": true,
+       "descriptionHtml": null,
+       "isHidden": null
+      }
+     ]
+    }
+   ]
+  },
+  "surveyForms": [
+   {
+    "sections": [
+     {
+      "descriptionHtml": "<p>U.S. EQUAL EMPLOYMENT OPPORTUNITY INFORMATION (voluntary)</p>",
+      "fieldEntries": [
+       {
+        "id": "entry__systemfield_eeoc_gender",
+        "field": {
+         "id": "_systemfield_eeoc_gender",
+         "path": "_systemfield_eeoc_gender",
+         "title": "Gender",
+         "type": "ValueSelect",
+         "isNullable": true,
+         "selectableValues": [
+          {
+           "label": "Male",
+           "value": "Male"
+          },
+          {
+           "label": "Female",
+           "value": "Female"
+          },
+          {
+           "label": "Decline to self-identify",
+           "value": "Decline to self-identify"
+          }
+         ]
+        },
+        "isRequired": false,
+        "descriptionHtml": null,
+        "isHidden": null
+       },
+       {
+        "id": "entry__systemfield_eeoc_veteran_status",
+        "field": {
+         "id": "_systemfield_eeoc_veteran_status",
+         "path": "_systemfield_eeoc_veteran_status",
+         "title": "Veteran Status",
+         "type": "ValueSelect",
+         "isNullable": true,
+         "selectableValues": [
+          {
+           "label": "I am not a protected veteran",
+           "value": "I am not a protected veteran"
+          },
+          {
+           "label": "I decline to self-identify for protected veteran status",
+           "value": "I decline to self-identify for protected veteran status"
+          }
+         ]
+        },
+        "isRequired": false,
+        "descriptionHtml": null,
+        "isHidden": null
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "shouldAskForTextingConsent": false
+ }
+}
