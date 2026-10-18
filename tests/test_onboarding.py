@@ -136,6 +136,11 @@ def test_form_round_trip_is_lossless(persona):
     vals = F.prefill(prefs, answers, profile=None, contact=None)
     html = F.render(vals, token="t", new_questions=[])
     assert "<script>" in html and 'name="token" value="t"' in html
+    # every labelled control is linked to its label (screen readers, click-to-focus)
+    import re
+
+    for target in re.findall(r'<label class="lbl" for="([^"]+)"', html):
+        assert f'id="{target}"' in html
     p2, a2, errors = F.parse(
         _post_from_values(vals), existing_prefs=prefs, existing_answers=answers, new_questions=[]
     )

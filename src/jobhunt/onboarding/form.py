@@ -419,8 +419,13 @@ def _e(s: object) -> str:
     return html.escape(str(s), quote=True)
 
 
+def _fid(name: str) -> str:
+    return "f-" + re.sub(r"[^A-Za-z0-9_-]+", "-", name)
+
+
 def _input(name: str, f: F, val: Any) -> str:
     v = val if val is not None else ""
+    idattr = f'id="{_fid(name)}"'
     if f.widget == "multi":
         chosen = set(v or [])
         boxes = "".join(
@@ -428,11 +433,13 @@ def _input(name: str, f: F, val: Any) -> str:
             f"{' checked' if o in chosen else ''}> {_e(o.replace('_', ' '))}</label>"
             for o in f.options
         )
-        return f'<div class="chips">{boxes}</div>'
+        return f'<div class="chips" role="group" aria-label="{_e(f.label)}">{boxes}</div>'
     if f.widget in ("textarea", "lines"):
-        return f'<textarea name="{_e(name)}" rows="{4 if f.widget == "textarea" else 3}">{_e(v)}</textarea>'
+        return f'<textarea {idattr} name="{_e(name)}" rows="{4 if f.widget == "textarea" else 3}">{_e(v)}</textarea>'
     if f.widget == "check":
-        return f'<input type="checkbox" name="{_e(name)}"{" checked" if v == "on" else ""}>'
+        return (
+            f'<input type="checkbox" {idattr} name="{_e(name)}"{" checked" if v == "on" else ""}>'
+        )
     opts: Iterable[str] | None = None
     if f.widget == "yesno":
         opts = ("yes", "no")
@@ -446,10 +453,10 @@ def _input(name: str, f: F, val: Any) -> str:
         options = '<option value="">—</option>' + "".join(
             f'<option value="{_e(o)}"{" selected" if o == v else ""}>{_e(o)}</option>' for o in opts
         )
-        return f'<select name="{_e(name)}">{options}</select>'
+        return f'<select {idattr} name="{_e(name)}">{options}</select>'
     t = {"date": "date", "int": "number", "float": "number"}.get(f.widget, "text")
     step = ' step="any"' if f.widget == "float" else ""
-    return f'<input type="{t}" name="{_e(name)}" value="{_e(v)}"{step}>'
+    return f'<input type="{t}" {idattr} name="{_e(name)}" value="{_e(v)}"{step}>'
 
 
 def _row(prefix: str, f: F, vals: dict[str, Any]) -> str:
@@ -459,14 +466,17 @@ def _row(prefix: str, f: F, vals: dict[str, Any]) -> str:
         checked = " checked" if vals.get(f"{name}.__must") == "on" else ""
         must = (
             f'<label class="must" title="Must = a hard filter. Unticked = Nice (affects '
-            f'ranking only)."><input type="checkbox" name="{_e(name)}.__must"{checked}> Must'
+            f'ranking only)."><input type="checkbox" name="{_e(name)}.__must"{checked} '
+            f'aria-label="{_e(f.label)}: Must (a hard filter)"> Must'
             f"</label>"
         )
     hint = f'<div class="hint">{_e(f.help)}</div>' if f.help else ""
-    return (
-        f'<div class="field"><label class="lbl">{_e(f.label)}</label>'
-        f'<div class="ctl">{_input(name, f, vals.get(name))}{must}{hint}</div></div>'
-    )
+    # a chip group isn't a single control: its name comes from its aria-label instead
+    if f.widget == "multi":
+        head = f'<div class="field"><div class="lbl">{_e(f.label)}</div>'
+    else:
+        head = f'<div class="field"><label class="lbl" for="{_fid(name)}">{_e(f.label)}</label>'
+    return f'{head}<div class="ctl">{_input(name, f, vals.get(name))}{must}{hint}</div></div>'
 
 
 def _sections(prefix: str, fields: list[F], vals: dict[str, Any]) -> list[tuple[str, str]]:
@@ -510,14 +520,14 @@ def _new_questions(qs: list[dict[str, Any]]) -> str:
         opts = q.get("options") or []
         if opts:
             ctl = (
-                f'<select name="nq:{i}:answer"><option value="">—</option>'
+                f'<select id="nq-{i}" name="nq:{i}:answer"><option value="">—</option>'
                 + "".join(f'<option value="{_e(o)}">{_e(o)}</option>' for o in opts)
                 + "</select>"
             )
         else:
-            ctl = f'<input type="text" name="nq:{i}:answer">'
+            ctl = f'<input type="text" id="nq-{i}" name="nq:{i}:answer">'
         rows.append(
-            f'<div class="field"><label class="lbl">{_e(q["label"])} {seen}</label>'
+            f'<div class="field"><label class="lbl" for="nq-{i}">{_e(q["label"])} {seen}</label>'
             f'<div class="ctl">{same}{ctl}</div></div>'
         )
     return "".join(rows)
