@@ -1,0 +1,17 @@
+# Application status state machine.
+#
+# - The agent only moves a status forward (to a later rank), and never out of a terminal state.
+# - You can set any status at any time, in the sheet or with `jobhunt mark`.
+# - Skipped asks for a reason; reasons feed calibration.
+states:
+  - {name: New, rank: 0}
+  - {name: Prefilled, rank: 1}
+  - {name: Applied, rank: 2}
+  - {name: OA, rank: 3}            # online assessment
+  - {name: Interviewing, rank: 4}
+  - {name: Offer, rank: 5, terminal: true}
+  - {name: Rejected, rank: 5, terminal: true}
+  - {name: Withdrawn, rank: 5, terminal: true}
+  - {name: Skipped, rank: 5, terminal: true, needs_reason: true}
+initial: New
+skip_reasons: [domain, too_senior, location, pay, other]

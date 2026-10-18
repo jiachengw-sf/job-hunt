@@ -36,6 +36,7 @@ education:
 work_authorization:                # one entry per target country, in the yes/no wording forms use
   US:
     authorized: null               # "yes" | "no"
+    citizen: null                  # only used for roles that require citizenship
     sponsorship_now: null
     sponsorship_future: null
     student_status: null

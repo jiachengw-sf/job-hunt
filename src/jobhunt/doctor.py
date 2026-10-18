@@ -290,7 +290,7 @@ def check_skills() -> list[Check]:
     return out
 
 
-def check_tracker(paths: Paths) -> Check:
+def check_tracker(paths: Paths, offline: bool = True) -> Check:
     try:
         cfg = load_config(paths)
     except ConfigError:
@@ -326,11 +326,45 @@ def check_tracker(paths: Paths) -> Check:
             summary=f"Service account file not found: {sa}",
             fix="Download the service-account JSON key and point service_account_file at it.",
         )
-    return Check(
-        name="tracker",
-        status="warn",
-        summary="Sheets configured; live connectivity check arrives in Milestone 2",
-    )
+    if importlib.util.find_spec("gspread") is None:
+        return Check(
+            name="tracker",
+            status="fail",
+            summary="Google Sheets tracker needs the [sheets] extra",
+            fix="Reinstall with `uv tool install 'jobhunt[sheets]'`, or set tracker.kind: xlsx.",
+        )
+    if offline:
+        return Check(
+            name="tracker", status="ok", summary="Sheets configured (not contacted: --offline)"
+        )
+    try:
+        from jobhunt.tracker.backends import SheetsBackend
+
+        SheetsBackend(t.sheets.spreadsheet_id, sa)
+    except Exception as e:
+        return Check(
+            name="tracker",
+            status="fail",
+            summary=f"Could not open the spreadsheet: {type(e).__name__}: {e}"[:200],
+            fix="Share the spreadsheet with the service account's email (Editor) and check the id.",
+        )
+    return Check(name="tracker", status="ok", summary="Google Sheets tracker reachable")
+
+
+def check_recall(paths: Paths) -> Check:
+    try:
+        mode = load_config(paths).fit.use_embeddings
+    except ConfigError:
+        return Check(name="recall", status="skip", summary="Skipped until config is valid")
+    if mode == "off":
+        return Check(name="recall", status="ok", summary="Recall: BM25 (embeddings off in config)")
+    if importlib.util.find_spec("sentence_transformers") is None:
+        return Check(
+            name="recall",
+            status="ok",
+            summary="Recall: BM25 only (optional: `uv tool install 'jobhunt[recall]'` adds embeddings)",  # noqa: E501
+        )
+    return Check(name="recall", status="ok", summary="Recall: BM25 + sentence embeddings")
 
 
 def check_sources(paths: Paths, offline: bool) -> list[Check]:
@@ -372,7 +406,8 @@ def run_checks(paths: Paths, *, offline: bool) -> list[Check]:
     checks += check_onboarding(paths)
     checks.append(check_browser())
     checks += check_skills()
-    checks.append(check_tracker(paths))
+    checks.append(check_recall(paths))
+    checks.append(check_tracker(paths, offline))
     checks += check_sources(paths, offline)
     return checks
 

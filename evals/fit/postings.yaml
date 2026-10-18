@@ -1,0 +1,595 @@
+# Synthetic postings for the fit eval set. Every company here is fictional.
+# posted_days_ago is relative to manifest `today`. pay.interval follows Lever/Ashby style.
+
+# --- software internships ---------------------------------------------------------------------
+
+- id: p01
+  company: Brightwave Software
+  title: Software Engineering Intern, Summer 2027
+  locations: ["Chicago, IL"]
+  work_mode: hybrid
+  employment_type: Intern
+  pay: {min: 35, max: 42, currency: USD, interval: per-hour-wage}
+  posted_days_ago: 3
+  description: |
+    Brightwave builds scheduling tools for clinics. Interns ship real features with a mentor.
+    Open to freshman and sophomore students.
+    Requirements
+    - Currently pursuing a Bachelor's degree in Computer Science or a related field
+    - Experience with Python or Java
+    - Familiarity with Git
+    Nice to have
+    - Experience with Flask or another web framework
+    - Some SQL
+
+- id: p02
+  company: Northfield Labs
+  title: Software Engineer Intern
+  locations: ["Austin, TX"]
+  work_mode: onsite
+  employment_type: Intern
+  pay: {min: 40, max: 40, currency: USD, interval: per-hour-wage}
+  posted_days_ago: 6
+  description: |
+    Join our Summer 2027 intern class building storage systems.
+    Qualifications
+    - Pursuing a BS or MS in Computer Science, graduating between Dec 2027 and Jun 2028
+    - Proficiency in Java or C++
+    - Coursework in data structures and algorithms
+
+- id: p03
+  company: Pixelfern
+  title: Frontend Engineering Intern - Summer 2027
+  locations: ["San Francisco, CA"]
+  work_mode: onsite
+  employment_type: Intern
+  pay: {min: 45, max: 45, currency: USD, interval: per-hour-wage}
+  posted_days_ago: 10
+  description: |
+    Pixelfern makes design tools for small studios.
+    What you'll need
+    - Must be enrolled in a Bachelor's program
+    - Experience with JavaScript and React
+    - Comfortable with HTML and CSS
+    Bonus points
+    - TypeScript
+
+- id: p04
+  company: Granite Systems
+  title: Software Engineering Intern (Summer 2027)
+  locations: ["Remote - US"]
+  work_mode: remote
+  employment_type: Intern
+  pay: {min: 30, max: 34, currency: USD, interval: per-hour-wage}
+  posted_days_ago: 1
+  description: |
+    A fully remote internship on our developer tooling team.
+    Requirements
+    - Strong Python skills
+    - You write unit tests (pytest or similar)
+    - Must be authorized to work in the US without current or future visa sponsorship
+
+- id: p05
+  company: Corvid Defense Systems
+  title: Software Intern, Summer 2027
+  locations: ["Arlington, VA"]
+  work_mode: onsite
+  employment_type: Intern
+  pay: {min: 32, max: 36, currency: USD, interval: per-hour-wage}
+  posted_days_ago: 12
+  description: |
+    Build mission software for aerospace customers.
+    Requirements
+    - U.S. citizenship required
+    - Must be able to obtain a Secret security clearance
+    - Experience with C++ or Python
+
+- id: p06
+  company: Lumen Health
+  title: Data Engineering Intern - Summer 2027
+  locations: ["Chicago, IL"]
+  work_mode: hybrid
+  employment_type: Intern
+  pay: {min: 30, max: 30, currency: USD, interval: per-hour-wage}
+  posted_days_ago: 4
+  description: |
+    Open to rising sophomores, juniors and seniors (undergraduate students).
+    Requirements
+    - SQL
+    - Python
+    Nice to have
+    - Airflow
+
+- id: p07
+  company: Tidewater Robotics
+  title: Robotics Software Co-op, Fall 2027
+  locations: ["Waterloo, ON"]
+  work_mode: onsite
+  employment_type: Co-op
+  posted_days_ago: 8
+  description: |
+    An eight-month co-op on our autonomy team.
+    Requirements
+    - C++ and ROS
+    - Linear algebra
+
+- id: p08
+  company: Quarry AI
+  title: Machine Learning Intern, Summer 2027
+  locations: ["New York, NY"]
+  work_mode: hybrid
+  employment_type: Intern
+  pay: {min: 55, max: 60, currency: USD, interval: per-hour-wage}
+  posted_days_ago: 2
+  description: |
+    Train and evaluate models for document understanding.
+    Requirements
+    - Currently pursuing an MS or PhD in Computer Science, Machine Learning or a related field
+    - Experience with PyTorch
+    - Strong Python
+    Preferred qualifications
+    - Distributed training experience
+    - Kubernetes
+
+- id: p09
+  company: Saltmarsh Media
+  title: Software Engineer Intern, Summer 2027
+  locations: ["Los Angeles, CA"]
+  work_mode: onsite
+  employment_type: Intern
+  pay: {min: 28, max: 28, currency: USD, interval: per-hour-wage}
+  posted_days_ago: 15
+  description: |
+    Build tools for our Spanish-language newsroom.
+    Requirements
+    - JavaScript
+    - Node.js
+    - Fluency in Spanish is required
+
+- id: p10
+  company: Brightwave Software
+  title: Software Engineering Intern - PhD
+  locations: ["Chicago, IL"]
+  work_mode: hybrid
+  employment_type: Intern
+  posted_days_ago: 5
+  description: |
+    Requirements
+    - Currently pursuing a PhD in Computer Science
+    - Research experience in systems or ML
+
+- id: p11
+  company: Ferrous Cloud
+  title: Platform Engineering Intern, Summer 2027
+  locations: ["Seattle, WA"]
+  work_mode: hybrid
+  employment_type: Intern
+  pay: {min: 50, max: 52, currency: USD, interval: per-hour-wage}
+  posted_days_ago: 3
+  description: |
+    Work on the platform that runs every Ferrous service.
+    Requirements
+    - Go or Python
+    - Linux
+    - Docker
+    - Kubernetes
+    Nice to have
+    - Terraform
+
+- id: p12
+  company: Kestrel Finance
+  title: Quant Developer Intern, Summer 2027
+  locations: ["New York, NY"]
+  work_mode: onsite
+  employment_type: Intern
+  pay: {min: 60, max: 60, currency: USD, interval: per-hour-wage}
+  posted_days_ago: 9
+  description: |
+    For students graduating in 2028.
+    Requirements
+    - C++
+    - Python
+    - Probability
+
+- id: p13
+  company: Harborview Data
+  title: Data Science Intern (Summer 2027)
+  locations: ["Boston, MA"]
+  work_mode: hybrid
+  employment_type: Intern
+  pay: {min: 38, max: 38, currency: USD, interval: per-hour-wage}
+  posted_days_ago: 7
+  description: |
+    Visa sponsorship may be available for exceptional candidates.
+    Requirements
+    - Python, pandas, and SQL
+    - Coursework in statistics
+    Nice to have
+    - Tableau
+
+- id: p14
+  company: Cinder Labs
+  title: AI Research Intern, Summer 2027
+  locations: ["Remote - US"]
+  work_mode: remote
+  employment_type: Intern
+  posted_days_ago: 11
+  description: |
+    Requirements
+    - Currently pursuing a PhD in machine learning
+    - Publications at major ML venues
+
+# --- new-grad data / analytics ----------------------------------------------------------------
+
+- id: p15
+  company: Harborline Analytics
+  title: Data Analyst, New Grad (2027 Start)
+  locations: ["Boston, MA"]
+  work_mode: hybrid
+  employment_type: Full-time
+  pay: {min: 72000, max: 85000, currency: USD, interval: per-year-salary}
+  posted_days_ago: 2
+  description: |
+    Join the analytics team that runs our member insights.
+    Requirements
+    - Bachelor's degree in Statistics, Economics or a related field, graduating by June 2027
+    - SQL
+    - Excel
+    - Tableau or Power BI
+    Nice to have
+    - Python
+    - A/B testing
+
+- id: p16
+  company: Meridian Retail
+  title: Business Intelligence Analyst I
+  locations: ["New York, NY"]
+  work_mode: onsite
+  employment_type: Full-time
+  pay: {min: 68000, max: 78000, currency: USD, interval: per-year-salary}
+  posted_days_ago: 5
+  description: |
+    Requirements
+    - SQL
+    - Excel
+    - 1+ years of experience with BI tools such as Tableau or Looker
+    Preferred
+    - R or Python
+
+- id: p17
+  company: Sterling Insurance
+  title: Senior Data Analyst
+  locations: ["Hartford, CT"]
+  work_mode: onsite
+  employment_type: Full-time
+  pay: {min: 110000, max: 130000, currency: USD, interval: per-year-salary}
+  posted_days_ago: 14
+  description: |
+    Requirements
+    - 5+ years of experience in analytics
+    - SQL
+    - Stakeholder management
+
+- id: p18
+  company: Coastal Ventures
+  title: Data Analyst
+  locations: ["Boston, MA"]
+  work_mode: hybrid
+  employment_type: Full-time
+  pay: {min: 60000, max: 64000, currency: USD, interval: per-year-salary}
+  posted_days_ago: 6
+  description: |
+    Requirements
+    - SQL
+    - Excel
+
+- id: p19
+  company: Bluefin Analytics
+  title: Analytics Engineer, New Grad
+  locations: ["Chicago, IL"]
+  work_mode: onsite
+  employment_type: Full-time
+  pay: {min: 90000, max: 105000, currency: USD, interval: per-year-salary}
+  posted_days_ago: 4
+  description: |
+    Requirements
+    - Bachelor's degree required
+    - SQL
+    - dbt
+    - Python
+
+- id: p20
+  company: Lattice Health
+  title: Data Analyst - Entry Level
+  locations: ["Remote - US"]
+  work_mode: remote
+  employment_type: Full-time
+  pay: {min: 70000, max: 80000, currency: USD, interval: per-year-salary}
+  posted_days_ago: 3
+  description: |
+    Requirements
+    - SQL
+    - Python or R
+    - Experience with A/B testing
+
+- id: p21
+  company: Pinecrest Gov Analytics
+  title: Junior Data Analyst
+  locations: ["Washington, DC"]
+  work_mode: onsite
+  employment_type: Full-time
+  pay: {min: 70000, max: 70000, currency: USD, interval: per-year-salary}
+  posted_days_ago: 9
+  description: |
+    Requirements
+    - Active Secret clearance required
+    - SQL
+    - Excel
+
+- id: p22
+  company: Datastream KK
+  title: Data Analyst (Japanese Speaking)
+  locations: ["New York, NY"]
+  work_mode: hybrid
+  employment_type: Full-time
+  pay: {min: 75000, max: 85000, currency: USD, interval: per-year-salary}
+  posted_days_ago: 8
+  description: |
+    Requirements
+    - Business-level Japanese required
+    - SQL
+    - Excel
+
+- id: p23
+  company: Northgate Partners
+  title: Data Analyst, Rotational Program - Spring 2027 start
+  locations: ["Boston, MA"]
+  work_mode: onsite
+  employment_type: Full-time
+  pay: {min: 70000, max: 70000, currency: USD, interval: per-year-salary}
+  posted_days_ago: 20
+  description: |
+    Requirements
+    - SQL
+    - Excel
+
+- id: p24
+  company: Orchard Bank
+  title: Data Analyst, New Grad
+  locations: ["Charlotte, NC"]
+  work_mode: onsite
+  employment_type: Full-time
+  pay: {min: 66000, max: 70000, currency: USD, interval: per-year-salary}
+  posted_days_ago: 2
+  description: |
+    Requirements
+    - SQL
+    - Excel
+    - Tableau
+
+# --- senior backend ---------------------------------------------------------------------------
+
+- id: p25
+  company: Tessellate Pay
+  title: Senior Backend Engineer (Remote, US)
+  locations: ["Remote - US"]
+  work_mode: remote
+  employment_type: Full-time
+  pay: {min: 200000, max: 240000, currency: USD, interval: per-year-salary}
+  posted_days_ago: 1
+  description: |
+    Requirements
+    - 8+ years of backend engineering experience
+    - Go or Java
+    - PostgreSQL
+    - Kafka or a similar event-streaming system
+    Nice to have
+    - AWS
+    - Terraform
+
+- id: p26
+  company: Driftwood Labs
+  title: Staff Software Engineer, Payments Platform
+  locations: ["Remote - US"]
+  work_mode: remote
+  employment_type: Full-time
+  pay: {min: 230000, max: 270000, currency: USD, interval: per-year-salary}
+  posted_days_ago: 4
+  description: |
+    Requirements
+    - 10+ years of software engineering experience
+    - Distributed systems
+    - Python or Go
+    Nice to have
+    - Kafka
+
+- id: p27
+  company: Kitewire
+  title: Senior Backend Engineer
+  locations: ["San Francisco, CA"]
+  work_mode: onsite
+  employment_type: Full-time
+  pay: {min: 210000, max: 250000, currency: USD, interval: per-year-salary}
+  posted_days_ago: 6
+  description: |
+    Requirements
+    - 6+ years of backend experience
+    - Go
+    - PostgreSQL
+
+- id: p28
+  company: Moonpath Crypto
+  title: Senior Backend Engineer, Exchange
+  locations: ["Remote - US"]
+  work_mode: remote
+  employment_type: Full-time
+  pay: {min: 220000, max: 260000, currency: USD, interval: per-year-salary}
+  posted_days_ago: 3
+  description: |
+    Requirements
+    - 7+ years of backend experience
+    - Go
+    - Low-latency systems
+
+- id: p29
+  company: Adlift
+  title: Senior Platform Engineer
+  locations: ["Remote - US"]
+  work_mode: remote
+  employment_type: Full-time
+  pay: {min: 200000, max: 230000, currency: USD, interval: per-year-salary}
+  posted_days_ago: 5
+  description: |
+    Scale the bidding engine behind our adtech platform.
+    Requirements
+    - 7+ years of experience building backend systems
+    - Go or Java
+    - Kafka
+
+- id: p30
+  company: Ledgerly
+  title: Senior Backend Engineer
+  locations: ["Remote - US"]
+  work_mode: remote
+  employment_type: Full-time
+  pay: {min: 200000, max: 230000, currency: USD, interval: per-year-salary}
+  posted_days_ago: 2
+  description: |
+    Requirements
+    - 6+ years of experience with Python or Java services
+
+- id: p31
+  company: Fernhill
+  title: Senior Software Engineer, Backend
+  locations: ["Remote - Canada"]
+  work_mode: remote
+  employment_type: Full-time
+  pay: {min: 170000, max: 200000, currency: CAD, interval: per-year-salary}
+  posted_days_ago: 7
+  description: |
+    Requirements
+    - 6+ years of backend experience
+    - Go
+
+- id: p32
+  company: Ridgeway
+  title: Backend Engineer II
+  locations: ["Remote - US"]
+  work_mode: remote
+  employment_type: Full-time
+  pay: {min: 150000, max: 170000, currency: USD, interval: per-year-salary}
+  posted_days_ago: 3
+  description: |
+    Requirements
+    - 3+ years of backend experience
+    - Python
+
+- id: p33
+  company: Quanta Systems
+  title: Principal Engineer, Infrastructure
+  locations: ["Remote - US"]
+  work_mode: remote
+  employment_type: Full-time
+  pay: {min: 280000, max: 330000, currency: USD, interval: per-year-salary}
+  posted_days_ago: 10
+  description: |
+    Requirements
+    - 15+ years of experience building infrastructure at scale
+    - Distributed systems
+
+- id: p34
+  company: Tidal Logistics
+  title: Senior Backend Engineer
+  locations: ["Remote - US"]
+  work_mode: remote
+  employment_type: Full-time
+  pay: {min: 205000, max: 225000, currency: USD, interval: per-year-salary}
+  posted_days_ago: 2
+  description: |
+    This role is part of a 1-in-3 week on-call rotation.
+    Requirements
+    - 7+ years of backend experience
+    - Go
+    - PostgreSQL
+
+- id: p35
+  company: Sable
+  title: Senior Software Engineer (Frontend)
+  locations: ["Remote - US"]
+  work_mode: remote
+  employment_type: Full-time
+  pay: {min: 190000, max: 220000, currency: USD, interval: per-year-salary}
+  posted_days_ago: 4
+  description: |
+    Requirements
+    - 6+ years with JavaScript and React
+
+- id: p36
+  company: Copperline
+  title: Senior Backend Engineer, Data Infrastructure
+  locations: ["Remote - US"]
+  work_mode: remote
+  employment_type: Full-time
+  posted_days_ago: 6
+  description: |
+    Requirements
+    - 7+ years of backend experience
+    - Python
+    - Spark
+    - Airflow
+    Nice to have
+    - Kafka
+
+# --- mixed and hard cases ---------------------------------------------------------------------
+
+- id: p37
+  company: Northwind Robotics
+  title: Future Opportunities - Software Engineering (Talent Pipeline)
+  locations: ["Boston, MA"]
+  work_mode: onsite
+  posted_days_ago: 90
+  description: |
+    This posting is for our engineering talent pipeline. We are always accepting applications
+    for future opportunities. There is no specific open role today.
+
+- id: p38
+  company: Brightwave Software
+  title: Software Engineering Intern, Summer 2027
+  locations: ["Toronto, ON"]
+  work_mode: hybrid
+  employment_type: Intern
+  pay: {min: 38, max: 38, currency: CAD, interval: per-hour-wage}
+  posted_days_ago: 3
+  description: |
+    Candidates must be legally eligible to work in Canada; we cannot sponsor work permits.
+    Requirements
+    - Python or Java
+
+- id: p39
+  company: Glacier Storage
+  title: Software Engineering Intern, Summer 2027
+  locations: ["Boston, MA"]
+  work_mode: onsite
+  employment_type: Intern
+  pay: {min: 42, max: 42, currency: USD, interval: per-hour-wage}
+  posted_days_ago: 2
+  description: |
+    Requirements
+    - Python
+    - Go
+    - Coursework in distributed systems
+    Nice to have
+    - Raft or Paxos
+
+- id: p40
+  company: Elmstead College Services
+  title: IT Support Intern, Summer 2027
+  locations: ["Chicago, IL"]
+  work_mode: onsite
+  employment_type: Intern
+  pay: {min: 18, max: 18, currency: USD, interval: per-hour-wage}
+  posted_days_ago: 5
+  description: |
+    Requirements
+    - Help desk or customer support experience
+    - Troubleshooting laptops and printers

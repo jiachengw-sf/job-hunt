@@ -23,7 +23,7 @@ def conn(tmp_path: Path):
 
 def test_migrate_is_idempotent(tmp_path: Path):
     c = connect(tmp_path / "x.db")
-    assert migrate(c) == ["0001_init.sql", "0002_discovery.sql"]
+    assert migrate(c) == ["0001_init.sql", "0002_discovery.sql", "0003_fit.sql"]
     assert migrate(c) == []
     assert current_version(c) == SCHEMA_VERSION
     assert pending_migrations(c) == []

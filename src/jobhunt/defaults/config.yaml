@@ -8,6 +8,7 @@ tracker:
   sheets:
     spreadsheet_id: null
     service_account_file: null
+  include_gated_out: false   # also list jobs that failed a Must gate (with the reason)
 
 http:
   # Sent on every request. Add a way to reach you if you like (it stays in your config file).
@@ -30,8 +31,26 @@ schedule:
   interval_hours: 4     # recruiting-season default; new postings matter most in their first 48-96h
 
 fit:
-  recall_top_k: 50
-  priority_threshold: 0.5
+  recall_top_k: 50           # jobs kept after recall (watchlist companies always kept)
+  priority_threshold: 0.5    # jobs at or above this get application forms inspected (Milestone 3)
+  use_embeddings: auto       # auto | off. auto uses sentence-transformers if the [recall] extra is installed
+  embedding_model: sentence-transformers/all-MiniLM-L6-v2
+  level_mismatch_years: 3    # role wants this many more years than you have -> band at most stretch
+  yoe_gate_slack_years: 2    # role wants more than this many extra years -> fails the experience gate
+  freshness_half_life_days: 7
+  # The weights below are visible on purpose. `jobhunt calibrate` (Milestone 6) suggests changes;
+  # nothing tunes itself.
+  bands: {strong: 0.8, good: 0.6, stretch: 0.3}
+  qualification:
+    must_share: 0.75         # share of the qualification score from must-haves (rest: preferred)
+    met_stated: 1.0
+    met_inferred: 0.6
+    partial: 0.5
+    unassessed: 0.4          # not judged yet (band stays provisional)
+    unmet: 0.0
+  priority:                  # relevance = recall rank (used to rank, never shown as fit)
+    {band: 0.35, relevance: 0.15, preference: 0.15, freshness: 0.10, deadline: 0.10, referral: 0.10, watchlist: 0.05}
+  preference: {pay: 0.30, location: 0.20, work_mode: 0.15, term: 0.10, keywords: 0.15, industry: 0.10}
 
 volume_guard:
   max_applications_per_company: 2   # warn before the next one

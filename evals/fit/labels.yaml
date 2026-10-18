@@ -1,0 +1,171 @@
+# Labels per persona and posting. See manifest.yaml for the scale and the single-annotator caveat.
+# {gated: true} means grade 0 and "should be ruled out" (by a gate, or by a dealbreaker that only
+# the judgment task can check). Requirement keys are quotes from the start of the requirement.
+
+first-year-intern:
+  p01: {grade: 2, band: strong, req: {"Currently pursuing a Bachelor's": met, "Experience with Python or Java": met, "Familiarity with Git": met, "Experience with Flask": met, "Some SQL": met}}
+  p02: {gated: true}
+  p03: {grade: 1, band: stretch, req: {"Must be enrolled in a Bachelor's": met, "Experience with JavaScript and React": unmet, "Comfortable with HTML and CSS": met}}
+  p04: {grade: 2, band: strong, req: {"Strong Python skills": met, "You write unit tests": met}}
+  p05: {grade: 1, band: good, req: {"Experience with C++ or Python": met}}
+  p06: {grade: 2, band: strong, req: {"SQL": met, "Python": met, "Airflow": unmet}}
+  p07: {gated: true}
+  p08: {gated: true}
+  p09: {grade: 0, band: not_a_fit, req: {"JavaScript": unmet, "Node.js": unmet}}
+  p10: {gated: true}
+  p11: {grade: 1, band: stretch, req: {"Go or Python": met, "Linux": unmet, "Docker": unmet, "Kubernetes": unmet}}
+  p12: {gated: true}
+  p13: {grade: 1, band: stretch, req: {"Python, pandas, and SQL": partial, "Coursework in statistics": unmet}}
+  p14: {gated: true}
+  p15: {gated: true}
+  p16: {gated: true}
+  p17: {gated: true}
+  p18: {gated: true}
+  p19: {gated: true}
+  p20: {gated: true}
+  p21: {gated: true}
+  p22: {gated: true}
+  p23: {gated: true}
+  p24: {gated: true}
+  p25: {gated: true}
+  p26: {gated: true}
+  p27: {gated: true}
+  p28: {gated: true}
+  p29: {gated: true}
+  p30: {gated: true}
+  p31: {gated: true}
+  p32: {gated: true}
+  p33: {gated: true}
+  p34: {gated: true}
+  p35: {gated: true}
+  p36: {gated: true}
+  p37: {grade: 0, band: not_a_fit}
+  p38: {gated: true}
+  p39: {grade: 1, band: stretch, req: {"Python": met, "Go": unmet, "Coursework in distributed systems": unmet, "Raft or Paxos": unmet}}
+  p40: {grade: 1, band: good, req: {"Help desk or customer support experience": met, "Troubleshooting laptops and printers": met}}
+
+intl-sponsorship:
+  p01: {gated: true}
+  p02: {grade: 1, band: stretch, req: {"Pursuing a BS or MS": met, "Proficiency in Java or C++": unmet, "Coursework in data structures": met}}
+  p03: {gated: true}
+  p04: {gated: true}
+  p05: {gated: true}
+  p06: {gated: true}
+  p07: {gated: true}
+  p08: {grade: 2, band: strong, req: {"Currently pursuing an MS or PhD": met, "Experience with PyTorch": met, "Strong Python": met, "Distributed training experience": unmet, "Kubernetes": met}}
+  p09: {gated: true}
+  p10: {gated: true}
+  p11: {grade: 2, band: strong, req: {"Go or Python": met, "Linux": met, "Docker": met, "Kubernetes": met, "Terraform": unmet}}
+  p12: {gated: true}
+  p13: {grade: 1, band: stretch, req: {"Python, pandas, and SQL": partial, "Coursework in statistics": unmet}}
+  p14: {gated: true}
+  p15: {gated: true}
+  p16: {gated: true}
+  p17: {gated: true}
+  p18: {gated: true}
+  p19: {gated: true}
+  p20: {gated: true}
+  p21: {gated: true}
+  p22: {gated: true}
+  p23: {gated: true}
+  p24: {gated: true}
+  p25: {gated: true}
+  p26: {gated: true}
+  p27: {gated: true}
+  p28: {gated: true}
+  p29: {gated: true}
+  p30: {gated: true}
+  p31: {gated: true}
+  p32: {gated: true}
+  p33: {gated: true}
+  p34: {gated: true}
+  p35: {gated: true}
+  p36: {gated: true}
+  p37: {grade: 0, band: not_a_fit}
+  p38: {gated: true}
+  p39: {grade: 2, band: strong, req: {"Python": met, "Go": met, "Coursework in distributed systems": met, "Raft or Paxos": met}}
+  p40: {grade: 0, band: not_a_fit, req: {"Help desk or customer support experience": unmet, "Troubleshooting laptops and printers": unmet}}
+
+newgrad-analyst:
+  p01: {gated: true}
+  p02: {gated: true}
+  p03: {gated: true}
+  p04: {gated: true}
+  p05: {gated: true}
+  p06: {gated: true}
+  p07: {gated: true}
+  p08: {gated: true}
+  p09: {gated: true}
+  p10: {gated: true}
+  p11: {gated: true}
+  p12: {gated: true}
+  p13: {gated: true}
+  p14: {gated: true}
+  p15: {grade: 2, band: strong, req: {"Bachelor's degree in Statistics": met, "SQL": met, "Excel": met, "Tableau or Power BI": met, "Python": met, "A/B testing": met}}
+  p16: {grade: 2, band: good, req: {"SQL": met, "Excel": met, "1+ years of experience with BI tools": partial, "R or Python": met}}
+  p17: {gated: true}
+  p18: {gated: true}
+  p19: {grade: 1, band: stretch, req: {"Bachelor's degree required": met, "SQL": met, "dbt": unmet, "Python": met}}
+  p20: {grade: 1, band: strong, req: {"SQL": met, "Python or R": met, "Experience with A/B testing": met}}
+  p21: {gated: true}
+  p22: {gated: true}
+  p23: {gated: true}
+  p24: {grade: 1, band: strong, req: {"SQL": met, "Excel": met, "Tableau": met}}
+  p25: {gated: true}
+  p26: {gated: true}
+  p27: {gated: true}
+  p28: {gated: true}
+  p29: {gated: true}
+  p30: {gated: true}
+  p31: {gated: true}
+  p32: {gated: true}
+  p33: {gated: true}
+  p34: {gated: true}
+  p35: {gated: true}
+  p36: {gated: true}
+  p37: {grade: 0, band: not_a_fit}
+  p38: {gated: true}
+  p39: {gated: true}
+  p40: {gated: true}
+
+senior-backend:
+  p01: {gated: true}
+  p02: {gated: true}
+  p03: {gated: true}
+  p04: {gated: true}
+  p05: {gated: true}
+  p06: {gated: true}
+  p07: {gated: true}
+  p08: {gated: true}
+  p09: {gated: true}
+  p10: {gated: true}
+  p11: {gated: true}
+  p12: {gated: true}
+  p13: {gated: true}
+  p14: {gated: true}
+  p15: {gated: true}
+  p16: {gated: true}
+  p17: {gated: true}
+  p18: {gated: true}
+  p19: {gated: true}
+  p20: {gated: true}
+  p21: {gated: true}
+  p22: {gated: true}
+  p23: {gated: true}
+  p24: {gated: true}
+  p25: {grade: 2, band: strong, req: {"8+ years of backend engineering": met, "Go or Java": met, "PostgreSQL": met, "Kafka or a similar": met, "AWS": met, "Terraform": met}}
+  p26: {grade: 2, band: strong, req: {"10+ years of software engineering": met, "Distributed systems": met, "Python or Go": met, "Kafka": met}}
+  p27: {gated: true}
+  p28: {gated: true}
+  p29: {gated: true}
+  p30: {gated: true}
+  p31: {gated: true}
+  p32: {gated: true}
+  p33: {gated: true}
+  p34: {gated: true}
+  p35: {gated: true}
+  p36: {grade: 1, band: stretch, req: {"7+ years of backend experience": met, "Python": met, "Spark": unmet, "Airflow": unmet, "Kafka": met}}
+  p37: {gated: true}
+  p38: {gated: true}
+  p39: {gated: true}
+  p40: {gated: true}

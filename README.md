@@ -5,7 +5,7 @@ Codex CLI, or any tool that supports Agent Skills). It finds fresh roles that fi
 filters out the ones you can't get, researches companies, pre-fills applications for you to review,
 and keeps everything in a spreadsheet. **You always click Submit.**
 
-> Status: early development (Milestone 1: discovery). See [PROGRESS.md](PROGRESS.md).
+> Status: early development (Milestone 2: fit engine and tracker). See [PROGRESS.md](PROGRESS.md).
 > Full first-time-user docs arrive in Milestone 6.
 
 ## Try it

@@ -1,0 +1,97 @@
+# Canonical skill -> aliases. Matching is whole-word and case-insensitive, except aliases written
+# "=Like This", which match case-sensitively (for short names such as Go or R).
+# Used only to pre-match obvious skills; anything not listed is left to the judgment task.
+# Taxonomies (ESCO, Lightcast) may help normalize terms but are never ground truth.
+
+# languages
+Python: [python3, py3]
+Java: []
+JavaScript: [js, ecmascript, es6]
+TypeScript: []
+Go: ["=Go", golang]
+Rust: []
+C++: [cpp, c plus plus]
+C#: [csharp, c sharp, .net, dotnet]
+Ruby: []
+Kotlin: []
+Swift: []
+Scala: []
+PHP: []
+R: ["=R", rstats]
+MATLAB: []
+SQL: [t-sql, pl/sql, plsql]
+Bash: [shell scripting, zsh]
+HTML: [html5]
+CSS: [css3, sass, scss]
+
+# frameworks and libraries
+React: [react.js, reactjs]
+Vue: [vue.js, vuejs]
+Angular: [angularjs]
+Node.js: [nodejs]
+Django: []
+Flask: []
+FastAPI: []
+Spring Boot: [springboot, spring framework]
+Rails: [ruby on rails]
+pandas: []
+NumPy: [numpy]
+scikit-learn: [sklearn, scikit learn]
+PyTorch: [torch]
+TensorFlow: [keras]
+Spark: [apache spark, pyspark]
+Airflow: [apache airflow]
+dbt: []
+gRPC: [grpc]
+GraphQL: []
+REST: [rest api, rest apis, restful, restful apis]
+
+# data stores and streaming
+PostgreSQL: [postgres, postgresql, psql]
+MySQL: []
+SQLite: []
+MongoDB: [mongo]
+Redis: []
+Kafka: [apache kafka]
+Elasticsearch: [elastic search, opensearch]
+Snowflake: []
+BigQuery: [big query]
+DynamoDB: [dynamo]
+
+# cloud and infrastructure
+AWS: [amazon web services, ec2, s3, ecs, rds, sqs, lambda]
+GCP: [google cloud, google cloud platform]
+Azure: [microsoft azure]
+Docker: [containers, containerization]
+Kubernetes: [k8s, eks, gke]
+Terraform: [infrastructure as code, iac]
+Linux: [unix]
+Git: [github, gitlab, version control]
+CI/CD: [continuous integration, github actions, jenkins]
+Prometheus: []
+OpenTelemetry: [otel]
+observability: [monitoring, tracing]
+
+# analytics and BI
+Excel: [microsoft excel, spreadsheets]
+Tableau: []
+Power BI: [powerbi]
+Looker: []
+A/B testing: [ab testing, a/b tests, experimentation, experiment design]
+statistics: [statistical analysis, statistical modeling, regression, probability]
+linear regression: []
+
+# ML and data science
+machine learning: [ml]
+deep learning: []
+computer vision: [image classification]
+NLP: [natural language processing]
+data visualization: [dashboards, dashboarding, data viz]
+
+# practices
+distributed systems: [distributed computing, raft, paxos]
+data structures: [algorithms, data structures and algorithms]
+unit testing: [pytest, junit, unit tests]
+system design: []
+microservices: [microservice]
+APIs: [web services]

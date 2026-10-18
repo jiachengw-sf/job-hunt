@@ -18,6 +18,7 @@ classifiers = [
 ]
 dependencies = [
   "click>=8.1",
+  "openpyxl>=3.1.5",
   "pydantic>=2.7",
   "pyyaml>=6.0",
 ]
@@ -25,12 +26,20 @@ dependencies = [
 [project.optional-dependencies]
 # Needed from Milestone 4 (pre-fill). `jobhunt doctor` reports when it is missing.
 browser = ["playwright>=1.45"]
+# Embedding recall (sentence-transformers pulls in PyTorch, ~1-2 GB). Without it recall is BM25 only.
+recall = ["sentence-transformers>=3.0"]
+# Google Sheets tracker. XLSX needs nothing extra.
+sheets = ["gspread>=6.0", "google-auth>=2.0"]
 
 [project.scripts]
 jobhunt = "jobhunt.cli.main:main"
 
 [dependency-groups]
-dev = ["pytest>=8", "ruff>=0.6"]
+dev = [
+    "gspread>=6.2.1",
+    "pytest>=8",
+    "ruff>=0.6",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/jobhunt"]
@@ -46,4 +55,4 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
-ignore = ["RUF012"]
+ignore = ["RUF012", "RUF001", "RUF002", "RUF003"]  # en dashes and curly quotes are matched on purpose

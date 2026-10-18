@@ -135,7 +135,112 @@ real public boards, one each for Greenhouse, Lever and Ashby):
   but the employer's board dropped stays live with a `missing_from_ats` signal.
 - Windows is still untested locally, and CI has not run (no GitHub remote yet).
 
-## Milestone 2 — Fit engine + tracker (next)
+## Milestone 2 — Fit engine + tracker ✅ (2026-10-18)
 
-Gates (they fill `gated_out`), recall, requirement extraction and code pre-match, scores, band
-rules, priority, volume guard, Sheets/XLSX sync with ownership, `states.yml`.
+Done when the sync test proves user edits survive, `eval-fit` runs on the persona eval set, and
+a gated-out job always shows its reason. Met:
+
+- **Gates (Stage 0, `fit/gates.py`).**
+  - Must preferences: blocklist, include/exclude title keywords, seniority (new grad ≈ entry),
+    employment type, term, start/end window, country, work mode, places within a radius
+    (approximate metro table), pay floor (hourly/annual normalized), avoided industries.
+  - Knockouts (always on): sponsorship, citizenship / export control, clearance, graduation
+    window / class of / class year (rising, graduate standing), degree (pursuing vs required, "or
+    equivalent"), years of experience, spoken language.
+  - Preferred/bonus sections are never knockouts.
+  - Each gate gives `pass | pass_unverified | unclear | fail` with the matched text as evidence.
+    Unclear gates route to the **user** (sensitive answers) or to a **judgment task**.
+  - `gated_out` now fills `source_yields`. `jobs --gated` and `show` always print the reason.
+- **Recall (Stage 1, `fit/recall.py`).** De-identified profile lines (school names redacted even
+  inside employer names; no contact info or links) feed pure-Python BM25. With the `[recall]`
+  extra, sentence embeddings (cached per job) are fused by RRF. Top K is kept, and watchlist
+  companies always pass. This is relevance, never shown as fit.
+- **Requirements (Stage 2, code part, `fit/requirements.py`).** Section splitter (must /
+  preferred / other headers, inline headers, long paragraphs → sentences). Every item is a
+  verbatim slice and is typed. `defaults/synonyms.yaml` (about 90 skills, case-sensitive aliases
+  for Go and R) pre-matches skills as `met`/`partial` with tier `stated`, citing the exact
+  profile line and its `ref`. Eligibility and degree items a passing gate matched are `met`.
+  Everything else is left unassessed.
+- **Scores (Stage 3, `fit/scoring.py`).** Band from coverage with the spec's hard rules (an unmet
+  must caps the band at stretch; strong needs every must stated-met; a level mismatch caps it at
+  stretch). It is `provisional` while anything is unjudged. There is a preference score (pay,
+  location, work mode, term, keywords, industry) and a priority score (band, recall relevance,
+  preference, freshness, deadline, referral, watchlist). All weights are in
+  `defaults/config.yaml`.
+- **Volume guard.** Flags a job when you already have 2 applications at that company in 90 days.
+- **Judgment tasks (`fit/tasks.py`).** One posting per task for recalled jobs at or above
+  `fit.priority_threshold`.
+  - The posting is wrapped in `<untrusted_content>`, with delimiters and zero-width characters
+    neutralized.
+  - Tasks include the de-identified profile lines, unclear AI-route gates, dealbreakers, the
+    computed band, and the result JSON schema (`RequirementEvidenceResult`).
+  - Tasks are deduplicated by input hash. `ingest` is still Milestone 5.
+- **Tracker (`tracker/`).**
+  - `states.yml`: the agent only moves forward and never leaves a terminal state; the user can set
+    anything; Skipped needs a reason.
+  - XLSX (openpyxl, written atomically) and Google Sheets (`[sheets]` extra) share one grid
+    interface. Updates are cell by cell, so your formatting, extra columns and row order survive.
+    User-owned headers are tinted.
+  - Three-way sync per user cell (sheet / store / last synced): sheet edits win, `jobhunt mark`
+    changes are pushed, and when both changed the sheet wins and the conflict is reported.
+    Invalid values are reported and not applied.
+  - Tabs: Jobs, Companies, Runs. An open XLSX (`~$` / `.~lock` file) is skipped with a message.
+- **Commands:** `gate`, `match`, `sync`, `run` (fetch → gate → recall → score → sync), `jobs`,
+  `show`, `mark`, `eval-fit [--set DIR | --personal]`. Writers have `--dry-run`, and dry runs
+  never write to the sheet. `doctor` reports the recall mode and checks Sheets.
+- **Eval set (`evals/fit/`).** 40 synthetic postings × 4 personas with grades, bands, gate truth
+  and per-requirement labels.
+- Migration `0003_fit.sql`; `openpyxl` dependency; `[recall]` and `[sheets]` extras; `gspread` in
+  the dev group so CI runs the Sheets test.
+- **262 offline tests** (macOS, Python 3.11 and 3.13). ruff and the pii scan are clean.
+
+`eval-fit` on the seed set (single annotator; regression floors are asserted in tests):
+
+| metric | value |
+|---|---|
+| gate accuracy | 0.975 (0 wrongly gated) |
+| recall nDCG@10 | 0.982 |
+| final nDCG@10 | 0.959 |
+| band exact / within one | 0.54 / 1.00 |
+| requirements assessed by code | 0.69 (accuracy where assessed 1.00) |
+
+The 5 missed gates are by design. Three need the user's answer: clearance not answered, Japanese
+when no languages are listed, and a graduate student on an undergraduate class-year posting
+(fixed for "Graduate" standing). Two need a judgment task: adtech mentioned only in the
+description, and an on-call dealbreaker. Exact band agreement is low because judgment tasks
+aren't run in eval, so bands stay provisional and capped below strong.
+
+Live run (2026-10-18, persona `intl-sponsorship`, real SimplifyJobs feed):
+
+- 4,791 fetched in 4s end to end, of which 2,202 were gated out: term 1,971, country 319,
+  seniority 9.
+- 224 were unclear, mostly listings tagged PhD-only.
+- 2,589 rows went to `tracker.xlsx`; the top priorities were ML and distributed-systems
+  internships.
+
+### Notes and decisions
+
+- **Biggest gap: Simplify rows have no posting text**, so requirements can't be extracted and
+  bands are "unknown" for Simplify-only jobs. Recall relevance carries their ranking. The fix is
+  to fetch the posting from the ATS (Greenhouse/Lever/Ashby) for recalled jobs. The Milestone 3
+  form inspection reads those same endpoints, so it should store the description as a
+  non-polling view that doesn't affect closures.
+- JobBERT short-phrase matching is **not** implemented: synonyms only. It was planned behind the
+  `[recall]` extra; deferred until it can be tested with the model installed. The embedding
+  recall path is tested with a fake embedder, not with sentence-transformers itself.
+- Free-text dealbreakers and industry mentions that appear only in the description are judged
+  by the AI task, not by code.
+- YAML gotcha found while building the eval set: `[Chicago, IL]` is two items, and `ON`/`NO`
+  parse as booleans. User files are validated, so this errors instead of misreading. Quote such
+  values.
+- Simplify sometimes lists one role twice under different URLs (e.g. the same title in two rows).
+  This is a Milestone 1 dedupe edge case and was left alone.
+- Sheets sync is tested against a fake gspread client only (no live spreadsheet available).
+- CI has still not run (no GitHub remote). Windows is untested locally.
+
+## Milestone 3 — Onboarding + answer bank + classifier (next)
+
+Resume → profile, the local form (preferences + questionnaire; sensitive answers only there),
+bank matching with confirmed reuse, Greenhouse `?questions=true` classification, Lever/Ashby page
+parsing, the four classes, coverage report, hand-off packet. Also store ATS posting descriptions
+for recalled Simplify jobs (see the Milestone 2 notes).

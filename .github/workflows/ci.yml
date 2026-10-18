@@ -46,3 +46,6 @@ jobs:
           cp tests/personas/intl-sponsorship/resume.md "$JOBHUNT_HOME/resume/"
           uv run jobhunt fetch --fixtures tests/fixtures/sources/base --human
           uv run jobhunt fetch --fixtures tests/fixtures/sources/base --human
+          uv run jobhunt run --fixtures tests/fixtures/sources/base --human
+          uv run jobhunt jobs --gated --human
+          uv run jobhunt eval-fit --out "$RUNNER_TEMP/eval-fit.json"

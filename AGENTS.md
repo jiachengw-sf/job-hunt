@@ -74,15 +74,36 @@ src/jobhunt/
   http.py         access to public job sources (per-host throttle, conditional GETs, backoff)
   discovery/      sources (Simplify, Greenhouse, Lever, Ashby), ATS resolver, ingest pipeline,
                   legitimacy signals
+  fit/            Stage 0 gates, Stage 1 recall (BM25 + optional embeddings), Stage 2
+                  requirement extraction + pre-match, Stage 3 band/preference/priority, judgment
+                  task files, eval-fit
+  tracker/        states.yml state machine, XLSX / Google Sheets backends, three-way sync
   doctor.py       environment checks
   models/         pydantic models for config, profile, preferences, answers, watchlist
   store/          SQLite schema + numbered migrations (events table is append-only)
   cli/            framework (@agent_command) and commands
-  defaults/       system-layer config templates
+  defaults/       system-layer config, synonyms.yaml (skill aliases), states.yml
   devtools/       pii_scan (CI personal-data check)
 tests/personas/   four synthetic users — use these, never real data
 tests/fixtures/sources/  offline snapshots of every source (`jobhunt fetch --fixtures <dir>`)
+evals/fit/        seed fit eval set: 40 synthetic postings x 4 personas (`jobhunt eval-fit`)
 ```
+
+## Fit and tracker rules
+
+- Qualification band and preference score are separate outputs; priority combines them. Every
+  weight lives in `defaults/config.yaml`. Nothing tunes itself.
+- Recall relevance helps ranking but is never shown or described as "fit".
+- Code marks a requirement `stated` only when a profile line literally names the skill; the
+  evidence is that line's exact text and `ref`. An `inferred` match never satisfies a must-have.
+- Bands are `provisional` until judgment tasks (`~/.jobhunt/work/tasks/`) are ingested.
+- Unclear gates route to the user when they involve sensitive answers (work authorization,
+  citizenship, clearance, class year, languages) and to a judgment task otherwise.
+- Judgment tasks carry the de-identified profile only. Postings are wrapped in
+  `<untrusted_content>`. Tests check that no persona's contact details or visa status leak.
+- The spreadsheet is a view. Agent-owned columns are pushed; user-owned columns (Status, Applied
+  on, Referral contact, Next step, Follow-up on, Outcome, Notes, Skip reason) are pulled back
+  and the user's edits win. The agent only moves Status forward (`states.yml`).
 
 ## Working on the code
 

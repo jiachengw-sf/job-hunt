@@ -55,6 +55,9 @@ class EducationAnswers(Strict):
 
 class WorkAuthorization(Strict):
     authorized: YesNo | None = None
+    citizen: YesNo | None = Field(
+        None, description="Citizen of this country (for citizenship-only roles)."
+    )
     sponsorship_now: YesNo | None = None
     sponsorship_future: YesNo | None = None
     student_status: str | None = Field(

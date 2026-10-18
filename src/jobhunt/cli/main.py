@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 from jobhunt import __version__
 from jobhunt.cli.discovery import register as register_discovery
+from jobhunt.cli.fit import register as register_fit
 from jobhunt.cli.framework import (
     REGISTRY,
     Result,
@@ -186,6 +187,7 @@ def schema_cmd(command: str | None, all_: bool) -> Result:
 # --- discovery ------------------------------------------------------------------------------
 
 register_discovery(cli)
+register_fit(cli)
 
 
 # --- entry point ----------------------------------------------------------------------------

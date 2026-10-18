@@ -1,0 +1,17 @@
+# Fit-engine eval set (seed).
+#
+# 40 synthetic postings across four role families, each graded for all four test personas:
+#   grade 0 = not a fit or ineligible, 1 = plausible, 2 = strong fit
+#   band    = the band a careful reviewer would assign (strong | good | stretch | not_a_fit)
+#   gated   = true when a Must preference, knockout requirement or dealbreaker rules it out
+#   requirements = per-requirement met / partial / unmet, keyed by a quote from the posting
+#
+# LIMITATION: one annotator wrote these labels. The build spec calls for real public postings,
+# 30-60 per role family, each graded by two people. Treat these numbers as a regression check,
+# not as evidence of accuracy, until that set exists.
+version: 1
+today: 2026-10-18
+personas_dir: ../../tests/personas
+postings: postings.yaml
+labels: labels.yaml
+annotators: 1

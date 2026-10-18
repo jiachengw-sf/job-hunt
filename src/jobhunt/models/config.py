@@ -16,6 +16,9 @@ class TrackerConfig(Strict):
     kind: Literal["xlsx", "sheets", "none"] = "xlsx"
     xlsx_path: str | None = Field(None, description="Default: tracker.xlsx in the data directory.")
     sheets: SheetsConfig = Field(default_factory=SheetsConfig)
+    include_gated_out: bool = Field(
+        False, description="Also list jobs that failed a Must gate (their reason is shown)."
+    )
 
 
 class HttpConfig(Strict):
@@ -51,9 +54,60 @@ class ScheduleConfig(Strict):
     interval_hours: float = Field(4, gt=0)
 
 
+class BandThresholds(Strict):
+    strong: float = Field(0.8, ge=0, le=1)
+    good: float = Field(0.6, ge=0, le=1)
+    stretch: float = Field(0.3, ge=0, le=1)
+
+
+class QualificationWeights(Strict):
+    """Credit per requirement status/tier, and the must vs preferred split."""
+
+    must_share: float = Field(0.75, ge=0, le=1)
+    met_stated: float = 1.0
+    met_inferred: float = 0.6
+    partial: float = 0.5
+    unassessed: float = 0.4
+    unmet: float = 0.0
+
+
+class PriorityWeights(Strict):
+    band: float = 0.35
+    relevance: float = Field(0.15, description="Recall rank. Used for ranking, never shown as fit.")
+    preference: float = 0.15
+    freshness: float = 0.10
+    deadline: float = 0.10
+    referral: float = 0.10
+    watchlist: float = 0.05
+
+
+class PreferenceWeights(Strict):
+    pay: float = 0.30
+    location: float = 0.20
+    work_mode: float = 0.15
+    term: float = 0.10
+    keywords: float = 0.15
+    industry: float = 0.10
+
+
 class FitConfig(Strict):
     recall_top_k: int = Field(50, ge=1)
     priority_threshold: float = Field(0.5, ge=0, le=1)
+    use_embeddings: Literal["auto", "off"] = Field(
+        "auto", description="auto: use sentence-transformers when the [recall] extra is installed."
+    )
+    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+    level_mismatch_years: float = Field(
+        3, ge=0, description="Required years above yours that cap the band at stretch."
+    )
+    yoe_gate_slack_years: float = Field(
+        2, ge=0, description="Required years above yours that fail the experience gate."
+    )
+    freshness_half_life_days: float = Field(7, gt=0)
+    bands: BandThresholds = Field(default_factory=BandThresholds)
+    qualification: QualificationWeights = Field(default_factory=QualificationWeights)
+    priority: PriorityWeights = Field(default_factory=PriorityWeights)
+    preference: PreferenceWeights = Field(default_factory=PreferenceWeights)
 
 
 class VolumeGuardConfig(Strict):
