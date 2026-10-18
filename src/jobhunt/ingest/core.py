@@ -17,6 +17,7 @@ from typing import Any, Protocol
 from pydantic import BaseModel, Field, ValidationError
 
 from jobhunt.fit.engine import Inputs
+from jobhunt.http import HttpClient
 from jobhunt.ingest.verify import Problem
 from jobhunt.paths import Paths, secure_file
 
@@ -31,13 +32,23 @@ class Ctx:
     paths: Paths
     now: str
     load_inputs: Callable[[], Inputs]
+    make_client: Callable[[], HttpClient] | None = None
     _inputs: Inputs | None = field(default=None, repr=False)
+    _client: HttpClient | None = field(default=None, repr=False)
 
     @property
     def inputs(self) -> Inputs:
         if self._inputs is None:
             self._inputs = self.load_inputs()
         return self._inputs
+
+    @property
+    def client(self) -> HttpClient:
+        """For checks that must fetch a public page (research quotes)."""
+        if self._client is None:
+            assert self.make_client is not None, "this ingest has no HTTP client"
+            self._client = self.make_client()
+        return self._client
 
 
 class Handler(Protocol):

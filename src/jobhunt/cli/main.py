@@ -30,6 +30,7 @@ from jobhunt.cli.framework import (
 from jobhunt.cli.ingest import register as register_ingest
 from jobhunt.cli.onboarding import register as register_onboarding
 from jobhunt.cli.prefill import register as register_prefill
+from jobhunt.cli.research import register as register_research
 from jobhunt.doctor import DoctorReport, doctor
 from jobhunt.envelope import Envelope, ErrorInfo
 from jobhunt.errors import EXIT_CODE_MEANINGS, ExitCode, NotFound, ValidationFailed
@@ -200,6 +201,7 @@ register_onboarding(cli)
 register_answers(cli)
 register_apply(cli)
 register_prefill(cli)
+register_research(cli)
 
 
 # --- entry point ----------------------------------------------------------------------------

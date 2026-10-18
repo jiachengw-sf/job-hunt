@@ -8,7 +8,7 @@ from pathlib import Path
 import click
 from pydantic import BaseModel, Field
 
-from jobhunt.cli.discovery import _prepare
+from jobhunt.cli.discovery import FIXTURES_HELP, _prepare, make_client
 from jobhunt.cli.fit import _inputs, _lock
 from jobhunt.cli.framework import Result, agent_command
 from jobhunt.discovery.text import utc_now
@@ -17,7 +17,7 @@ from jobhunt.errors import ExitCode
 from jobhunt.fit.engine import run_match
 from jobhunt.fit.recall import make_embedder
 from jobhunt.fit.tasks import TASK_KIND
-from jobhunt.ingest import judgment  # noqa: F401  (registers its handler)
+from jobhunt.ingest import judgment, research  # noqa: F401  (register their handlers)
 from jobhunt.ingest.core import MAX_ATTEMPTS, Ctx, IngestReport, ingest
 from jobhunt.store import open_store
 
@@ -92,17 +92,29 @@ def register(cli: click.Group) -> None:
     @click.option(
         "--task", "tasks", multiple=True, help="Only this task id (repeatable). Default: all."
     )
-    def ingest_cmd(tasks: tuple[str, ...], dry_run: bool) -> Result:
+    @click.option(
+        "--fixtures",
+        type=click.Path(file_okay=False, path_type=Path),
+        default=None,
+        help="Fetch cited pages from this fixture directory. " + FIXTURES_HELP,
+    )
+    def ingest_cmd(tasks: tuple[str, ...], fixtures: Path | None, dry_run: bool) -> Result:
         """Validate AI results in ~/.jobhunt/work/results/ and commit the ones that pass.
 
         Every posting quote is checked against the posting and every claim about you against a
-        profile line. A rejected result gets <task_id>.errors.json next to it, with a JSON path
-        and a fix for each problem; correct the file and run ingest again. Accepted judgment
-        results recompute the job's band, which stops being provisional once nothing is unjudged.
+        profile line; research quotes are re-checked on the pages they cite. A rejected result
+        gets <task_id>.errors.json next to it, with a JSON path and a fix for each problem;
+        correct the file and run ingest again. Accepted judgment results recompute the job's
+        band, which stops being provisional once nothing is unjudged.
         """
         paths, cfg = _prepare(dry_run)
         now = utc_now()
-        ctx = Ctx(paths=paths, now=now, load_inputs=lambda: _inputs(paths, cfg, now))
+        ctx = Ctx(
+            paths=paths,
+            now=now,
+            load_inputs=lambda: _inputs(paths, cfg, now),
+            make_client=lambda: make_client(cfg, fixtures),
+        )
         with _lock(paths, dry_run), open_store(paths.db, dry_run=dry_run) as conn:
             rep = ingest(conn, ctx, only=set(tasks) or None, dry_run=dry_run)
             refit_ids = {a.job_id for a in rep.accepted if a.kind in REFIT_KINDS and a.job_id}
