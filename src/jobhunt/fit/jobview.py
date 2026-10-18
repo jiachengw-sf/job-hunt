@@ -41,11 +41,11 @@ def _row_to_view(row: sqlite3.Row, extras: dict[str, Any]) -> JobView:
         company=row["company"],
         title=row["title"],
         locations=[str(x) for x in json.loads(row["locations_json"] or "[]")],
-        description=row["description"] or "",
+        description=row["description"] or row["view_description"] or "",
         ats=row["ats"] or "unknown",
         work_mode=row["work_mode"],
         employment_type=row["employment_type"],
-        pay=json.loads(row["pay_json"]) if row["pay_json"] else None,
+        pay=json.loads(pay) if (pay := row["pay_json"] or row["view_pay_json"]) else None,
         posted_at=row["posted_at"],
         first_seen=row["first_seen"],
         deadline=row["deadline"],
@@ -81,17 +81,21 @@ def load_jobs(
     conn: sqlite3.Connection, ids: Iterable[int] | None = None, *, live_only: bool = True
 ) -> list[JobView]:
     id_list = list(ids) if ids is not None else None
-    sql = "SELECT * FROM jobs"
+    # posting_views: the ATS's own text for jobs whose sources carry none (e.g. Simplify rows)
+    sql = (
+        "SELECT j.*, v.description AS view_description, v.pay_json AS view_pay_json FROM jobs j "
+        "LEFT JOIN posting_views v ON v.job_id = j.id"
+    )
     clauses, params = [], []
     if live_only:
-        clauses.append("live=1")
+        clauses.append("j.live=1")
     if id_list is not None:
         if not id_list:
             return []
-        clauses.append(f"id IN ({','.join('?' * len(id_list))})")
+        clauses.append(f"j.id IN ({','.join('?' * len(id_list))})")
         params += id_list
     if clauses:
         sql += " WHERE " + " AND ".join(clauses)
-    rows = conn.execute(sql + " ORDER BY id", params).fetchall()
+    rows = conn.execute(sql + " ORDER BY j.id", params).fetchall()
     extras = _extras(conn, [r["id"] for r in rows] if id_list is not None else None)
     return [_row_to_view(r, extras.get(r["id"], {})) for r in rows]
