@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 from pathlib import Path
 
 import pytest
 
 from jobhunt.cli.main import run
+from jobhunt.doctor import find_chrome, playwright_browsers_dir
 
 REPO = Path(__file__).resolve().parent.parent
 PERSONAS_DIR = REPO / "tests" / "personas"
@@ -55,3 +57,30 @@ def persona_home(isolated_home: Path):
         return isolated_home
 
     return _install
+
+
+# Playwright finds its bundled Chromium under the real home; tests redirect HOME, so pin it here.
+os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", str(playwright_browsers_dir()))
+
+
+@pytest.fixture(scope="session")
+def chromium():
+    """A headless browser for the pre-fill tests (real Chrome if installed). Skips without one."""
+    sync_api = pytest.importorskip("playwright.sync_api")
+    p = sync_api.sync_playwright().start()
+    try:
+        try:
+            b = p.chromium.launch(channel="chrome" if find_chrome() else None, headless=True)
+        except Exception as e:  # no browser binary installed
+            pytest.skip(f"no browser for Playwright: {e}")
+        yield b
+        b.close()
+    finally:
+        p.stop()
+
+
+@pytest.fixture
+def browser_context(chromium):
+    ctx = chromium.new_context(service_workers="block")
+    yield ctx
+    ctx.close()
