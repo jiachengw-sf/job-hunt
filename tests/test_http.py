@@ -147,3 +147,25 @@ def test_fixture_transport_serves_files_with_etags(tmp_path: Path):
     r2 = t("https://api.example/v1/jobs", {"If-None-Match": r1.headers["etag"]}, 1)
     assert r2.status == 304
     assert t("https://api.example/v1/missing", {}, 1).status == 404
+
+
+def test_fixture_transport_serves_html_pages(tmp_path: Path):
+    page = tmp_path / "jobs.example" / "acme" / "123" / "apply.html"
+    page.parent.mkdir(parents=True)
+    page.write_text("<form></form>")
+    t = FixtureTransport(tmp_path)
+    r = t("https://jobs.example/acme/123/apply?src=x", {}, 1)
+    assert r.status == 200 and r.body == b"<form></form>"
+
+
+def test_accept_header_is_configurable():
+    seen: list[dict[str, str]] = []
+
+    def transport(url: str, headers: dict[str, str], timeout: float) -> Response:
+        seen.append(headers)
+        return Response(url=url, status=200)
+
+    c = HttpClient(user_agent="t", min_host_interval=0, transport=transport)
+    c.get("https://a.example/x")
+    c.get("https://a.example/y", accept="text/html")
+    assert seen[0]["Accept"] == "application/json" and seen[1]["Accept"] == "text/html"

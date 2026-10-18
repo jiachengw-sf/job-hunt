@@ -124,13 +124,18 @@ class HttpClient:
         self.requests = 0
 
     def get(
-        self, url: str, *, etag: str | None = None, last_modified: str | None = None
+        self,
+        url: str,
+        *,
+        etag: str | None = None,
+        last_modified: str | None = None,
+        accept: str = "application/json",
     ) -> Response:
         """GET with throttle, conditional headers and retries. Returns the final response (any
         status, including 304); raises TransportError if the host stays unreachable."""
         headers = {
             "User-Agent": self.user_agent,
-            "Accept": "application/json",
+            "Accept": accept,
             "Accept-Encoding": "gzip",
         }
         if etag:
@@ -195,8 +200,9 @@ def retry_after_seconds(value: str | None) -> float | None:
 
 
 class FixtureTransport:
-    """Serves ``<root>/<host>/<path>`` (``.json`` appended when the path has no suffix); the
-    query string is ignored. Missing files are 404. ETags are content hashes, so conditional
+    """Serves ``<root>/<host>/<path>`` (``.json`` appended when the path has no suffix, or
+    ``.html`` when no such JSON file exists); the query string is ignored. Missing files are
+    404. ETags are content hashes, so conditional
     GETs behave as they do live."""
 
     def __init__(self, root: Path) -> None:
@@ -206,9 +212,12 @@ class FixtureTransport:
     def path_for(self, url: str) -> Path:
         parts = urlsplit(url)
         rel = parts.path.strip("/")
+        base = self.root / parts.netloc.lower()
         if not Path(rel).suffix:
+            if not (base / f"{rel}.json").is_file() and (base / f"{rel}.html").is_file():
+                return base / f"{rel}.html"
             rel += ".json"
-        return self.root / parts.netloc.lower() / rel
+        return base / rel
 
     def __call__(self, url: str, headers: dict[str, str], timeout: float) -> Response:
         self.calls.append(url)
