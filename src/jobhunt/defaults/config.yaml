@@ -63,7 +63,10 @@ forms:
   candidate_threshold: 0.6   # label similarity that suggests a known question (the user confirms once)
 
 prefill:
-  batch_size: 5
+  batch_size: 5              # tabs filled per batch
+  browser: auto              # auto | chrome | chromium (auto: real Chrome if installed)
+  parse_wait_s: 20           # wait this long for an ATS to parse an uploaded resume (Ashby, Lever)
+  watch_hours: 6             # how long open tabs are watched for your submission
 
 followups:
   after_days: 7

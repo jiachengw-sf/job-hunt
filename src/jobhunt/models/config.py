@@ -127,7 +127,16 @@ class FormsConfig(Strict):
 
 
 class PrefillConfig(Strict):
-    batch_size: int = Field(5, ge=1, le=20)
+    batch_size: int = Field(5, ge=1, le=20, description="Tabs filled per batch.")
+    browser: Literal["auto", "chrome", "chromium"] = Field(
+        "auto", description="auto: real Chrome if installed, else Playwright's Chromium."
+    )
+    parse_wait_s: float = Field(
+        20, gt=0, description="How long to wait for an ATS to finish parsing an uploaded resume."
+    )
+    watch_hours: float = Field(
+        6, gt=0, description="How long open tabs are watched for your submission."
+    )
 
 
 class FollowupsConfig(Strict):
