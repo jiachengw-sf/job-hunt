@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
 import pytest
@@ -15,7 +14,6 @@ from jobhunt.prefill.values import build_sheet, validate
 from tests.conftest import PERSONAS, REPO
 from tests.test_forms import COMPANY, SPECS, ctx_for
 
-FORMS = REPO / "tests" / "fixtures" / "forms"
 RESUMES = REPO / "tests" / "fixtures" / "resumes"
 URLS = {
     "gh_A": "https://job-boards.greenhouse.io/northwind/jobs/1001",
@@ -26,12 +24,9 @@ ATS = {"gh": "greenhouse", "lv": "lever", "ab": "ashby"}
 SUBMITS = ("/jobs/1001", "/apply", "op=ApiSubmit")
 
 
-@pytest.fixture(scope="module")
-def fx(tmp_path_factory) -> Path:
-    d = tmp_path_factory.mktemp("pages")
-    shutil.copytree(FORMS / "overlay", d, dirs_exist_ok=True)
-    shutil.copytree(FORMS / "pages", d, dirs_exist_ok=True)
-    return d
+@pytest.fixture
+def fx(fx_pages) -> Path:
+    return fx_pages
 
 
 def make_sheet(persona: str, name: str, resume: Path):

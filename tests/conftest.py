@@ -84,3 +84,13 @@ def browser_context(chromium):
     ctx = chromium.new_context(service_workers="block")
     yield ctx
     ctx.close()
+
+
+@pytest.fixture(scope="session")
+def fx_pages(tmp_path_factory) -> Path:
+    """Application-form fixtures plus the browser pages, laid over each other."""
+    forms = REPO / "tests" / "fixtures" / "forms"
+    d = tmp_path_factory.mktemp("pages")
+    shutil.copytree(forms / "overlay", d, dirs_exist_ok=True)
+    shutil.copytree(forms / "pages", d, dirs_exist_ok=True)
+    return d
