@@ -33,6 +33,7 @@ class Ctx:
     now: str
     load_inputs: Callable[[], Inputs]
     make_client: Callable[[], HttpClient] | None = None
+    dry_run: bool = False
     _inputs: Inputs | None = field(default=None, repr=False)
     _client: HttpClient | None = field(default=None, repr=False)
 

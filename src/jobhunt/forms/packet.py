@@ -89,11 +89,13 @@ def render(p: Packet) -> str:
         _answer_row(a, 1000 + i) for i, a in enumerate(p.common_answers) if a.value
     )
     essay_rows = "".join(
-        f'<div class="row"><div class="label">{_e(a.label)}</div>'
+        _answer_row(a, 2000 + i)
+        if a.value
+        else f'<div class="row"><div class="label">{_e(a.label)}</div>'
         f'<div class="note">{_e(a.note or "")}'
         f"{' · limit ' + str(a.max_length) + ' chars' if a.max_length else ''}</div>"
         f'<span class="missing">No approved draft yet: write it with the essay skill.</span></div>'
-        for a in p.essays
+        for i, a in enumerate(p.essays)
     )
     captcha = (
         "<p class='note'>This form has a CAPTCHA on Submit: that part is yours.</p>"

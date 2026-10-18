@@ -17,6 +17,7 @@ from jobhunt.cli.apply import form_inputs
 from jobhunt.cli.discovery import _prepare
 from jobhunt.cli.framework import Result, agent_command
 from jobhunt.discovery.text import utc_now
+from jobhunt.drafts.essays import approved_essays
 from jobhunt.errors import LockBusy, NotFound, ValidationFailed
 from jobhunt.fit.jobview import load_jobs
 from jobhunt.forms.classify import classify
@@ -60,11 +61,14 @@ class PrefillReport(BaseModel):
 
 
 def ready_jobs(conn: sqlite3.Connection, limit: int) -> list[int]:
-    """Ready jobs not yet pre-filled or applied to, highest priority first."""
+    """Ready jobs (and Essay jobs with approved essays) not yet pre-filled or applied to, highest
+    priority first."""
     rows = conn.execute(
         "SELECT fs.job_id FROM form_specs fs JOIN jobs j ON j.id = fs.job_id "
         "LEFT JOIN applications a ON a.job_id = fs.job_id LEFT JOIN fits f ON f.job_id = fs.job_id "
-        "WHERE fs.class = 'ready' AND j.live = 1 AND coalesce(a.status, 'New') = 'New' "
+        "WHERE (fs.class = 'ready' OR (fs.class = 'essay' AND EXISTS (SELECT 1 FROM drafts d "
+        "WHERE d.job_id = fs.job_id AND d.kind = 'essay' AND d.status = 'approved'))) "
+        "AND j.live = 1 AND coalesce(a.status, 'New') = 'New' "
         "ORDER BY coalesce(f.priority, 0) DESC, j.id LIMIT ?",
         (limit,),
     ).fetchall()
@@ -95,14 +99,20 @@ def prepare_job(
         return out, None
     ctx = inp.ctx(job)
     cls = classify(spec, ctx, inp.matcher, eeo_confirmed=inp.answers.eeo.confirmed)
-    if cls.cls != "ready":
+    essays = approved_essays(conn, job_id)
+    unapproved = [f for f in cls.essays if f.required and f.id not in essays]
+    if cls.cls == "essay" and not unapproved and not cls.needs:
+        pass  # every required essay is the user's approved text: fill like a Ready job
+    elif cls.cls != "ready":
         out.reason = f"not Ready ({cls.cls}): " + "; ".join(cls.reasons)
+        if unapproved:
+            out.reason += f"; approve {len(unapproved)} essay(s) with `jobhunt essays approve`"
         return out, None
     url = spec.url or row["url"]
     if not url:
         out.reason = "the application page's URL is unknown"
         return out, None
-    sheet = build_sheet(job_id, spec, cls, ctx, inp.matcher, now)
+    sheet = build_sheet(job_id, spec, cls, ctx, inp.matcher, now, essays)
     problems = validate(sheet, spec)
     if problems:
         out.status = "invalid"

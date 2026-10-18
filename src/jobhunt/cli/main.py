@@ -16,6 +16,7 @@ from jobhunt import __version__
 from jobhunt.cli.answers import register as register_answers
 from jobhunt.cli.apply import register as register_apply
 from jobhunt.cli.discovery import register as register_discovery
+from jobhunt.cli.essays import register as register_essays
 from jobhunt.cli.fit import register as register_fit
 from jobhunt.cli.framework import (
     REGISTRY,
@@ -202,6 +203,7 @@ register_answers(cli)
 register_apply(cli)
 register_prefill(cli)
 register_research(cli)
+register_essays(cli)
 
 
 # --- entry point ----------------------------------------------------------------------------

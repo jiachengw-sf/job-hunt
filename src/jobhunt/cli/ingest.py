@@ -17,7 +17,7 @@ from jobhunt.errors import ExitCode
 from jobhunt.fit.engine import run_match
 from jobhunt.fit.recall import make_embedder
 from jobhunt.fit.tasks import TASK_KIND
-from jobhunt.ingest import judgment, research  # noqa: F401  (register their handlers)
+from jobhunt.ingest import essays, judgment, research  # noqa: F401  (register handlers)
 from jobhunt.ingest.core import MAX_ATTEMPTS, Ctx, IngestReport, ingest
 from jobhunt.store import open_store
 
@@ -114,6 +114,7 @@ def register(cli: click.Group) -> None:
             now=now,
             load_inputs=lambda: _inputs(paths, cfg, now),
             make_client=lambda: make_client(cfg, fixtures),
+            dry_run=dry_run,
         )
         with _lock(paths, dry_run), open_store(paths.db, dry_run=dry_run) as conn:
             rep = ingest(conn, ctx, only=set(tasks) or None, dry_run=dry_run)

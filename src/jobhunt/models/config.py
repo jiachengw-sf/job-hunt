@@ -144,6 +144,13 @@ class FollowupsConfig(Strict):
     max_per_application: int = Field(2, ge=0)
 
 
+class DraftsConfig(Strict):
+    unchanged_edit_ratio: float = Field(
+        0.05, ge=0, le=1, description="Approving a draft changed less than this: a gentle nudge."
+    )
+    outreach_max_chars: int = Field(600, ge=100, description="Referral / follow-up message limit.")
+
+
 class ResearchConfig(Strict):
     cache_days: int = Field(14, ge=0)
     max_searches: int = Field(5, ge=0, le=5)
@@ -180,5 +187,6 @@ class Config(Strict):
     prefill: PrefillConfig = Field(default_factory=PrefillConfig)
     followups: FollowupsConfig = Field(default_factory=FollowupsConfig)
     research: ResearchConfig = Field(default_factory=ResearchConfig)
+    drafts: DraftsConfig = Field(default_factory=DraftsConfig)
     notifications: NotificationsConfig = Field(default_factory=NotificationsConfig)
     writing_style_skill: str | None = None

@@ -5,7 +5,8 @@ model never picks a value. Each field gets an action:
 
   fill       code types or picks the value
   recommend  shown next to the field for the user to set (Lever radios and checkboxes)
-  human      left for the user on purpose (attestations, consents, unreviewed EEO, essays)
+  human      left for the user on purpose (attestations, consents, unreviewed EEO, essays
+             the user hasn't approved with `jobhunt essays approve`)
   skip       optional and unanswered, or hidden on the page by another answer: left blank
 
 A field the page reveals only after another answer (``shown_if``) follows that answer: it is
@@ -118,13 +119,18 @@ def build_sheet(
     ctx: AnswerContext,
     matcher: Matcher,
     now: str,
+    essays: dict[str, str] | None = None,
 ) -> AnswerSheet:
-    """Map each form field to a value from the profile and bank (or to the user)."""
+    """Map each form field to a value from the profile and bank (or to the user). ``essays`` holds
+    the essay answers the user approved (``jobhunt essays approve``), by field id."""
     out: list[FillField] = []
     by_id = {f.id: f for f in spec.fields}
+    essays = essays or {}
     for fr in cls.fields:
         action, note = _action(fr, spec.ats)
         value = fill_value(fr, ctx, matcher) if action in ("fill", "recommend") else None
+        if fr.resolution == "essay" and fr.id in essays:
+            action, value, note = "fill", essays[fr.id], "your approved essay: reread it here"
         if action == "fill" and value is None:
             action, note = ("human" if fr.required else "skip"), "no value to fill"
         f = by_id.get(fr.id)

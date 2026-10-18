@@ -77,6 +77,10 @@ research:
   max_searches: 5
   max_fetches: 8
 
+drafts:
+  unchanged_edit_ratio: 0.05   # approving an essay you changed less than this gets a gentle nudge
+  outreach_max_chars: 600      # referral, coffee-chat and follow-up drafts stay short
+
 notifications:
   ntfy_topic: null
   discord_webhook: null

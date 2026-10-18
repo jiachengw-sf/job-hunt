@@ -20,6 +20,7 @@ from jobhunt.cli.discovery import FIXTURES_HELP, _prepare, make_client
 from jobhunt.cli.framework import Result, agent_command
 from jobhunt.cli.onboarding import default_resume
 from jobhunt.discovery.text import utc_now
+from jobhunt.drafts.essays import approved_essays
 from jobhunt.envelope import Envelope, render_human_default
 from jobhunt.errors import NotFound
 from jobhunt.fit.jobview import load_jobs
@@ -319,6 +320,7 @@ def register(cli: click.Group) -> None:
             detail = job_detail(conn, job_id)
             row = conn.execute("SELECT * FROM form_specs WHERE job_id=?", (job_id,)).fetchone()
             job = load_jobs(conn, [job_id], live_only=False)[0]
+            approved = approved_essays(conn, job_id)
         ctx = inp.ctx(job)
         cls: Classification | None = None
         if row and row["spec_json"]:
@@ -332,7 +334,7 @@ def register(cli: click.Group) -> None:
                 essays.append(
                     PacketAnswer(
                         fr.label,
-                        None,
+                        approved.get(fr.id),
                         note=fr.description,
                         max_length=fr.max_length,
                         required=fr.required,

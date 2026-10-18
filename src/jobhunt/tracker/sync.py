@@ -131,6 +131,23 @@ def _gate_text(status: str | None, reasons_json: str | None) -> str:
     return f"{status} — " + "; ".join(parts)
 
 
+def _essay_text(conn: sqlite3.Connection, job_id: int) -> str:
+    from jobhunt.drafts.essays import essay_prompts
+
+    status = {
+        r["key"]: r["status"]
+        for r in conn.execute("SELECT key, status FROM drafts WHERE job_id=? AND kind='essay'",
+                              (job_id,))
+    }  # fmt: skip
+    parts = []
+    for p in essay_prompts(conn, job_id):
+        if not p.required:
+            continue
+        limit = f", {p.max_length} chars" if p.max_length else ""
+        parts.append(f"{p.label} [{status.get(p.field_id, 'not drafted')}{limit}]")
+    return "; ".join(parts)
+
+
 def agent_values(conn: sqlite3.Connection, job_id: int) -> dict[str, str]:
     j = conn.execute(
         "SELECT j.*, f.band, f.provisional, f.priority, f.preference_score, f.gate_status, "
@@ -190,7 +207,7 @@ def agent_values(conn: sqlite3.Connection, job_id: int) -> dict[str, str]:
         "Gate results": _gate_text(j["gate_status"], j["gate_reasons_json"]),
         "Why fit": "; ".join(why),
         "Gaps": gaps,
-        "Essay prompts": "",
+        "Essay prompts": _essay_text(conn, job_id),
         "Legitimacy flags": ", ".join(signals + [f for f in flags if f.startswith("volume guard")]),
         "Company brief": (json.loads(brief[0]).get("summary", "") if brief and brief[0] else ""),
         "ATS": j["ats"] or "unknown",
