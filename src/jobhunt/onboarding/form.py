@@ -59,7 +59,7 @@ PREF_FIELDS: list[F] = [
     F("timing.latest_end", "Latest end", "date", pref=True, section="Term and timing"),
     F("timing.min_duration_weeks", "Minimum duration (weeks)", "int", pref=True, section="Term and timing"),
     F("timing.max_duration_weeks", "Maximum duration (weeks)", "int", pref=True, section="Term and timing"),
-    F("timing.hours_per_week", "Hours per week", "int", pref=True, section="Term and timing"),
+    F("timing.hours_per_week", "Hours per week you want", "int", pref=True, section="Term and timing"),
     F("location.places", "Places", "lines", help="One per line, optional radius in miles: Chicago, IL | 25", pref=True, section="Where"),
     F("location.work_modes", "Work modes", "multi", MODES, pref=True, section="Where"),
     F("location.relocation", "Open to relocating", "bool", pref=True, section="Where"),
@@ -114,7 +114,7 @@ ANSWER_FIELDS: list[F] = [
     F("availability.end_date", "End date (internships)", "date", section="Availability"),
     F("availability.terms", "Terms available", "list", section="Availability"),
     F("availability.full_term", "Available for the full term", "yesno", section="Availability"),
-    F("availability.hours_per_week", "Hours per week", "int", section="Availability"),
+    F("availability.hours_per_week", "Hours per week you can work", "int", section="Availability"),
     F("availability.notice_period", "Notice period", help="e.g. 2 weeks", section="Availability"),
     F("location.willing_to_relocate", "Willing to relocate", "yesno", section="Location and travel"),
     F("location.willing_to_travel", "Willing to travel", help="e.g. Up to 25%", section="Location and travel"),
@@ -492,7 +492,7 @@ def _wa_section(vals: dict[str, Any], countries: list[str]) -> str:
     blocks = []
     for cc in ccs:
         rows = "".join(
-            _row("a", F(f"work_authorization.{cc}.{k}", label, widget), vals)  # type: ignore[arg-type]
+            _row("a", F(f"work_authorization.{cc}.{k}", f"{label} ({cc})", widget), vals)  # type: ignore[arg-type]
             for k, label, widget in WA_KEYS
         )
         hidden = "" if cc in countries or cc in present else " hidden"

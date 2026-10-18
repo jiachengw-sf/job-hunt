@@ -141,6 +141,8 @@ def test_form_round_trip_is_lossless(persona):
 
     for target in re.findall(r'<label class="lbl" for="([^"]+)"', html):
         assert f'id="{target}"' in html
+    labels = re.findall(r'<label class="lbl" for="[^"]+">([^<]+)</label>', html)
+    assert len(labels) == len(set(labels)), "every label is distinct (one per country)"
     p2, a2, errors = F.parse(
         _post_from_values(vals), existing_prefs=prefs, existing_answers=answers, new_questions=[]
     )
