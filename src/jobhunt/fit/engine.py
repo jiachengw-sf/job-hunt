@@ -1,8 +1,9 @@
 """Run the fit stages over the store: gates → recall → requirements → scores → priority → tasks.
 
 Writes gate_results, requirements (code rows), fits, tasks, and a runs row. Re-running is safe:
-everything code-derived is recomputed in place; AI-derived requirement rows (Milestone 5) are kept
-and used instead of the code ones.
+everything code-derived is recomputed in place. Ingested AI results (requirement rows and
+``judgments``) are kept and used instead of the code ones while the posting and profile they were
+judged on are unchanged; when either changes they are dropped and a new task is written.
 """
 
 from __future__ import annotations
@@ -29,7 +30,7 @@ from jobhunt.fit.profile_lines import (
 from jobhunt.fit.recall import Embedder, recall
 from jobhunt.fit.requirements import Requirement, extract, prematch, required_years
 from jobhunt.fit.scoring import Qualification, preference, priority, qualify
-from jobhunt.fit.tasks import write_task
+from jobhunt.fit.tasks import TASK_KIND, basis_hash, write_task
 from jobhunt.models import Answers, Config, Preferences, Profile, Watchlist
 
 ELIGIBILITY_GATES = {"sponsorship", "citizenship", "clearance", "graduation", "degree", "language"}
@@ -130,16 +131,64 @@ def _store_gates(
     _upsert_fit(conn, job_id, now, gate_status=status, gate_reasons_json=json.dumps(shown))
 
 
+def _judged(conn: sqlite3.Connection, job_id: int, res: list[gt.GateResult]) -> list[gt.GateResult]:
+    """Apply ingested judgments: an AI-routed unclear gate takes the judged result, and a
+    dealbreaker the posting hits becomes a failing gate."""
+    rows = conn.execute("SELECT * FROM judgments WHERE job_id=?", (job_id,)).fetchall()
+    if not rows:
+        return res
+    gates = {r["key"]: r for r in rows if r["kind"] == "gate"}
+    out = []
+    for g in res:
+        j = gates.get(g.gate)
+        if g.result == "unclear" and g.route == "ai" and j is not None:
+            verdict = "passes" if j["result"] == "pass" else "fails"
+            g = gt.GateResult(
+                g.gate, j["result"], f"judged from the posting: {verdict} ({g.reason})", j["quote"]
+            )
+        out.append(g)
+    for r in rows:
+        if r["kind"] == "dealbreaker" and r["result"] == "hit":
+            out.append(
+                gt.GateResult("dealbreaker", "fail", f"your dealbreaker: {r['key']}", r["quote"])
+            )
+    return out
+
+
+def drop_stale_judgments(conn: sqlite3.Connection, job: JobView, lines: list[ProfileLine]) -> bool:
+    """Drop a job's AI rows when its posting or the profile changed since they were judged.
+    Returns True when the job holds an ingested result that is still current."""
+    row = conn.execute(
+        "SELECT basis_hash FROM tasks WHERE job_id=? AND kind=? AND status='ingested' "
+        "ORDER BY ingested_at DESC LIMIT 1",
+        (job.id, TASK_KIND),
+    ).fetchone()
+    if row is None:
+        return False
+    if row["basis_hash"] == basis_hash(job, lines):
+        return True
+    conn.execute("DELETE FROM requirements WHERE job_id=? AND source='ai'", (job.id,))
+    conn.execute("DELETE FROM judgments WHERE job_id=?", (job.id,))
+    conn.execute(
+        "UPDATE tasks SET status='expired' WHERE job_id=? AND kind=? AND status='ingested'",
+        (job.id, TASK_KIND),
+    )
+    conn.execute("UPDATE fits SET narrative_json=NULL, disagreement=NULL WHERE job_id=?", (job.id,))
+    return False
+
+
 def run_gate_stage(
     conn: sqlite3.Connection, inp: Inputs, jobs: list[JobView]
 ) -> tuple[GateSummary, dict[int, list[gt.GateResult]]]:
     ctx = inp.ctx
+    lines = profile_lines(inp.profile)
     by_job: dict[int, list[gt.GateResult]] = {}
     drops: Counter[str] = Counter()
     questions: Counter[str] = Counter()
     status_n: Counter[str] = Counter()
     for job in jobs:
-        res = gt.run_gates(job, ctx)
+        drop_stale_judgments(conn, job, lines)
+        res = _judged(conn, job.id, gt.run_gates(job, ctx))
         by_job[job.id] = res
         _store_gates(conn, job.id, res, inp.now)
         status_n[gt.overall(res)] += 1
@@ -309,7 +358,7 @@ def run_match(
             messy = False
             if not reqs:
                 ex = extract(job.description)
-                reqs, messy = ex.requirements, ex.messy
+                reqs, messy = ex.requirements, ex.messy or not ex.requirements
                 prematch(reqs, lines)
                 _apply_gate_evidence(reqs, gate_results[job.id], lines)
                 _store_requirements(conn, job.id, reqs)
@@ -375,6 +424,8 @@ def run_match(
         for s in scored:
             r = rec.by_job.get(s.job.id)
             if not (r and r.recalled) or s.prio < cfg.priority_threshold:
+                continue
+            if drop_stale_judgments(conn, s.job, lines):  # already judged on this posting
                 continue
             reqs, messy = reqs_by_job[s.job.id]
             unclear_ai = [

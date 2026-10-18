@@ -624,13 +624,14 @@ def job_detail(conn: Any, job_id: int) -> dict[str, Any]:
             "preference": js(f["preference_json"]),
             "priority_inputs": js(f["priority_json"]),
             "flags": js(f["flags_json"]) or [],
-            "ai_disagreement": f["disagreement"],
+            "ai_disagreement": js(f["disagreement"]),
+            "narrative": js(f["narrative_json"]),
         },
         "requirements": [
             dict(r)
             for r in conn.execute(
                 "SELECT seq, importance, type, text, status, tier, evidence, evidence_ref, "
-                "source FROM "
+                "note, source FROM "
                 "requirements WHERE job_id=? ORDER BY source='ai' DESC, seq",
                 (job_id,),
             )

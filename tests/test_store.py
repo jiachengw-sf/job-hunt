@@ -28,6 +28,7 @@ def test_migrate_is_idempotent(tmp_path: Path):
         "0002_discovery.sql",
         "0003_fit.sql",
         "0004_forms.sql",
+        "0005_ingest.sql",
     ]
     assert migrate(c) == []
     assert current_version(c) == SCHEMA_VERSION

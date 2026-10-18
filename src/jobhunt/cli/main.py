@@ -27,6 +27,7 @@ from jobhunt.cli.framework import (
     input_schema,
     output_schema,
 )
+from jobhunt.cli.ingest import register as register_ingest
 from jobhunt.cli.onboarding import register as register_onboarding
 from jobhunt.cli.prefill import register as register_prefill
 from jobhunt.doctor import DoctorReport, doctor
@@ -194,6 +195,7 @@ def schema_cmd(command_words: tuple[str, ...], all_: bool) -> Result:
 
 register_discovery(cli)
 register_fit(cli)
+register_ingest(cli)
 register_onboarding(cli)
 register_answers(cli)
 register_apply(cli)

@@ -134,7 +134,7 @@ def _gate_text(status: str | None, reasons_json: str | None) -> str:
 def agent_values(conn: sqlite3.Connection, job_id: int) -> dict[str, str]:
     j = conn.execute(
         "SELECT j.*, f.band, f.provisional, f.priority, f.preference_score, f.gate_status, "
-        "f.gate_reasons_json, f.recalled, f.flags_json, a.class FROM jobs j "
+        "f.gate_reasons_json, f.recalled, f.flags_json, f.narrative_json, a.class FROM jobs j "
         "LEFT JOIN fits f ON f.job_id=j.id LEFT JOIN applications a ON a.job_id=j.id WHERE j.id=?",
         (job_id,),
     ).fetchone()
@@ -146,6 +146,10 @@ def agent_values(conn: sqlite3.Connection, job_id: int) -> dict[str, str]:
     why = [r["text"] for r in reqs if r["status"] == "met" and r["tier"] == "stated"][:3]
     unmet = [r["text"] for r in reqs if r["importance"] == "must" and r["status"] == "unmet"][:3]
     unassessed = sum(1 for r in reqs if r["status"] is None)
+    narrative = json.loads(j["narrative_json"] or "null")
+    if narrative:  # an ingested judgment: its cited reasons and its gaps
+        why = [r["text"] for r in narrative["reasons"]] or why
+        unmet = list(dict.fromkeys(unmet + narrative["gaps"]))[:5]
     gaps = "; ".join(unmet)
     if unassessed:
         gaps = (gaps + "; " if gaps else "") + f"{unassessed} requirement(s) not judged yet"
