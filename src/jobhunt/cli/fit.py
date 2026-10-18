@@ -146,6 +146,9 @@ class RunReport(BaseModel):
     dry_run: bool
     fetch: dict[str, Any]
     match: MatchReport
+    forms: dict[str, Any] | None = Field(
+        None, description="Application classes for the top jobs (`jobhunt inspect` for detail)."
+    )
     sync: SyncReport | None
 
 
@@ -286,11 +289,15 @@ def register(cli: click.Group) -> None:
         help=FIXTURES_HELP,
     )
     @click.option("--no-sync", is_flag=True, help="Skip the tracker sync.")
-    def run_cmd(fixtures: Path | None, no_sync: bool, dry_run: bool) -> Result:
-        """The scheduled pipeline: fetch → gate → recall → score → sync. No AI needed.
+    @click.option("--no-inspect", is_flag=True, help="Skip reading and classifying forms.")
+    def run_cmd(fixtures: Path | None, no_sync: bool, no_inspect: bool, dry_run: bool) -> Result:
+        """The scheduled pipeline: fetch → gate → recall → score → classify → sync. No AI needed.
 
-        Application classification and notifications join in later milestones.
+        Classify reads the application forms of the top jobs (cached for a week). Notifications
+        join in a later milestone.
         """
+        from jobhunt.cli.apply import form_inputs, loader_factory, run_inspect, threshold_jobs
+
         paths, cfg = _prepare(dry_run)
         inp = _inputs(paths, cfg, utc_now())
         plan = plan_sources(cfg.discovery, inp.prefs, inp.watchlist)
@@ -310,9 +317,39 @@ def register(cli: click.Group) -> None:
                 embed_note=note,
                 dry_run=dry_run,
             )
+            forms = None
+            if not no_inspect and cfg.forms.max_per_run:
+                ids = threshold_jobs(conn, cfg.fit.priority_threshold, cfg.forms.max_per_run)
+                irep = run_inspect(
+                    conn,
+                    ids,
+                    form_inputs(paths, cfg, inp.now),
+                    client,
+                    loader_factory(cfg, client, fixtures),
+                    paths=paths,
+                    cfg=cfg,
+                    refresh=False,
+                    dry_run=dry_run,
+                )
+                if irep.descriptions_stored:  # new posting text: recompute fit for those jobs
+                    rep = run_match(
+                        conn,
+                        inp,
+                        tasks_dir=paths.tasks,
+                        results_dir=paths.results,
+                        embedder=embedder,
+                        embed_note=note,
+                        dry_run=dry_run,
+                    )
+                forms = {
+                    k: getattr(irep, k)
+                    for k in ("inspected", "by_class", "fetched", "cached", "new_questions")
+                }
+                actions += irep.warnings
             srep = None
             if not no_sync:
-                srep, actions = _do_sync(conn, cfg, paths, inp, dry_run)
+                srep, sync_actions = _do_sync(conn, cfg, paths, inp, dry_run)
+                actions += sync_actions
             fetch = _refresh_yields(conn, fetch)
         if raised.get("ai_instructions"):
             actions.append(
@@ -321,7 +358,11 @@ def register(cli: click.Group) -> None:
             )
         return Result(
             data=RunReport(
-                dry_run=dry_run, fetch=_fetch_summary(fetch, status), match=rep, sync=srep
+                dry_run=dry_run,
+                fetch=_fetch_summary(fetch, status),
+                match=rep,
+                forms=forms,
+                sync=srep,
             ),
             user_actions=actions + _question_actions(rep.gates),
             next_actions=[
@@ -511,6 +552,12 @@ def _render_run(env: Envelope) -> str:
     m = Envelope(ok=True, data=d["match"])
     lines.append("")
     lines.append(_render_match(m))
+    if fm := d.get("forms"):
+        lines.append(
+            f"\nForms: {fm['inspected']} classified ("
+            + ", ".join(f"{k} {v}" for k, v in sorted(fm["by_class"].items()))
+            + f"); {fm['new_questions']} unanswered question(s)"
+        )
     s = d.get("sync")
     if s:
         lines.append("")

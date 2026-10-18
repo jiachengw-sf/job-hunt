@@ -96,7 +96,7 @@ def test_packet_for_every_live_job(cli, persona_home, persona, fx):
 def test_simplify_job_gets_posting_text_and_a_band(cli, persona_home, fx):
     """Milestone 2 gap: a Simplify-only job has no text until its ATS posting is read."""
     home = persona_home("first-year-intern")  # doesn't watch the northwind board
-    cli("run", "--fixtures", str(fx), "--no-sync")
+    cli("run", "--fixtures", str(fx), "--no-sync", "--no-inspect")
     with db(home) as c:
         jid = c.execute("SELECT id FROM jobs WHERE ats_job_id='1099'").fetchone()[0]
         assert not c.execute("SELECT description FROM jobs WHERE id=?", (jid,)).fetchone()[0]
@@ -116,7 +116,7 @@ def test_simplify_job_gets_posting_text_and_a_band(cli, persona_home, fx):
 
 def test_posting_view_never_keeps_a_closed_job_live(cli, persona_home, fx, tmp_path):
     home = persona_home("first-year-intern")
-    cli("run", "--fixtures", str(fx), "--no-sync")
+    cli("run", "--fixtures", str(fx), "--no-sync", "--no-inspect")
     with db(home) as c:
         jid = c.execute("SELECT id FROM jobs WHERE ats_job_id='1099'").fetchone()[0]
     cli("inspect", str(jid), "--fixtures", str(fx), "--no-match")
@@ -141,7 +141,7 @@ def test_posting_view_never_keeps_a_closed_job_live(cli, persona_home, fx, tmp_p
 
 def test_confirming_a_wording_moves_a_job_to_ready(cli, persona_home, fx):
     home = persona_home("intl-sponsorship")
-    cli("run", "--fixtures", str(fx), "--no-sync")
+    cli("run", "--fixtures", str(fx), "--no-sync", "--no-inspect")
     with db(home) as c:
         jid = c.execute("SELECT id FROM jobs WHERE ats_job_id='1004'").fetchone()[0]
     _, env, _ = cli("inspect", str(jid), "--fixtures", str(fx))
@@ -172,7 +172,7 @@ def test_confirming_a_wording_moves_a_job_to_ready(cli, persona_home, fx):
 
 def test_inspect_dry_run_writes_nothing(cli, persona_home, fx):
     home = persona_home("senior-backend")
-    cli("run", "--fixtures", str(fx), "--no-sync")
+    cli("run", "--fixtures", str(fx), "--no-sync", "--no-inspect")
     before = (home / "jobhunt.db").read_bytes()
     code, env, _ = cli("inspect", "--top", "10", "--fixtures", str(fx), "--dry-run")
     assert code == ExitCode.OK and env["data"]["dry_run"]
@@ -188,7 +188,7 @@ def test_inspect_unknown_job_is_not_found(cli, persona_home):
 
 def test_unsupported_ats_is_manual_with_reason(cli, persona_home, fx):
     home = persona_home("first-year-intern")
-    cli("run", "--fixtures", str(fx), "--no-sync")
+    cli("run", "--fixtures", str(fx), "--no-sync", "--no-inspect")
     with db(home) as c:
         jid = c.execute("SELECT id FROM jobs WHERE ats='workday' LIMIT 1").fetchone()[0]
     _, env, _ = cli("inspect", str(jid), "--fixtures", str(fx))
