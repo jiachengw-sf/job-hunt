@@ -1,0 +1,54 @@
+# preferences.yaml — what you want. Lives at ~/.jobhunt/preferences.yaml.
+#
+# Every preference is either:
+#   - a bare value               -> Nice: affects priority only (the default)
+#   - {value: ..., importance: must} -> Must: a hard gate; postings that fail it are dropped
+#     (and the tracker always shows why)
+version: 1
+
+roles:
+  families: [software engineering]
+  include_keywords: [intern, new grad]
+  exclude_keywords:
+    value: [senior, staff, principal]
+    importance: must
+  seniority:                       # internship | new_grad | entry | mid | senior
+    value: [internship]
+    importance: must
+
+employment_types:                  # internship | co-op | full-time | part-time | contract
+  value: [internship]
+  importance: must
+
+timing:
+  terms: [Summer 2027]
+  earliest_start: 2027-05-15
+  latest_end: 2027-08-31
+  min_duration_weeks: 10
+  max_duration_weeks: null
+  hours_per_week: 40
+
+location:
+  places:
+    - name: Seattle, WA
+      radius_miles: 25
+  work_modes: [onsite, hybrid, remote]   # onsite | hybrid | remote
+  relocation: true
+  countries:                       # ISO codes; also decides which questionnaire sections appear
+    value: [US]
+    importance: must
+
+pay:                               # postings with no pay listed are flagged, never excluded
+  min: 25
+  ideal: 45
+  unit: hourly                     # hourly | annual
+  currency: USD
+
+company:
+  sizes: []
+  stages: []
+  prefer_industries: []
+  avoid_industries: []
+  blocklist: []                    # companies never shown
+
+dealbreakers: []                   # free text; always Must

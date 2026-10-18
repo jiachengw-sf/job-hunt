@@ -1,0 +1,45 @@
+version: 1
+identity:
+  legal_first_name: Jordan
+  legal_last_name: Mockley
+  email: jordan.mockley@example.com
+  phone: "617-555-0145"
+  phone_country: US
+  address_line1: 12 Example Street
+  city: Coastal Plains
+  region: MA
+  postal_code: "00000"
+  country: US
+  over_18: "yes"
+education:
+  class_standing: Senior
+  graduation_month: 5
+  graduation_year: 2027
+  gpa: 3.4
+  gpa_scale: 4.0
+  gpa_disclose_at_or_above: 3.5
+work_authorization:
+  US:
+    authorized: "yes"
+    sponsorship_now: "no"
+    sponsorship_future: "no"
+availability:
+  start_date: 2027-06-14
+  notice_period: none
+location:
+  willing_to_relocate: "no"
+  willing_to_travel: Up to 10%
+compensation:
+  expected: "$75,000"
+experience:
+  years: 0.5
+  prior_employers: [Harborline Credit Union]
+standard:
+  relatives_at_company: "no"
+  non_compete: "no"
+  background_check_consent: "yes"
+  drug_test_consent: "yes"
+sourcing:
+  how_did_you_hear: Company website
+eeo:
+  gender: Decline to self-identify

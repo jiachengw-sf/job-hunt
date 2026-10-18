@@ -1,0 +1,10 @@
+# Your jobhunt settings. Only put keys here that you want to change from the defaults;
+# see `jobhunt schema doctor` or the README for every option. This file stays on your machine.
+version: 1
+
+# tracker:
+#   kind: xlsx            # xlsx | sheets | none
+#   xlsx_path: ~/Documents/jobhunt-tracker.xlsx   # default: inside the data directory
+
+# notifications:
+#   ntfy_topic: null

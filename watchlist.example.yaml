@@ -1,0 +1,10 @@
+# watchlist.yaml — companies to watch directly. Lives at ~/.jobhunt/watchlist.yaml.
+# Give any careers or job-board URL; jobhunt detects the ATS and board token.
+version: 1
+companies:
+  - name: Example Robotics
+    careers_url: https://boards.greenhouse.io/examplerobotics
+    notes: watch for the fall new-grad posting
+  - name: Example Health
+    ats: lever
+    board_token: examplehealth

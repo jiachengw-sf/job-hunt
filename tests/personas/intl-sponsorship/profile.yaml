@@ -1,0 +1,44 @@
+version: 1
+headline: Computer science master's student seeking a 2027 software or ML engineering internship
+resumes:
+  - file: resume.md
+    default: true
+education:
+  - school: Lakeview Institute of Technology
+    degree: MS
+    majors: [Computer Science]
+    start: 2025-09
+    graduation: 2027-12
+    coursework: [Machine Learning, Distributed Systems, Algorithms]
+  - school: Riverside University
+    degree: BEng
+    majors: [Software Engineering]
+    graduation: 2025-06
+skills:
+  languages: [Python, Go, SQL]
+  ml: [PyTorch]
+  infrastructure: [Docker, Kubernetes, Linux]
+experience:
+  - org: Brightpath Analytics
+    title: Software Engineering Intern
+    start: 2026-06
+    end: 2026-08
+    bullets:
+      - Built a Python service that cleans and validates partner CSV uploads before ingestion
+      - Reduced failed nightly imports from about 20 a week to 3 by adding schema checks
+  - org: Riverside University ML Lab
+    title: Research Assistant
+    start: 2024-01
+    end: 2025-05
+    bullets:
+      - Trained image-classification models in PyTorch for a crop-disease dataset
+      - Co-authored a workshop paper on data augmentation for small agricultural datasets
+projects:
+  - name: Raft KV Store
+    summary: Replicated key-value store using Raft, for a distributed systems course
+    tech: [Go]
+    bullets:
+      - Implemented a replicated key-value store using the Raft consensus algorithm for a distributed systems course
+links:
+  - label: LinkedIn
+    url: https://linkedin.com/in/mei-testwell-example

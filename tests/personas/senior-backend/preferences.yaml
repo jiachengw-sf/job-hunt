@@ -1,0 +1,35 @@
+version: 1
+roles:
+  families: [backend engineering, platform engineering]
+  include_keywords: [backend, platform, infrastructure, distributed systems]
+  exclude_keywords:
+    value: [intern, junior, frontend, mobile]
+    importance: must
+  seniority:
+    value: [senior]
+    importance: must
+employment_types:
+  value: [full-time]
+  importance: must
+location:
+  work_modes:
+    value: [remote]
+    importance: must
+  countries:
+    value: [US]
+    importance: must
+pay:
+  value:
+    min: 190000
+    ideal: 230000
+    unit: annual
+  importance: nice
+company:
+  stages: [series-b, series-c, public]
+  avoid_industries:
+    value: [crypto, adtech]
+    importance: must
+  blocklist: [Ledgerly]
+dealbreakers:
+  - Required on-site presence
+  - On-call more than one week in four

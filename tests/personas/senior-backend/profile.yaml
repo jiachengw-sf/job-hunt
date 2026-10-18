@@ -1,0 +1,41 @@
+version: 1
+headline: Senior backend engineer (10 years) focused on high-throughput APIs and data migrations
+resumes:
+  - file: resume.md
+    default: true
+education:
+  - school: Granite Valley University
+    degree: BS
+    majors: [Computer Engineering]
+    graduation: 2016-05
+skills:
+  languages: [Go, Python, Java]
+  data: [PostgreSQL, Kafka, Redis]
+  cloud: [AWS ECS, AWS RDS, AWS SQS, Terraform]
+  other: [gRPC, Prometheus, OpenTelemetry]
+experience:
+  - org: Parcelwise
+    title: Senior Backend Engineer
+    start: 2022-03
+    end: null
+    bullets:
+      - Lead a team of 4 engineers owning the shipment-tracking API (Go, PostgreSQL, Kafka)
+      - Cut p99 latency of the tracking endpoint from 900 ms to 180 ms by redesigning the cache layer
+      - Designed the event schema migration that moved 2 billion rows with no downtime
+  - org: Ledgerly
+    title: Backend Engineer
+    start: 2018-06
+    end: 2022-02
+    bullets:
+      - Built payment reconciliation services in Python and Java
+      - On-call for the ledger service; wrote the runbooks the team still uses
+  - org: Ledgerly
+    title: Software Engineer I
+    start: 2016-07
+    end: 2018-05
+    bullets:
+      - Maintained internal admin tools in Django
+projects: []
+links:
+  - label: GitHub
+    url: https://github.com/sam-stubbs-example

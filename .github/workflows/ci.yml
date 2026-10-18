@@ -1,0 +1,44 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  personal-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - name: Fail on committed real-looking personal data
+        run: uv run python -m jobhunt.devtools.pii_scan
+
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.11", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - name: Offline tests
+        run: uv run pytest
+        env:
+          JOBHUNT_OFFLINE_TESTS: "1"
+      - name: CLI smoke test
+        shell: bash
+        run: |
+          export JOBHUNT_HOME="$RUNNER_TEMP/jobhunt-home"
+          uv run jobhunt doctor --fix --offline --human
+          uv run jobhunt schema --all --out "$RUNNER_TEMP/schema.json"

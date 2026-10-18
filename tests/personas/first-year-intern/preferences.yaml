@@ -1,0 +1,36 @@
+version: 1
+roles:
+  families: [software engineering, data engineering]
+  include_keywords: [intern, internship, explore, freshman, first-year]
+  exclude_keywords:
+    value: [senior, staff, principal, phd]
+    importance: must
+  seniority:
+    value: [internship]
+    importance: must
+employment_types:
+  value: [internship]
+  importance: must
+timing:
+  terms:
+    value: [Summer 2027]
+    importance: must
+  earliest_start: 2027-05-15
+  latest_end: 2027-08-31
+location:
+  places:
+    - name: Chicago, IL
+      radius_miles: 50
+  work_modes: [onsite, hybrid, remote]
+  relocation: true
+  countries:
+    value: [US]
+    importance: must
+pay:
+  min: 20
+  ideal: 35
+  unit: hourly
+company:
+  prefer_industries: [developer tools, education, transit]
+  avoid_industries: [gambling]
+dealbreakers: []

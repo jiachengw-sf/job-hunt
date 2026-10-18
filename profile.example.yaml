@@ -1,0 +1,39 @@
+# profile.yaml — your resume content, which the AI may read for fit scoring and essays.
+# No contact details, address, work authorization or demographics here: those go in answers.yaml
+# (entered in the local form) and are filled into applications by code only.
+# Onboarding drafts this from your resume and you confirm it. Lives at ~/.jobhunt/profile.yaml.
+version: 1
+headline: CHANGE_ME one line about what you're looking for
+resumes:
+  - file: resume.pdf          # inside ~/.jobhunt/resume/
+    label: general
+    default: true
+education:
+  - school: CHANGE_ME
+    degree: BS
+    majors: [Computer Science]
+    minors: []
+    start: 2024-09
+    graduation: 2028-05
+    coursework: [Data Structures, Algorithms]
+    honors: []
+skills:                       # category -> skills
+  languages: [Python, SQL]
+  tools: [Git]
+experience:
+  - org: CHANGE_ME
+    title: CHANGE_ME
+    start: 2025-06
+    end: 2025-08              # null if current
+    location: null
+    bullets:                  # copy these from your resume; essays cite them line by line
+      - CHANGE_ME
+projects:
+  - name: CHANGE_ME
+    summary: CHANGE_ME one line
+    tech: []
+    bullets: []
+    links: []
+links:
+  - label: GitHub
+    url: https://github.com/CHANGE_ME

@@ -1,0 +1,38 @@
+version: 1
+headline: Statistics new grad looking for a full-time data or business analyst role
+resumes:
+  - file: resume.md
+    default: true
+education:
+  - school: Coastal Plains University
+    degree: BS
+    majors: [Statistics]
+    minors: [Economics]
+    start: 2023-09
+    graduation: 2027-05
+    coursework: [Regression Analysis, Probability, Database Systems, Econometrics]
+skills:
+  languages: [SQL, Python, R]
+  tools: [pandas, scikit-learn, Excel, Tableau]
+  methods: [A/B testing, linear regression]
+experience:
+  - org: Harborline Credit Union
+    title: Data Analyst Intern
+    start: 2026-06
+    end: 2026-08
+    bullets:
+      - Built weekly Tableau dashboards of member account openings for the marketing team
+      - Wrote SQL queries against the member data warehouse to answer ad-hoc questions
+  - org: Coastal Plains University Athletics
+    title: Student Analyst
+    start: 2025-09
+    end: null
+    bullets:
+      - Track player workload data in Excel and summarize trends for coaching staff
+projects:
+  - name: City Bike Demand
+    summary: Linear-regression model of daily bike-share demand from public data
+    tech: [Python, pandas, scikit-learn]
+    bullets:
+      - Modeled daily bike-share demand from public weather and ridership data with linear regression
+links: []

@@ -1,0 +1,96 @@
+# answers.yaml — the screening questionnaire and answer bank. Lives at ~/.jobhunt/answers.yaml.
+#
+# Fill this in the local onboarding form, not in an AI chat: the sensitive sections are filled into
+# applications by code and never shown to the model. Every field can be skipped (leave it null);
+# jobhunt never guesses a skipped answer, it asks you.
+version: 1
+
+identity:
+  legal_first_name: CHANGE_ME
+  legal_last_name: CHANGE_ME
+  preferred_name: null
+  pronouns: null                   # optional
+  email: you@example.com
+  phone: null
+  phone_country: US
+  address_line1: null
+  city: null
+  region: null
+  postal_code: null
+  country: US
+  over_18: null                    # "yes" | "no"
+
+links:
+  linkedin: null
+  github: null
+  portfolio: null
+
+education:
+  class_standing: null             # e.g. Sophomore
+  graduation_month: null
+  graduation_year: null
+  gpa: null
+  gpa_scale: 4.0
+  gpa_disclose_at_or_above: null   # GPA is only filled when it's at least this
+
+work_authorization:                # one entry per target country, in the yes/no wording forms use
+  US:
+    authorized: null               # "yes" | "no"
+    sponsorship_now: null
+    sponsorship_future: null
+    student_status: null
+
+availability:
+  start_date: null
+  end_date: null
+  terms: []
+  full_term: null
+  hours_per_week: null
+  notice_period: null
+
+location:
+  willing_to_relocate: null
+  willing_to_travel: null
+
+compensation:
+  expected: null
+  prefer_not_to_say: false
+
+experience:
+  years: null
+  prior_employers: []              # answers "have you worked here before?"
+
+skills:
+  certifications: []
+  spoken_languages: []
+
+standard:
+  relatives_at_company: null
+  non_compete: null
+  security_clearance: null
+  background_check_consent: null   # "yes" | "no" | "decline"
+  drug_test_consent: null
+  sms_consent: null
+
+sourcing:
+  how_did_you_hear: null
+  referral_default: null
+
+# Voluntary self-identification. Each defaults to "Decline to self-identify".
+eeo:
+  gender: Decline to self-identify
+  race_ethnicity: Decline to self-identify
+  hispanic_latino: Decline to self-identify
+  veteran_status: Decline to self-identify
+  disability_status: Decline to self-identify
+  sexual_orientation: Decline to self-identify
+  transgender: Decline to self-identify
+
+# Starting material for essays. Never auto-filled into a form.
+base_answers:
+  bio: null
+  why_field: null
+  project: null
+
+# Canonical questions. A new wording reuses an answer only after you confirm it once.
+bank: []

@@ -1,0 +1,20 @@
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+dist/
+build/
+*.egg-info/
+.DS_Store
+
+# Personal data never lives in the repo. These patterns are a backstop:
+# the real data directory is ~/.jobhunt/ (or $JOBHUNT_HOME).
+.jobhunt/
+/profile.yaml
+/preferences.yaml
+/answers.yaml
+/watchlist.yaml
+/config.yaml
+*.db
+.pii-denylist

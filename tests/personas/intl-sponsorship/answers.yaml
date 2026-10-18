@@ -1,0 +1,49 @@
+version: 1
+identity:
+  legal_first_name: Mei
+  legal_last_name: Testwell
+  email: mei.testwell@example.com
+  phone: "617-555-0122"
+  phone_country: US
+  city: Lakeview
+  region: MA
+  country: US
+  over_18: "yes"
+links:
+  linkedin: https://linkedin.com/in/mei-testwell-example
+education:
+  class_standing: Graduate
+  graduation_month: 12
+  graduation_year: 2027
+work_authorization:
+  US:
+    authorized: "yes"
+    sponsorship_now: "no"
+    sponsorship_future: "yes"
+    student_status: F-1 student; internship work through CPT, post-graduation work through OPT
+  CA:
+    authorized: "no"
+    sponsorship_now: "yes"
+    sponsorship_future: "yes"
+availability:
+  start_date: 2027-05-17
+  end_date: 2027-08-27
+  terms: [Summer 2027]
+  full_term: "yes"
+  hours_per_week: 40
+location:
+  willing_to_relocate: "yes"
+compensation:
+  expected: "$40/hour"
+experience:
+  years: 1
+  prior_employers: [Brightpath Analytics]
+skills:
+  spoken_languages: [English, Mandarin]
+standard:
+  relatives_at_company: "no"
+  non_compete: "no"
+  security_clearance: none
+  background_check_consent: "yes"
+sourcing:
+  how_did_you_hear: Job board

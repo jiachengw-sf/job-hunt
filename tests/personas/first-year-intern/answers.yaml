@@ -1,0 +1,56 @@
+version: 1
+identity:
+  legal_first_name: Riley
+  legal_last_name: Fixture
+  pronouns: they/them
+  email: riley.fixture@example.com
+  phone: "312-555-0101"
+  phone_country: US
+  city: Northfield
+  region: IL
+  country: US
+  over_18: "yes"
+links:
+  github: https://github.com/riley-fixture-example
+education:
+  class_standing: Freshman
+  graduation_month: 5
+  graduation_year: 2030
+  gpa: 3.7
+  gpa_scale: 4.0
+  gpa_disclose_at_or_above: 3.3
+work_authorization:
+  US:
+    authorized: "yes"
+    sponsorship_now: "no"
+    sponsorship_future: "no"
+availability:
+  start_date: 2027-05-24
+  end_date: 2027-08-20
+  terms: [Summer 2027]
+  full_term: "yes"
+  hours_per_week: 40
+location:
+  willing_to_relocate: "yes"
+compensation:
+  prefer_not_to_say: true
+experience:
+  years: 0
+standard:
+  relatives_at_company: "no"
+  non_compete: "no"
+  background_check_consent: "yes"
+  sms_consent: "no"
+sourcing:
+  how_did_you_hear: Company website
+base_answers:
+  bio: First-year CS student at Northfield State who likes building small tools people use every day.
+  why_field: I like turning everyday annoyances, like waiting for a campus shuttle, into small programs that fix them.
+  project: I built a campus bus tracker in Flask that reads the transit agency's public feed.
+bank:
+  - key: start.summer_availability
+    question: Are you available for the full 10-12 week summer internship?
+    answer: "yes"
+    wordings:
+      - Are you available for the full 10-12 week summer internship?
+    options: ["Yes"]

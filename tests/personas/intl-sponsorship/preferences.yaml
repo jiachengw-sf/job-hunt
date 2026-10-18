@@ -1,0 +1,28 @@
+version: 1
+roles:
+  families: [software engineering, machine learning engineering]
+  include_keywords: [intern, internship, co-op]
+  exclude_keywords: [senior, staff, manager]
+  seniority:
+    value: [internship]
+    importance: must
+employment_types:
+  value: [internship, co-op]
+  importance: must
+timing:
+  terms:
+    value: [Summer 2027]
+    importance: must
+location:
+  work_modes: [onsite, hybrid]
+  relocation: true
+  countries:
+    value: [US, CA]
+    importance: must
+pay:
+  min: 30
+  unit: hourly
+company:
+  sizes: [startup, mid-size, large]
+dealbreakers:
+  - Roles that require U.S. citizenship or a security clearance

@@ -1,0 +1,37 @@
+version: 1
+roles:
+  families: [data analytics, business intelligence]
+  include_keywords: [analyst, analytics, new grad, entry level]
+  exclude_keywords:
+    value: [senior, lead, manager, intern]
+    importance: must
+  seniority:
+    value: [new_grad, entry]
+    importance: must
+employment_types:
+  value: [full-time]
+  importance: must
+timing:
+  earliest_start:
+    value: 2027-06-01
+    importance: must
+location:
+  places:
+    - name: Boston, MA
+      radius_miles: 30
+    - name: New York, NY
+      radius_miles: 20
+  work_modes: [hybrid, onsite]
+  relocation: false
+  countries:
+    value: [US]
+    importance: must
+pay:
+  value:
+    min: 65000
+    ideal: 80000
+    unit: annual
+  importance: must
+company:
+  prefer_industries: [fintech, healthcare, sports]
+dealbreakers: []

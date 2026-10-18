@@ -1,0 +1,49 @@
+version: 1
+identity:
+  legal_first_name: Sam
+  legal_last_name: Stubbs
+  preferred_name: Sam
+  email: sam.stubbs@example.com
+  phone: "720-555-0177"
+  phone_country: US
+  city: Granite Valley
+  region: CO
+  country: US
+  over_18: "yes"
+links:
+  github: https://github.com/sam-stubbs-example
+work_authorization:
+  US:
+    authorized: "yes"
+    sponsorship_now: "no"
+    sponsorship_future: "no"
+availability:
+  notice_period: 3 weeks
+location:
+  willing_to_relocate: "no"
+  willing_to_travel: Quarterly team offsites only
+compensation:
+  expected: "$215,000 base"
+experience:
+  years: 10
+  prior_employers: [Parcelwise, Ledgerly]
+standard:
+  relatives_at_company: "no"
+  non_compete: "no"
+  security_clearance: none
+  background_check_consent: "yes"
+sourcing:
+  how_did_you_hear: Company website
+  referral_default: none
+eeo:
+  veteran_status: I am not a protected veteran
+base_answers:
+  bio: Backend engineer with ten years building payment and logistics APIs in Go, Python and Java.
+bank:
+  - key: work.remote_timezone
+    question: Can you work core hours in a US time zone?
+    answer: "yes"
+    wordings:
+      - Can you work core hours in a US time zone?
+      - Are you able to overlap with US Eastern business hours?
+    options: ["Yes", "Yes, I can"]
