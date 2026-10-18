@@ -230,7 +230,7 @@ def check_browser() -> Check:
         return Check(
             name="browser",
             status="warn",
-            summary="Playwright not installed (needed for pre-fill, Milestone 4)",
+            summary="Playwright not installed (needed for `jobhunt prefill` and Ashby forms)",
             fix="Reinstall with the browser extra: `uv tool install 'jobhunt[browser]'`.",
         )
     chrome = find_chrome()

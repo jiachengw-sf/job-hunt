@@ -32,6 +32,8 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: uv sync --locked
       - run: uv run ruff check .
+      - name: Browser for the pre-fill tests (they skip without one)
+        run: uv run playwright install --with-deps chromium
       - name: Offline tests
         run: uv run pytest
         env:
@@ -48,4 +50,5 @@ jobs:
           uv run jobhunt fetch --fixtures tests/fixtures/sources/base --human
           uv run jobhunt run --fixtures tests/fixtures/sources/base --human
           uv run jobhunt jobs --gated --human
+          uv run jobhunt prefill --dry-run --human
           uv run jobhunt eval-fit --out "$RUNNER_TEMP/eval-fit.json"
