@@ -1,0 +1,82 @@
+# Canonical question key -> known wordings of that question on real application forms.
+# A label whose normalized text equals one of these wordings maps to the key without asking.
+# Anything merely similar is only a *candidate*: the user confirms it once (`jobhunt answers
+# confirm`), and the confirmed wording is saved to answers.yaml. Never add a wording whose answer
+# could differ from the key's (e.g. "now" vs "in the future" for sponsorship).
+# The job's company name is replaced by "company" before matching ("worked at Acme" -> "worked
+# at company").
+
+identity.first_name: [first name, legal first name, given name, first name legal]
+identity.last_name: [last name, legal last name, surname, family name, last name legal]
+identity.full_name: [full name, name, legal name, full legal name, your name]
+identity.preferred_name: [preferred name, preferred first name, what name do you prefer to go by, nickname]
+identity.pronouns: [pronouns, your pronouns, preferred pronouns, what are your pronouns]
+identity.email: [email, email address, e mail, your email]
+identity.phone: [phone, phone number, mobile phone, mobile number, cell phone, telephone]
+identity.address: [address, street address, home address, mailing address]
+identity.city_region: [what city and state do you reside in, city and state, in what city and state do you currently reside, if located in the us in what city and state do you reside]
+identity.location: [location, current location, city, where are you located, where are you currently located, location city]
+identity.postal_code: [zip code, postal code, zip]
+identity.country: [country, country of residence, what country do you currently reside in, select the country where you currently reside, which country do you live in]
+identity.over_18: [are you at least 18 years of age, are you 18 years of age or older, are you over 18, are you at least 18 years old]
+
+links.linkedin: [linkedin, linkedin profile, linkedin url, linkedin profile url]
+links.github: [github, github url, github profile]
+links.portfolio: [website, portfolio, portfolio url, personal website, website url, other website]
+
+files.resume: [resume, resume cv, cv, upload your resume]
+files.cover_letter: [cover letter, upload your cover letter]
+
+education.school: [school, university, college, school name, which university are you currently attending or did you last attend, what school do you attend, name of school, university college]
+education.degree: [degree, degree type, highest degree, what degree are you pursuing, level of education, highest level of education]
+education.major: [major, field of study, discipline, area of study, what is your major]
+education.graduation: [graduation date, expected graduation date, anticipated graduation date, when do you expect to graduate, graduation month and year]
+education.graduation_year: [graduation year, expected graduation year, class year, what year will you graduate]
+education.gpa: [gpa, cumulative gpa, what is your gpa, overall gpa]
+education.class_standing: [current year in school, year in school, class standing, what is your current year of study, academic year]
+
+work_auth.authorized: [are you legally authorized to work in the united states, are you legally authorized to work in the country in which you are applying, are you authorized to work in the us, are you legally authorized to work in this country, are you legally eligible to work in the united states, are you legally authorized to work in the country for which you are applying, are you currently authorized to work in the united states]
+work_auth.sponsorship_now: [do you currently require visa sponsorship, do you now require sponsorship for employment visa status, will you require sponsorship to work at this time]
+work_auth.sponsorship_future: [will you in the future require sponsorship for employment visa status, will you require visa sponsorship in the future]
+work_auth.sponsorship: [will you now or in the future require sponsorship for employment visa status, will you now or in the future require sponsorship for employment visa status e g h 1b visa status, will you now or in the future require visa sponsorship, do you now or will you in the future require sponsorship, will you require company to sponsor you for a work permit now or in the future, will you now or in the future require employer sponsorship, will you now or in the future require sponsorship for employment visa status e g h 1b etc]
+work_auth.citizen: [are you a us citizen, are you a citizen of the united states, are you a united states citizen]
+
+availability.start_date: [start date, earliest start date, when can you start, when are you available to start, desired start date]
+availability.end_date: [end date, internship end date, when would your internship end]
+availability.full_term: [are you available for the full duration of the internship, are you able to commit to the full internship]
+availability.hours_per_week: [how many hours per week are you available, hours per week, how many hours can you work per week]
+availability.notice_period: [notice period, what is your notice period]
+
+location.relocate: [are you willing to relocate, would you be willing to relocate, are you open to relocation, are you open to relocating]
+location.travel: [are you willing to travel, willingness to travel]
+
+compensation.expected: [expected salary, desired salary, salary expectations, what are your salary expectations, compensation expectations, desired compensation, expected compensation]
+
+experience.years: [years of experience, how many years of experience do you have, how many years of professional experience do you have, total years of experience]
+experience.current_employer: [current company, current employer, who is your current or previous employer, most recent employer, company, current or most recent employer]
+experience.current_title: [current title, current job title, what is your current or previous job title, most recent job title, job title]
+experience.previously_employed: [have you ever been employed by company, have you previously worked at company, have you ever worked for company, have you worked at company before, have you ever been employed by company or a company affiliate]
+
+skills.languages: [what languages do you speak, languages spoken, which languages do you speak fluently]
+
+standard.relatives: [do you have any relatives working at company, are you related to anyone who works at company, do you have family members employed by company]
+standard.non_compete: [are you bound by a non compete agreement, are you subject to a non compete, are you subject to any non compete or non solicitation agreements]
+standard.clearance: [do you have an active security clearance, do you hold a security clearance, security clearance, what is your current security clearance level]
+standard.background_check: [are you willing to undergo a background check, do you consent to a background check, are you willing to submit to a background check]
+standard.drug_test: [are you willing to undergo a drug test, are you willing to submit to a drug screen]
+standard.sms_consent: [do you consent to receive text messages, do you consent to receiving text messages, do you opt in to receive text messages, sms consent]
+
+sourcing.how_did_you_hear: [how did you hear about us, how did you hear about this job, how did you hear about this opportunity, please tell us how you heard about this opportunity, how did you hear about this position, how did you find this job, source, how did you learn about this role]
+sourcing.referral: [were you referred, referral, who referred you, were you referred by a company employee, name of referrer]
+
+eeo.gender: [gender, what is your gender, gender identity, how would you describe your gender identity]
+eeo.race: [race, race ethnicity, what is your race, ethnicity, please identify your race]
+eeo.hispanic: [are you hispanic latino, are you hispanic or latino, hispanic latino]
+eeo.veteran: [veteran status, veteranstatus, protected veteran status, are you a protected veteran]
+eeo.disability: [disability status, disabilitystatus, do you have a disability, voluntary self identification of disability]
+eeo.sexual_orientation: [sexual orientation, how would you describe your sexual orientation]
+eeo.transgender: [do you identify as transgender, are you transgender]
+
+essay.why_company: [why do you want to work at company, why company, why are you interested in company, why are you interested in this role, what interests you about company, why do you want to join company, what excites you about company]
+essay.project: [tell us about a project you are proud of, what has been your favorite project or proudest accomplishment why, describe a project you have worked on]
+essay.additional: [additional information, anything else you would like to share, is there anything else you would like us to know, add a cover letter or anything else you want to share]
