@@ -78,6 +78,8 @@ src/jobhunt/
                   requirement extraction + pre-match, Stage 3 band/preference/priority, judgment
                   task files, eval-fit
   tracker/        states.yml state machine, XLSX / Google Sheets backends, three-way sync
+  prefill/        answers.json + validator, submit guard (click wrapper, route guard), browser,
+                  Greenhouse / Lever / Ashby adapters, review (highlights, screenshots), driver
   doctor.py       environment checks
   models/         pydantic models for config, profile, preferences, answers, watchlist
   store/          SQLite schema + numbered migrations (events table is append-only)
@@ -86,8 +88,21 @@ src/jobhunt/
   devtools/       pii_scan (CI personal-data check)
 tests/personas/   four synthetic users — use these, never real data
 tests/fixtures/sources/  offline snapshots of every source (`jobhunt fetch --fixtures <dir>`)
+tests/fixtures/forms/    form specs (`overlay/`) and browser pages (`pages/`), from make_forms.py
 evals/fit/        seed fit eval set: 40 synthetic postings x 4 personas (`jobhunt eval-fit`)
 ```
+
+## Pre-fill rules
+
+- Values come only from answers.json, which code builds from the profile and bank and validates
+  against the form (required present, options exact, limits, files exist) before a tab opens.
+- Adapters click only through `prefill/guard.py:safe_click`; a test fails on any other click,
+  key press or submit call in `prefill/`. Never press Enter in a field.
+- During the fill, the route guard blocks every non-GET request except the adapter's allowlist,
+  and always blocks its submit endpoints. It is released only at handoff.
+- A field that can't be found, matched or read back is highlighted and logged, never guessed.
+  Envelopes carry field ids, labels and statuses, never values.
+- Live testing never clicks a submit control or lets a submit request through.
 
 ## Fit and tracker rules
 

@@ -367,7 +367,149 @@ Verified runs (2026-10-18):
   the browser path is exercised only live. CI has still not run (no GitHub remote), and Windows
   is untested.
 
-## Milestone 4 — Pre-fill (next)
+## Milestone 4 — Pre-fill ✅ (2026-10-18)
 
-Adapters (Greenhouse, Lever, Ashby) using the cached form specs and `classify.display_value`,
-all three submit-guard layers with tests, read-back, screenshots, confirmation detection.
+Done when a batch of fixture and live forms fills correctly, stops before Submit, read-back
+matches, and the guard tests pass. Met (see "Verified runs" below). The one caveat is that live
+forms were filled field by field through a scratch harness, because none of the sampled live
+postings was Ready for a test persona. The full `jobhunt prefill` flow ran on fixture forms,
+both headless and headed.
+
+- **Values (`prefill/values.py`).** For each Ready job, code builds `answers.json` from the
+  classifier's resolution, the profile and the bank (`classify.fill_value`). The model never
+  picks a value.
+  - Each field gets an action: `fill`, `recommend` (Lever radios and checkboxes), `human`
+    (attestations, consents, unreviewed EEO, essays), or `skip` (optional and unanswered).
+  - The validator checks the sheet against the form spec before a browser opens: required
+    fields are present, choice values are among the form's own options, text fits its limit,
+    files exist, and no question id comes from another job. Zero-width and bidi characters are
+    stripped.
+  - The file is owner-only under `work/prefill/<job>/`.
+- **Submit guard, three layers (`prefill/guard.py`).**
+  1. No command or option anywhere is named submit (contract test).
+  2. `safe_click` refuses `type=submit`, untyped `<button>`s inside a form, and buttons or links
+     saying submit / apply / send / finish / complete. Options are exempt, so an option labeled
+     "Complete" still works. `safe_press` refuses Enter. A source test fails on any other click,
+     key press or submit call in `prefill/`.
+  3. `RouteGuard` (on the page, installed before the first request) blocks **every**
+     non-GET/HEAD/OPTIONS request during the fill, except the adapter's allowlist. Known submit
+     endpoints stay blocked even when an allow pattern matches. It is released only at handoff.
+     This is stricter than the spec's "abort known submit endpoints" (decided at plan approval).
+     Contexts block service workers, because `page.route` can't see their requests.
+  - Tests prove a scripted `fetch` to the submit URL and a scripted `form.submit()` never reach
+    the server during the fill, and that the human's own click does after handoff.
+- **Browser (`prefill/browser.py`).** `launch_persistent_context`, headed, with real Chrome when
+  installed (`prefill.browser: auto`) and Playwright's Chromium otherwise. Profile at
+  `~/.jobhunt/browser-profile`. No stealth plugins, proxies, extra args or spoofed headers.
+- **Adapters (`prefill/adapters/`).**
+  - **Greenhouse:** react-select comboboxes (type, then click the exact option);
+    `#candidate-location` counts only after clicking an option; the phone country is set
+    before the number; per-job `question_*` ids with no label fallback (only demographic
+    questions, which have no DOM id, are found by exact label); resume through `#resume`, with
+    the `accept` list checked (a `.md` resume is reported, not uploaded); confirmation is
+    `application_id=` in the URL.
+  - **Lever:** text, textarea, native select and location (`/searchLocations` dropdown). The
+    resume goes first and the engine waits for `/parseResume`, which autofills fields. Radios
+    and checkboxes are recommended, never ticked. Confirmation is `/thanks` or the submitted
+    text.
+  - **Ashby:** fields located by `[data-field-path]` (there is no `<form>`). The resume goes
+    first and the engine waits for `ApiAutofillApplicationFormWithUploadedResume`, then fills
+    or overwrites. Yes/no buttons (`aria-pressed`), radio and checkbox groups by label, and a
+    location combobox. Confirmation is the success container or the submitted text.
+  - Location answers pick an option only when exactly one names the same city and region
+    (state abbreviations or names); otherwise the field is left for you.
+  - Every value is read back after all writes. Phone numbers compare by digits, files by name
+    on the page, choices by exact text.
+  - Fields that are missing, unmatched, refused or rejected, plus empty optional fields the ATS
+    autofilled from the resume, come back as statuses. Nothing is guessed.
+- **Review (`prefill/review.py`).** Fields that need you are outlined: red for required
+  problems, amber for review. Each gets a note next to it: a plain `<div>`, never a form
+  control, showing the recommended or expected value on your own screen only. A banner says
+  jobhunt never submits. A full-page screenshot goes to `work/screens/` (owner-only).
+  `TabReview` returns `ready_for_review` with filled vs. to-fill counts and the needs-you list:
+  ids, labels and statuses, never values.
+- **Driver (`prefill/driver.py`) and `jobhunt prefill`.**
+  - The command re-classifies, validates and writes each `answers.json`. It then starts a
+    detached driver and returns at once, as `setup form` does.
+  - The driver fills up to `prefill.batch_size` (5) tabs, marks each job **Prefilled**, releases
+    that tab's guard, then watches the open tabs.
+  - When a tab shows the confirmation after the human submits, the job is marked **Applied**
+    (`agent_advance`) with `applied_on` set to today. A tab closed without submitting stays
+    Prefilled.
+  - Command flags: `--status`, `--stop`, `--batch`, and `--dry-run` (builds and validates
+    without a browser). `--fixtures DIR` (offline pages via `FixtureRouter`) and `--headless`
+    are for testing. Only one batch runs at a time (a second start exits 7). Store writes take
+    the file lock only for each update.
+  - New config: `prefill.browser`, `parse_wait_s`, `watch_hours`.
+- **Fixtures.** `make_forms.py` also builds `tests/fixtures/forms/pages/`: a synthetic browser
+  page for every Greenhouse, Lever and Ashby fixture job. Each is built from the same questions
+  as the form specs, with small scripts (`js/`) that copy the live widgets and quirks
+  (react-select, location autocomplete, phone country, S3 upload, resume parse that overwrites
+  fields, Ashby draft autosave, JS or form-POST submit), plus the endpoint responses.
+  Greenhouse template A gained a location question.
+- **CI** installs Playwright Chromium, so the browser tests run there (they skip without a
+  browser), and smoke-tests `prefill --dry-run`.
+- **498 offline tests** (macOS, Python 3.13), about 80s including the browser tests. ruff and
+  the pii scan are clean.
+
+Verified runs (2026-10-18):
+
+- **Fixture batch, every persona.** All 12 persona × ATS combinations (Greenhouse, Lever and
+  Ashby template-A forms) fill with every `fill` field read back equal. No submit request
+  reaches the fixture server during the fill. After handoff the human's click submits, and
+  confirmation is detected.
+  - The real detached driver (headless) fills a batch, marks the jobs Prefilled, and `--stop`
+    leaves them Prefilled.
+  - The in-process test submits one tab and closes another: Applied with the date vs. still
+    Prefilled.
+- **Headed, real Chrome (`first-year-intern`, fixtures).** `jobhunt prefill` opened 4 tabs
+  (2 Greenhouse, 1 Lever, 1 Ashby). All reached `ready_for_review` with 7/7, 8/8, 9/9 and 9/9
+  read back. Ashby knockout questions were filled and flagged, Lever radios recommended, EEO
+  left to the user. `--stop` closed the browser; the jobs stayed Prefilled. 11 POSTs reached
+  the fixture server (uploads, parses, autosaves), and none was a submit.
+- **Live forms (synthetic `intl-sponsorship` with its synthetic PDF resume; resume uploads
+  approved at plan time).** 5 real postings: 2 Greenhouse, 1 Lever, 2 Ashby. Inspected live:
+  none was Ready, since each had company-specific questions. A scratch harness ran the same
+  adapters and guard headless on their answered fields, then closed each tab without
+  submitting.
+  - After the fixes below: 8/8, 6/6, 7/7, 6/6 and 6/6 filled and read back equal, including
+    phone country, location autocomplete on all three ATSs, and resume uploads.
+  - Requests that left: Greenhouse's S3 upload; Lever's `parseResume`, hCaptcha config and
+    Cloudflare check; Ashby's reads, upload chain and draft autosave. Blocked: only analytics.
+    **No submit control was clicked, and no request went to a submit endpoint.**
+  - With the persona's fictional town, location was correctly left for the user on every ATS
+    rather than guessed.
+
+### Notes and decisions
+
+- **Live findings, fixed and covered by fixtures/tests:**
+  - Greenhouse ignores input until the page hydrates, and its phone-country list opens only
+    once you type.
+  - Ashby saves drafts server-side (`ApiSetFormValue`, and `ApiSetFormValueToFile` attaches the
+    upload). Blocking them left the resume unattached, and could break the human's submit.
+    They are allowed; they are not submits.
+  - CAPTCHA and bot-check widgets (hCaptcha config, reCAPTCHA reload, Cloudflare challenge
+    platform) are allowed to load so the human's own submit works. jobhunt never solves or
+    touches them.
+- **Known gap:** Greenhouse's API lists the EEO `race` question, but the page first shows "Are
+  you Hispanic/Latino?" (`hispanic_ethnicity`) and reveals Race only after an answer. That
+  field isn't in the form spec, so it is left alone but not outlined. Fix it in the Greenhouse
+  reader, or flag page fields missing from the spec.
+- **Not verified live:** the confirmation pages, since nothing may be submitted.
+  - Greenhouse's `application_id=` comes from the spec.
+  - Lever's `/thanks` and Ashby's success container are educated guesses with text fallbacks.
+  - Watch the first real submissions; if a confirmation is missed, the job stays Prefilled and
+    `jobhunt mark <job> Applied` fixes it.
+- Ashby's resume autofill didn't fire for the minimal synthetic PDF on the live forms; the
+  engine waits up to `parse_wait_s` and then fills anyway.
+- Essay text from approved drafts is Milestone 5. Until then essay fields are always the
+  user's, and Essay-class jobs aren't pre-filled.
+- Playwright's sync API allows one instance per thread, so tests that run the real driver use a
+  subprocess, and in-process tests share one session browser.
+- Windows is untested, and CI has still not run (no GitHub remote).
+
+## Milestone 5 — Skills (next)
+
+All seven skills, ingest validation with quote and provenance checks, essays with the reviewer
+pass (approved drafts feed pre-fill), research with budgets, outreach, notifications, scheduler,
+`skills install`. The apply skill drives `jobhunt prefill` and relays its `user_actions`.
