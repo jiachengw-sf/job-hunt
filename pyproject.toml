@@ -20,11 +20,13 @@ dependencies = [
   "click>=8.1",
   "openpyxl>=3.1.5",
   "pydantic>=2.7",
+  "pypdf>=5.0",
+  "python-docx>=1.1",
   "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
-# Needed from Milestone 4 (pre-fill). `jobhunt doctor` reports when it is missing.
+# Reads Ashby application forms (Milestone 3) and pre-fills (Milestone 4). `jobhunt doctor` reports when it is missing.
 browser = ["playwright>=1.45"]
 # Embedding recall (sentence-transformers pulls in PyTorch, ~1-2 GB). Without it recall is BM25 only.
 recall = ["sentence-transformers>=3.0"]
@@ -37,6 +39,7 @@ jobhunt = "jobhunt.cli.main:main"
 [dependency-groups]
 dev = [
     "gspread>=6.2.1",
+    "playwright>=1.45",
     "pytest>=8",
     "ruff>=0.6",
 ]
@@ -56,3 +59,4 @@ src = ["src", "tests"]
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
 ignore = ["RUF012", "RUF001", "RUF002", "RUF003"]  # en dashes and curly quotes are matched on purpose
+
