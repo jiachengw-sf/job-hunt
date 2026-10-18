@@ -65,6 +65,37 @@ def test_greenhouse_parse():
     assert s.description and "robot" in s.description
 
 
+def test_greenhouse_adds_hispanic_question_before_race():
+    s = gh("northwind", "1004")
+    ids = [f.id for f in s.fields]
+    assert ids.index("hispanic_ethnicity") == ids.index("race") - 1
+    by = {f.id: f for f in s.fields}
+    hisp, race = by["hispanic_ethnicity"], by["race"]
+    assert hisp.label == "Are you Hispanic/Latino?" and hisp.section == "eeo"
+    assert hisp.options == ["Yes", "No", "Decline To Self Identify"]
+    assert hisp.required == race.required and hisp.shown_if is None
+    assert race.shown_if and race.shown_if.field == "hispanic_ethnicity"
+    assert race.shown_if.options == ["No"]
+    # no race question, no Hispanic question
+    data = json.loads((GH / "northwind" / "jobs" / "1004.json").read_text())
+    for block in data["compliance"]:
+        block["questions"] = [q for q in block["questions"] if q["label"] != "Race"]
+    assert "hispanic_ethnicity" not in {f.id for f in greenhouse.parse(data).fields}
+
+
+def test_greenhouse_hispanic_question_is_eeo():
+    ctx, matcher, _ = ctx_for("intl-sponsorship", "Northwind Robotics")
+    spec = gh("northwind", "1004")
+    c = classify(spec, ctx, matcher, eeo_confirmed=False)
+    hisp = next(f for f in c.fields if f.id == "hispanic_ethnicity")
+    assert hisp.key == "eeo.hispanic" and hisp.sensitive
+    assert hisp.resolution == "human_only"
+    assert any("self-identification" in h for h in hisp.human)
+    c2 = classify(spec, ctx, matcher, eeo_confirmed=True)
+    h2 = next(f for f in c2.fields if f.id == "hispanic_ethnicity")
+    assert display_value(h2, ctx, matcher) == "Decline To Self Identify"
+
+
 def test_lever_parse_reads_cards_and_captcha():
     s = lv("bluefin", "4d1c2e7a-0b6f-4c1e-9a7d-2f3b5c6d7e02")
     by = {f.label: f for f in s.fields}

@@ -2,6 +2,11 @@
 
 Public, no auth. Returns each question's label, ``required`` flag, field types and options, plus
 the ``location_questions``, ``compliance`` (EEOC) and ``demographic_questions`` blocks.
+
+The page builds one EEOC field the API doesn't list (verified live, 2026-10-18): from the
+``race`` question it first shows "Are you Hispanic/Latino?" (``hispanic_ethnicity``). Yes sets
+race to Hispanic or Latino and Decline sets it to Decline To Self Identify, both without showing
+it; only No reveals the Race picker.
 """
 
 from __future__ import annotations
@@ -10,11 +15,13 @@ from typing import Any
 
 from jobhunt.discovery.sources import _greenhouse_pay
 from jobhunt.discovery.text import html_to_text
-from jobhunt.forms.model import FieldType, FormError, FormField, FormSpec, one_line
+from jobhunt.forms.model import FieldType, FormError, FormField, FormSpec, ShownIf, one_line
 from jobhunt.http import HttpClient, TransportError
 
 API = "https://boards-api.greenhouse.io/v1/boards"
 
+HISPANIC = "hispanic_ethnicity"
+HISPANIC_OPTIONS = ["Yes", "No", "Decline To Self Identify"]
 _TYPES: dict[str, FieldType] = {
     "input_text": "text",
     "textarea": "textarea",
@@ -66,6 +73,18 @@ def _question(q: dict[str, Any], section: str = "main") -> FormField | None:
     )
 
 
+def _hispanic(race: FormField) -> FormField:
+    """The question the page shows before Race, with Race's own required flag."""
+    return FormField(
+        id=HISPANIC,
+        label="Are you Hispanic/Latino?",
+        type="select",
+        required=race.required,
+        options=list(HISPANIC_OPTIONS),
+        section="eeo",
+    )
+
+
 def parse(data: Any, apply_url: str | None = None) -> FormSpec:
     if not isinstance(data, dict) or "questions" not in data:
         raise FormError("Greenhouse response has no questions (was ?questions=true honored?)")
@@ -79,6 +98,9 @@ def parse(data: Any, apply_url: str | None = None) -> FormSpec:
     for block in data.get("compliance") or []:
         for q in block.get("questions") or []:
             if f := _question(q, "eeo"):
+                if f.id == "race":
+                    out.append(_hispanic(f))
+                    f.shown_if = ShownIf(field=HISPANIC, options=["No"])
                 out.append(f)
     demo = data.get("demographic_questions") or {}
     for q in demo.get("questions") or []:

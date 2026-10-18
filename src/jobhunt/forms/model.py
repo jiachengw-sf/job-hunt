@@ -27,6 +27,11 @@ FieldType = Literal[
 Section = Literal["main", "eeo", "survey", "consent"]
 
 
+class ShownIf(BaseModel):
+    field: str = Field(description="The id of the field that reveals this one.")
+    options: list[str] = Field(description="The answers to that field that reveal this one.")
+
+
 class FormField(BaseModel):
     id: str = Field(description="The ATS's field name or id. Differs per job; never reuse.")
     label: str
@@ -36,6 +41,9 @@ class FormField(BaseModel):
     options: list[str] = Field(default_factory=list)
     max_length: int | None = None
     section: Section = "main"
+    shown_if: ShownIf | None = Field(
+        None, description="The page shows this field only after another one is answered so."
+    )
 
 
 class FormSpec(BaseModel):
