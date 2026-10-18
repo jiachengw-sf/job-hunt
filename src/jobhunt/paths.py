@@ -76,6 +76,20 @@ class Paths:
         return self.work / "screens"
 
     @property
+    def packets(self) -> Path:
+        """Hand-off packets (local HTML pages)."""
+        return self.work / "packets"
+
+    @property
+    def onboarding(self) -> Path:
+        """Resume text (redacted), the draft profile, and the form's state."""
+        return self.work / "onboarding"
+
+    @property
+    def profile_draft(self) -> Path:
+        return self.onboarding / "profile.draft.yaml"
+
+    @property
     def out(self) -> Path:
         """Where oversized command output is spilled."""
         return self.work / "out"
@@ -100,6 +114,8 @@ class Paths:
             self.tasks,
             self.results,
             self.screens,
+            self.packets,
+            self.onboarding,
             self.out,
             self.cache,
             self.browser_profile,

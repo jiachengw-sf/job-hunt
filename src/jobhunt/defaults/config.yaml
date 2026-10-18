@@ -56,6 +56,12 @@ volume_guard:
   max_applications_per_company: 2   # warn before the next one
   window_days: 90
 
+forms:
+  max_per_run: 30            # application forms `jobhunt run` inspects (top priorities first; 0 = off)
+  spec_max_age_days: 7       # re-read a cached form after this many days
+  ashby_browser: true        # Ashby forms load in a headless browser (read-only; needs the [browser] extra)
+  candidate_threshold: 0.6   # label similarity that suggests a known question (the user confirms once)
+
 prefill:
   batch_size: 5
 

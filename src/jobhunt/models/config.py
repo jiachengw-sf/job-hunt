@@ -115,6 +115,17 @@ class VolumeGuardConfig(Strict):
     window_days: int = Field(90, ge=1)
 
 
+class FormsConfig(Strict):
+    max_per_run: int = Field(30, ge=0, description="Forms inspected per `run` (0: off).")
+    spec_max_age_days: int = Field(7, ge=0, description="Re-read a cached form after this.")
+    ashby_browser: bool = Field(
+        True, description="Read Ashby forms with a headless browser (needs the [browser] extra)."
+    )
+    candidate_threshold: float = Field(
+        0.6, ge=0, le=1, description="Similarity that makes a label a candidate (asks the user)."
+    )
+
+
 class PrefillConfig(Strict):
     batch_size: int = Field(5, ge=1, le=20)
 
@@ -156,6 +167,7 @@ class Config(Strict):
     schedule: ScheduleConfig = Field(default_factory=ScheduleConfig)
     fit: FitConfig = Field(default_factory=FitConfig)
     volume_guard: VolumeGuardConfig = Field(default_factory=VolumeGuardConfig)
+    forms: FormsConfig = Field(default_factory=FormsConfig)
     prefill: PrefillConfig = Field(default_factory=PrefillConfig)
     followups: FollowupsConfig = Field(default_factory=FollowupsConfig)
     research: ResearchConfig = Field(default_factory=ResearchConfig)

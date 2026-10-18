@@ -149,7 +149,9 @@ def test_unknown_keys_rejected():
 
 def test_eeo_defaults_to_decline():
     a = Answers.model_validate({})
-    assert all(v == DECLINE_EEO for v in a.eeo.model_dump().values())
+    eeo = a.eeo.model_dump()
+    assert eeo.pop("confirmed") is False
+    assert all(v == DECLINE_EEO for v in eeo.values())
 
 
 def test_sensitive_fields_default_to_unset_not_guessed():

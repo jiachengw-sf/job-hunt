@@ -109,7 +109,10 @@ class Sourcing(Strict):
 
 
 class EEO(Strict):
-    """Voluntary. Every field defaults to declining."""
+    """Voluntary. Every field defaults to declining. Until the user reviews this section in the
+    local form (``confirmed``), EEO blocks are left for the user to fill on every application."""
+
+    confirmed: bool = False
 
     gender: str = DECLINE_EEO
     race_ethnicity: str = DECLINE_EEO
@@ -129,9 +132,13 @@ class BaseAnswers(Strict):
 
 
 class BankEntry(Strict):
+    """A canonical question. For a built-in key (e.g. ``work_auth.sponsorship_future``) the answer
+    comes from the typed section above and ``answer`` stays empty; the entry then only records
+    the wordings the user confirmed and the option texts they accept."""
+
     key: str = Field(pattern=r"^[a-z0-9_.]+$", description="Stable canonical key.")
     question: str = Field(description="Canonical wording.")
-    answer: str
+    answer: str | None = None
     wordings: list[str] = Field(
         default_factory=list, description="Every label the user has confirmed maps to this key."
     )
