@@ -238,9 +238,136 @@ Live run (2026-10-18, persona `intl-sponsorship`, real SimplifyJobs feed):
 - Sheets sync is tested against a fake gspread client only (no live spreadsheet available).
 - CI has still not run (no GitHub remote). Windows is untested locally.
 
-## Milestone 3 — Onboarding + answer bank + classifier (next)
+## Milestone 3 — Onboarding + answer bank + classifier ✅ (2026-10-18)
 
-Resume → profile, the local form (preferences + questionnaire; sensitive answers only there),
-bank matching with confirmed reuse, Greenhouse `?questions=true` classification, Lever/Ashby page
-parsing, the four classes, coverage report, hand-off packet. Also store ATS posting descriptions
-for recalled Simplify jobs (see the Milestone 2 notes).
+Done when a new persona finishes onboarding in under 15 minutes and the coverage report runs on 30
+live postings. Met (see "Verified runs" below), with one caveat: the onboarding run was scripted,
+not a person at the keyboard.
+
+- **Resume → profile (`onboarding/resume.py`, `profile.py`).**
+  - `resume add` reads PDF (pypdf), DOCX (python-docx), Markdown or text. It copies the file to
+    `~/.jobhunt/resume/` and drafts `work/onboarding/profile.draft.yaml` by section (education,
+    experience with dates, projects, skills).
+  - Contact details found on the resume go only to the form's pre-fill (`contact.json`,
+    owner-only). The AI tool reads a redacted copy without contact lines or the name.
+  - `profile confirm` refuses drafts that still have placeholders. `profile set` edits one value
+    by path (`experience[0].title`, `--append`, `[a, b]`, `null` removes the key) and validates
+    before writing. `profile show`.
+  - The drafts reproduce every persona's schools, employers and titles from their synthetic PDF
+    and DOCX resumes (`tests/fixtures/resumes/make_resumes.py`).
+- **Local form (`onboarding/form.py`, `server.py`, `jobhunt setup form`).**
+  - One page for `preferences.yaml` and `answers.yaml`. It is declared once, and that declaration
+    drives pre-fill, rendering and parsing.
+  - Every preference has a Must box (default Nice), and every field is optional.
+  - Work-authorization blocks follow the target countries, and US EEO appears when the US is a
+    target. EEO defaults to Decline; until the user ticks "fill these for me" (`eeo.confirmed`),
+    EEO blocks are left to them on every application.
+  - "Questions from your matches" lists `new_questions.yaml`: answer them, or confirm a
+    suggested match.
+  - Saves merge over the existing files and validate against the same models. Opening and saving
+    unchanged is lossless for every persona.
+  - The server binds 127.0.0.1 only. It needs a one-time token, checks Host and Origin, redirects
+    after save, and exits after an idle hour. `setup form` returns the URL at once; `--status`
+    and `--stop` manage it.
+  - Every control has a distinct, linked label.
+- **Answer bank (`bank/`).**
+  - `keys.py` holds about 60 built-in canonical questions and where each answer lives (profile or
+    a typed answers section). Unanswered resolves to None, never a guess.
+  - Sponsorship "now or in the future" combines the two typed answers. "Worked here before?"
+    needs a known employer list. GPA respects the disclosure threshold.
+  - `match.py` tries, in order: the ATS field name, a wording the user confirmed, a curated
+    wording (`defaults/question_synonyms.yaml`), then the user's own bank question. Anything only
+    similar (token and trigram overlap) is a candidate the user confirms once.
+  - Company names normalize to `[Company]`, so one confirmation carries to every employer.
+  - Selects match the form's own option texts, with several accepted texts per answer. Between
+    two lookalike options ("Yes, now" / "Yes, in the future") nothing is chosen. EEO "Decline"
+    finds the form's own decline wording.
+  - Sensitive labels (work authorization and visa status, EEO, pay, criminal history, ...) never
+    go through chat. Commands: `answers show | add | edit | confirm | questions`; `add` refuses
+    sensitive questions and points to the form.
+- **Form readers (`forms/`).** Every reader is read-only.
+  - Greenhouse: `jobs/{id}?questions=true`, including the location, compliance and demographic
+    blocks.
+  - Lever: the server-rendered `/apply` page. Card templates are authoritative for custom
+    questions, and the CAPTCHA on Submit is noted.
+  - Ashby: the hosted page builds its form in JavaScript (an assumption in the plan was wrong
+    here), so it is loaded in headless Chrome or Chromium. jobhunt reads the `ApiJobPosting`
+    response the page itself fetches. A route guard allows only GETs and the page's two
+    read-only queries; nothing is clicked. It needs the `[browser]` extra; without it, Ashby jobs
+    are Manual with a fix hint.
+  - Form specs are cached a week in `form_specs` (migration `0004_forms.sql`).
+- **Classifier (`forms/classify.py`).**
+  - Each field resolves as answered, unanswered, candidate, unknown, option mismatch, too long
+    (character limits are checked), essay, human-only, or skipped (optional).
+  - Classes: Manual (form unreadable or unsupported), Essay (required free text or cover
+    letter), Needs answers, Ready.
+  - Always-human flags: attestations and policy questions, consents, unreviewed EEO, Ashby
+    knockout questions, and Lever radios and checkboxes.
+  - Output carries where a value comes from, never the value.
+- **Commands.**
+  - `inspect [JOB…] [--top N]` defaults to recalled jobs at or above `fit.priority_threshold`.
+    It re-classifies the other cached forms locally (no network) and rebuilds
+    `new_questions.yaml` grouped by normalized wording.
+  - `coverage [--sample 30]` reports the required-field share answered, the top unanswered
+    questions, classes, and the ATS mix ("N% of your matches are on Workday: hand-off
+    packets").
+  - `packet <job>` writes an owner-only local page: apply link, fit, every known answer with copy
+    buttons and character counts, essay prompts, and the human-only fields. Values appear only
+    there.
+  - `run` now classifies the top `forms.max_per_run` jobs (`--no-inspect` skips it).
+- **Milestone 2 gap closed.** Posting text read with a form is stored in `posting_views`, a view
+  rather than a source. Job views use it when the sources carry none, and fit is recomputed.
+  - In the fixtures, the Simplify-only job now gets requirements and a band.
+  - A test proves the view never keeps a job live after its sources close it.
+- **CLI.** Sub-command groups (`jobhunt profile set`; `jobhunt schema profile set`), and outputs
+  serialize by alias. `http` takes an `Accept` header, and `FixtureTransport` serves `.html`
+  pages.
+- **Fixtures.** `tests/fixtures/forms/make_forms.py` builds a synthetic overlay of Greenhouse,
+  Lever and Ashby forms in three templates (Ready / Essay / Needs answers).
+- **378 offline tests** (macOS, Python 3.13). ruff and the pii scan are clean, and the eval-fit
+  floors still pass.
+
+Verified runs (2026-10-18):
+
+- **Live coverage.**
+  - Setup: persona `intl-sponsorship`, the live Simplify feed, and a temporary watchlist of four
+    real boards (Greenhouse, Lever, two Ashby). 6,127 fetched; 181 recalled.
+  - `coverage --sample 30` took 37s: 27 forms read (25 Greenhouse, 2 Lever, 3 Ashby through the
+    browser). The 3 Manual are links on a custom domain with no Greenhouse board token.
+  - 59% of required fields were covered (225 of 382), plus 13 required essays. Classes: 21 needs
+    answers, 6 essay, 3 manual.
+  - Top unanswered questions: remote-work plans, location-specific work authorization, target
+    countries, location-specific sponsorship (offered as a candidate for
+    `work_auth.sponsorship`), and WhatsApp opt-in.
+  - ATS mix of matches: 74% Greenhouse, 10% unrecognized, 5% Workday, 4% Lever, 3% Ashby.
+- **New-persona onboarding (`newgrad-analyst`, from its DOCX resume).** Scripted run, with the
+  form filled in through the browser pane:
+  - `resume add`, tidy the draft (headline, skill groups), `profile confirm`, `setup form`
+    (contact and education pre-filled; about 30 fields typed), Save, `doctor`, first `run`,
+    `coverage`.
+  - About 3 minutes end to end; the form itself took under a minute.
+  - A person would be slower; the estimate is well under 15 minutes, but a timed run with a real
+    user is still owed.
+
+### Notes and decisions
+
+- Live forms ask many location-dependent questions ("authorized to work in the location(s) you
+  selected", "countries you anticipate working in"). They stay Needs answers by design: the
+  answer depends on the job. Answering them once per wording in the form fixes it.
+- Forms ask about AI note-takers and recording consent. These are flagged as attestations only
+  when their wording matches; some live variants (e.g. "we use BrightHire to record") still show
+  as unanswered questions.
+- Ashby via the browser costs about 1 to 3s per job; one browser is shared per run.
+- `[Company]` templating only applies to the job's own company name. Other employer names in a
+  question stay literal.
+- Embedding similarity for labels hooks in (`Matcher.embed`) but isn't wired to the `[recall]`
+  model yet; token and trigram similarity plus confirmation carry it.
+- Approved essay text in packets is a placeholder until Milestone 5.
+- Playwright is in the dev dependency group, so CI installs the package, but no browser binary;
+  the browser path is exercised only live. CI has still not run (no GitHub remote), and Windows
+  is untested.
+
+## Milestone 4 — Pre-fill (next)
+
+Adapters (Greenhouse, Lever, Ashby) using the cached form specs and `classify.display_value`,
+all three submit-guard layers with tests, read-back, screenshots, confirmation detection.
