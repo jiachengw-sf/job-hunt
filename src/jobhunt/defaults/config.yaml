@@ -38,7 +38,7 @@ fit:
   level_mismatch_years: 3    # role wants this many more years than you have -> band at most stretch
   yoe_gate_slack_years: 2    # role wants more than this many extra years -> fails the experience gate
   freshness_half_life_days: 7
-  # The weights below are visible on purpose. `jobhunt calibrate` (Milestone 6) suggests changes;
+  # The weights below are visible on purpose. `jobhunt calibrate` suggests changes;
   # nothing tunes itself.
   bands: {strong: 0.8, good: 0.6, stretch: 0.3}
   qualification:
@@ -88,5 +88,12 @@ notifications:               # the terminal digest is always on: `jobhunt digest
   digest: daily                # every_run | daily | off: when `jobhunt run` pushes the digest
   alerts: true                 # push high-priority new postings right away
   alert_priority: 0.75
+
+calibration:                 # `jobhunt calibrate` only reports and suggests; nothing tunes itself
+  min_responses: 5             # replies a band needs before it gets a label (no reply never counts)
+  flat_margin: 0.05            # interview rates closer than this are "flat"
+  skip_min: 3                  # skips with one reason before it drives a suggestion
+  skip_share: 0.3              # ...and that reason's share of strong/good skips
+  step: 0.05                   # size of a suggested threshold or weight change
 
 writing_style_skill: null   # name of a personal writing-style skill to hand essay drafting to

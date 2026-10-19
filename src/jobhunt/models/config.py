@@ -182,6 +182,27 @@ class NotificationsConfig(Strict):
     alert_priority: float = Field(0.75, ge=0, le=1)
 
 
+class CalibrationConfig(Strict):
+    min_responses: int = Field(
+        5, ge=1, description="Replies a band needs before it gets a label (no-reply never counts)."
+    )
+    flat_margin: float = Field(
+        0.05, ge=0, le=1, description="Interview rates closer than this count as flat."
+    )
+    skip_min: int = Field(
+        3, ge=1, description="Skips with one reason before it drives a suggestion."
+    )
+    skip_share: float = Field(
+        0.3,
+        ge=0,
+        le=1,
+        description="Share of high-band skips one reason needs to drive a suggestion.",
+    )
+    step: float = Field(
+        0.05, gt=0, le=0.5, description="Size of a suggested threshold or weight change."
+    )
+
+
 class Config(Strict):
     version: Literal[1] = 1
     tracker: TrackerConfig = Field(default_factory=TrackerConfig)
@@ -196,4 +217,5 @@ class Config(Strict):
     research: ResearchConfig = Field(default_factory=ResearchConfig)
     drafts: DraftsConfig = Field(default_factory=DraftsConfig)
     notifications: NotificationsConfig = Field(default_factory=NotificationsConfig)
+    calibration: CalibrationConfig = Field(default_factory=CalibrationConfig)
     writing_style_skill: str | None = None

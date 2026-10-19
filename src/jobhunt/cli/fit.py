@@ -1,4 +1,4 @@
-"""Fit and tracker commands: gate, match, sync, run, jobs, show, mark, eval-fit."""
+"""Fit and tracker commands: gate, match, sync, run, jobs, show, mark, calibrate, eval-fit."""
 
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ from jobhunt.discovery.text import utc_now
 from jobhunt.envelope import Envelope, paginate, render_human_default
 from jobhunt.errors import NotFound
 from jobhunt.fit import gates as gt
+from jobhunt.fit.calibrate import CalibrationReport, calibrate
 from jobhunt.fit.engine import (
     GateSummary,
     Inputs,
@@ -162,6 +163,42 @@ class MarkReport(BaseModel):
     job_id: int
     dry_run: bool
     change: dict[str, str | None]
+
+
+def _render_calibrate(env: Envelope) -> str:
+    d = env.data
+    if not isinstance(d, dict) or "bands" not in d:
+        return render_human_default(env)
+
+    def pct(v: float | None) -> str:
+        return "  -" if v is None else f"{v:4.0%}"
+
+    lines = [
+        f"Applied {d['applied']}: {d['replies']} replies, {d['no_reply']} no reply yet "
+        "(no reply never counts against fit)",
+        f"{'band':<10} {'applied':>7} {'replies':>7} {'interview':>9} {'offer':>5}  label",
+    ]
+    for b in d["bands"]:
+        label = (b["label"] or "").replace("_", " ")
+        if b["compared_with"]:
+            label += f" (vs {b['compared_with']})"
+        lines.append(
+            f"{b['band']:<10} {b['applied']:>7} {b['replies']:>7} {pct(b['interview_rate']):>9} "
+            f"{pct(b['offer_rate']):>5}  {label}"
+        )
+    if d["skip_reasons"]:
+        lines.append(
+            "Skipped: " + ", ".join(f"{k} {sum(v.values())}" for k, v in d["skip_reasons"].items())
+        )
+    if d["suggestions"]:
+        lines.append("Suggestions (nothing is applied):")
+        for s in d["suggestions"]:
+            head = f"{s['key']}: {s['current']} -> {s['suggested']}. " if s["key"] else ""
+            lines.append(f"  - {head}{s['reason']}")
+    if d["config_snippet"]:
+        lines += ["To accept, add to ~/.jobhunt/config.yaml:", d["config_snippet"].rstrip()]
+    lines.append(d["note"])
+    return "\n".join(lines)
 
 
 def _reason_texts(reasons_json: str | None) -> list[str]:
@@ -488,6 +525,25 @@ def register(cli: click.Group) -> None:
             data=MarkReport(job_id=job_id, dry_run=dry_run, change=change),
             next_actions=["Run `jobhunt sync` to update the tracker."],
         )
+
+    @agent_command(cli, "calibrate", output=CalibrationReport, render=_render_calibrate)
+    def calibrate_cmd() -> Result:
+        """Interview and offer rates by band from your tracker, with suggestions. Never tunes."""
+        paths, cfg = _prepare(True)
+        with open_store(paths.db, dry_run=True) as conn:
+            report = calibrate(conn, cfg)
+        next_actions = []
+        if report.config_snippet:
+            next_actions.append(
+                "Show the suggestions to the user. Only if they approve, they add config_snippet "
+                "to ~/.jobhunt/config.yaml themselves, then `jobhunt match`."
+            )
+        if not report.replies:
+            next_actions.append(
+                "Record outcomes with `jobhunt mark <id> <status>` or in the tracker's Status "
+                "column, then `jobhunt sync`."
+            )
+        return Result(data=report, next_actions=next_actions)
 
     @agent_command(cli, "eval-fit", output=None)
     @click.option(

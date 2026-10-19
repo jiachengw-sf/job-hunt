@@ -78,7 +78,7 @@ src/jobhunt/
                   legitimacy signals
   fit/            Stage 0 gates, Stage 1 recall (BM25 + optional embeddings), Stage 2
                   requirement extraction + pre-match, Stage 3 band/preference/priority, judgment
-                  task files, eval-fit
+                  task files, eval-fit, calibrate (band vs. outcomes; suggests, never tunes)
   tracker/        states.yml state machine, XLSX / Google Sheets backends, three-way sync
   prefill/        answers.json + validator, submit guard (click wrapper, route guard), browser,
                   Greenhouse / Lever / Ashby adapters, review (highlights, screenshots), driver
@@ -119,7 +119,8 @@ evals/daily/      daily-flow end-to-end results (`python -m jobhunt.devtools.dai
 ## Fit and tracker rules
 
 - Qualification band and preference score are separate outputs; priority combines them. Every
-  weight lives in `defaults/config.yaml`. Nothing tunes itself.
+  weight lives in `defaults/config.yaml`. Nothing tunes itself: `jobhunt calibrate` only
+  suggests, and an application with no reply is never counted against fit.
 - Recall relevance helps ranking but is never shown or described as "fit".
 - Code marks a requirement `stated` only when a profile line literally names the skill; the
   evidence is that line's exact text and `ref`. An `inferred` match never satisfies a must-have.
