@@ -667,6 +667,14 @@ install to a first daily run, and the demo GIF exists. Met:
 - 672 offline tests (from 646). ruff, format and both personal-data scans are clean at every
   commit.
 
+Verified (2026-10-19): the README walkthrough, run from a freshly built 0.1.0 wheel in a clean
+venv with a scratch `HOME`. Persona `newgrad-analyst`, offline fixtures, no `[browser]` extra.
+- `doctor --fix` passes with 0 failing checks.
+- `skills install` puts 7 skills in `~/.claude/skills`, with jobhunt-apply explicit-only.
+- Unedited `*.example.yaml` files fail onboarding, naming each placeholder field.
+- With persona files: `run` (5 jobs), `coverage` (93% of required fields), `digest` (1 Ready),
+  `calibrate`, `schedule install --dry-run` (launchd) and `tracker.xlsx` all work.
+
 ### Still owed or untested
 
 - **CI has never run**: there is no GitHub remote yet. The first push runs it, including
@@ -677,6 +685,9 @@ install to a first daily run, and the demo GIF exists. Met:
 - **Onboarding has not been timed with a real person**. The 15-minute target is an estimate
   from persona runs.
 - **Codex CLI is untested, by decision** (see Milestone 5).
+- **The fit eval set has a single annotator.** The spec asks for two graders per pair, and the
+  set is synthetic postings rather than real public ones. `eval-fit --personal` lets a user
+  check against their own labels.
 - **Not on PyPI.** The README installs from a clone, but some `doctor` fixes still say
   `uv tool install 'jobhunt[…]'` / `uv tool upgrade jobhunt`, which only work once jobhunt is
   published there (check whether the name is free first).
@@ -684,6 +695,27 @@ install to a first daily run, and the demo GIF exists. Met:
   tests on synthetic trackers.
 - Cosmetic: with `priority_threshold: 0`, a first `jobhunt run` reports "0 new, 2 replaced"
   judgment tasks while 10 are pending. The run report shows the second match pass only.
+
+### Known product gaps (from earlier milestones, still open)
+
+- **No Workday adapter or other ATS adapters.** Pre-fill covers Greenhouse, Lever and Ashby;
+  every other ATS gets a hand-off packet. Workday alone is about a third of Simplify's
+  internship rows. CONTRIBUTING lists the open questions.
+- **Simplify-only jobs** get a band only when jobhunt can read their posting text from a
+  supported ATS. Others rank on recall relevance alone, with band "unknown".
+- **Confirmation pages are educated guesses** for Lever and Ashby, since nothing may be
+  submitted while testing. A missed confirmation leaves the job Prefilled;
+  `jobhunt mark <id> Applied` fixes it.
+- **Page-only form fields** that an ATS API doesn't list go unflagged; only Greenhouse's
+  Hispanic/Latino question is handled.
+- **Location-dependent screening questions** stay Needs answers until answered once per
+  wording.
+- **Grounding catches only skills listed in `synonyms.yaml`.** An unlisted skill name in a draft
+  isn't caught.
+- **Embeddings are wired but unproven.** Recall and label matching only run with a fake
+  embedder in tests, and JobBERT phrase matching isn't built.
+- **Live pre-fill was verified field by field.** No live posting was Ready for a test persona,
+  so the full `jobhunt prefill` flow has only run on fixtures.
 
 ### Publishing to GitHub (for the maintainer; nothing here was pushed)
 
