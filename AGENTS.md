@@ -90,6 +90,7 @@ src/jobhunt/
   schedule.py     launchd / cron / Task Scheduler entry for `jobhunt run`
   skills.py       `jobhunt skills install` (tool paths, explicit-only settings)
   doctor.py       environment checks
+  install.py      how jobhunt was installed; reinstall/upgrade hints that match it
   models/         pydantic models for config, profile, preferences, answers, watchlist
   store/          SQLite schema + numbered migrations (events table is append-only)
   cli/            framework (@agent_command) and commands

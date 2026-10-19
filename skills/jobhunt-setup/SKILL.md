@@ -2,7 +2,7 @@
 name: jobhunt-setup
 description: Set up jobhunt, the local job-hunt agent, for a new user, or fix their setup. Use when the user wants to start using jobhunt, onboard, add or replace a resume, change job preferences or screening answers, connect the tracker spreadsheet, turn on notifications, or schedule automatic runs. Not for the daily job review (jobhunt-daily) or for filling applications (jobhunt-apply).
 license: MIT
-compatibility: Needs the jobhunt CLI on PATH (uv tool install jobhunt, or pipx install jobhunt).
+compatibility: Needs the jobhunt CLI on PATH (uv tool install or pipx install from a jobhunt checkout).
 ---
 
 # jobhunt setup

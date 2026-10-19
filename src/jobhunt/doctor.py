@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import importlib.metadata
 import importlib.util
-import json
 import os
 import shutil
 import subprocess
@@ -18,6 +17,7 @@ from pydantic import BaseModel, Field
 from jobhunt.config import USER_FILES, load_config, load_user_file, tracker_xlsx_path
 from jobhunt.errors import ConfigError, OnboardingIncomplete
 from jobhunt.http import probe
+from jobhunt.install import detect_install_method, reinstall_command, upgrade_hint
 from jobhunt.paths import Paths, package_file, secure_file
 from jobhunt.store import SCHEMA_VERSION, connect, current_version, migrate
 
@@ -75,22 +75,6 @@ def check_python() -> Check:
     )
 
 
-def detect_install_method() -> str:
-    prefix = Path(sys.prefix).as_posix()
-    if "/uv/tools/" in prefix:
-        return "uv-tool"
-    if "/pipx/venvs/" in prefix:
-        return "pipx"
-    try:
-        dist = importlib.metadata.distribution("jobhunt")
-        raw = dist.read_text("direct_url.json")
-        if raw and json.loads(raw).get("dir_info", {}).get("editable"):
-            return "editable"
-    except importlib.metadata.PackageNotFoundError:
-        return "source"
-    return "other"
-
-
 def check_install() -> Check:
     method = detect_install_method()
     if method in ("uv-tool", "pipx"):
@@ -101,8 +85,8 @@ def check_install() -> Check:
         name="install",
         status="warn",
         summary="Installed into a shared environment",
-        fix="Reinstall in isolation: `uv tool install jobhunt`"
-        " (or `uv tool install .` from a checkout).",
+        fix="Reinstall in isolation: `uv tool install .` from a checkout"
+        " (or `uv tool install jobhunt` once it's on PyPI).",
     )
 
 
@@ -161,7 +145,7 @@ def check_store(paths: Paths) -> Check:
             name="store",
             status="fail",
             summary=f"Database schema v{v} is newer than this jobhunt (v{SCHEMA_VERSION})",
-            fix="Upgrade jobhunt: `uv tool upgrade jobhunt`.",
+            fix=f"Upgrade jobhunt: {upgrade_hint()}.",
         )
     return Check(
         name="store",
@@ -231,7 +215,7 @@ def check_browser() -> Check:
             name="browser",
             status="warn",
             summary="Playwright not installed (needed for `jobhunt prefill` and Ashby forms)",
-            fix="Reinstall with the browser extra: `uv tool install 'jobhunt[browser]'`.",
+            fix=f"Reinstall with the browser extra: `{reinstall_command('browser')}`.",
         )
     chrome = find_chrome()
     if chrome:
@@ -343,7 +327,7 @@ def check_tracker(paths: Paths, offline: bool = True) -> Check:
             name="tracker",
             status="fail",
             summary="Google Sheets tracker needs the [sheets] extra",
-            fix="Reinstall with `uv tool install 'jobhunt[sheets]'`, or set tracker.kind: xlsx.",
+            fix=f"Reinstall with `{reinstall_command('sheets')}`, or set tracker.kind: xlsx.",
         )
     if offline:
         return Check(
@@ -374,7 +358,8 @@ def check_recall(paths: Paths) -> Check:
         return Check(
             name="recall",
             status="ok",
-            summary="Recall: BM25 only (optional: `uv tool install 'jobhunt[recall]'` adds embeddings)",  # noqa: E501
+            summary="Recall: BM25 only "
+            f"(optional: `{reinstall_command('recall')}` adds embeddings)",
         )
     return Check(name="recall", status="ok", summary="Recall: BM25 + sentence embeddings")
 

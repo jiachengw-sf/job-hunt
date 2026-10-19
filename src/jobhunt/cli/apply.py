@@ -39,6 +39,7 @@ from jobhunt.forms.inspect import (
 from jobhunt.forms.model import FormSpec
 from jobhunt.forms.packet import Packet, PacketAnswer, render
 from jobhunt.http import HttpClient
+from jobhunt.install import reinstall_command
 from jobhunt.models import Config
 from jobhunt.paths import Paths, secure_file
 from jobhunt.store import open_store
@@ -112,7 +113,7 @@ def run_inspect(
     if by_status.get("needs_browser"):
         warnings.append(
             f"{by_status['needs_browser']} Ashby form(s) need the browser extra: "
-            "`uv tool install 'jobhunt[browser]'`, then `jobhunt doctor --fix`."
+            f"`{reinstall_command('browser')}`, then `jobhunt doctor --fix`."
         )
     return InspectReport(
         dry_run=dry_run,

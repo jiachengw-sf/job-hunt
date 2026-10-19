@@ -18,6 +18,7 @@ from typing import Any
 
 from jobhunt.doctor import find_chrome
 from jobhunt.errors import ConfigError
+from jobhunt.install import reinstall_command
 from jobhunt.models.config import PrefillConfig
 from jobhunt.paths import Paths
 
@@ -45,8 +46,7 @@ def require_playwright() -> None:
         raise ConfigError(
             "Pre-fill needs Playwright, which comes with the browser extra.",
             next_actions=[
-                "Reinstall with `uv tool install 'jobhunt[browser]'`, then run "
-                "`jobhunt doctor --fix`."
+                f"Reinstall with `{reinstall_command('browser')}`, then run `jobhunt doctor --fix`."
             ],
         )
 

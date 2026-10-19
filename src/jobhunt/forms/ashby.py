@@ -18,6 +18,7 @@ from jobhunt.discovery.sources import _ashby_pay
 from jobhunt.discovery.text import html_to_text
 from jobhunt.forms.model import FieldType, FormError, FormField, FormSpec, one_line
 from jobhunt.http import HttpClient, TransportError
+from jobhunt.install import reinstall_command
 
 READ_OPS = frozenset({"ApiJobPosting", "ApiOrganizationFromHostedJobsPageName"})
 GRAPHQL = "/api/non-user-graphql"
@@ -137,7 +138,7 @@ def browser_session(timeout_s: float = 45.0, channel: str | None = "chrome") -> 
         from playwright.sync_api import sync_playwright
     except ImportError:
         yield _failing(
-            "Reading Ashby forms needs the browser extra: `uv tool install 'jobhunt[browser]'`",
+            f"Reading Ashby forms needs the browser extra: `{reinstall_command('browser')}`",
             "needs_browser",
         )
         return

@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from jobhunt.errors import ConfigError, JobhuntError
+from jobhunt.install import reinstall_command
 
 
 class TrackerLocked(JobhuntError):
@@ -188,7 +189,7 @@ class SheetsBackend:
                 raise ConfigError(
                     "The Google Sheets tracker needs the [sheets] extra.",
                     next_actions=[
-                        "Reinstall with `uv tool install 'jobhunt[sheets]'`, or set "
+                        f"Reinstall with `{reinstall_command('sheets')}`, or set "
                         "tracker.kind: xlsx."
                     ],
                 ) from e
