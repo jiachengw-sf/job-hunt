@@ -616,7 +616,85 @@ Verified runs:
   pick an unguessable name.
 - Windows (Task Scheduler) is untested, and CI has still not run (no GitHub remote).
 
-## Milestone 6 — Calibrate + share (next)
+## Milestone 6 — Calibrate + share ✅ (2026-10-19)
 
-`calibrate`, README for first-time users, `CONTRIBUTING.md` (new sources and ATS adapters;
-Workday first), a demo GIF with a persona. Codex is not tested by decision (see Milestone 5).
+Done when calibrate works on persona tracker data with tests, the docs take a new user from
+install to a first daily run, and the demo GIF exists. Met:
+
+- **`jobhunt calibrate`** (`fit/calibrate.py`, read-only).
+  - Reads each job's highest status from the append-only `status_changed` events, so an
+    Interviewing → Rejected job still counts as an interview.
+  - Per band, for applied jobs: interview and offer rates over **replies only**. No-reply
+    applications (including withdrawn ones) are counted and shown, but never enter a rate.
+  - Labels each band `separating | flat | inverted | insufficient_data`. A band is compared with
+    the next band down that has data; the lowest compares upward.
+  - Suggestions: a flat or inverted pair raises the upper band's threshold. How the lower band's
+    interviewed jobs scored their must-haves can suggest raising `met_inferred` or `partial`, or
+    sends the user to finish judgment tasks or add a profile line. Skip reasons among
+    strong/good jobs (`too_senior`, `pay`, `location`, `domain`) suggest
+    `level_mismatch_years` or preference weights.
+  - The suggestions come back as a YAML `config_snippet`; the user pastes it into config. There
+    is no apply flag.
+  - The thresholds are visible in config: `calibration.min_responses` (5), `flat_margin`,
+    `skip_min`, `skip_share`, `step`.
+  - The daily skill runs it weekly and leaves config to the user.
+- **README** for first-time users: an honest coverage table (pre-fill on Greenhouse, Lever and
+  Ashby; Workday and others get hand-off packets), install, onboarding, the first daily run,
+  daily use, bands and calibration, the tracker, troubleshooting by exit code, and uninstall.
+- **CONTRIBUTING.md**: setup, the rules every change keeps, recipes for a new source and a new
+  ATS adapter (form reader, pre-fill adapter, fixtures, guard tests), and the open questions
+  for Workday (is its discovery endpoint documented enough, the sign-in hand-over, the
+  multi-step wizard vs. Submit, resume parsing).
+- **Docs test**: every `jobhunt …` command, flag and local link in README, CONTRIBUTING and
+  AGENTS exists.
+- **Demo GIF** (`docs/demo.gif`, 0.8 MB) recorded with VHS from `docs/demo/demo.tape`. It runs
+  the real commands for synthetic `intl-sponsorship` on offline fixtures, in a scratch `HOME`
+  and `JOBHUNT_HOME` (`docs/demo/setup.sh`): doctor, run, ingest + match, digest, mark,
+  calibrate. Onboarding files and the judgment stand-in (the tests' `judge_all`) happen off
+  screen, and the screen says so. A test checks that the tape uses a synthetic persona and a
+  scratch home.
+- **Publish prep**:
+  - `pii_scan --history` scans every blob reachable from any ref, plus every commit message;
+    the whole history is clean (460 blobs, 54 commits at the time).
+  - CI checks out the full history for that scan and adds `ruff format --check`.
+  - The version comes from one place (`jobhunt/__init__.py`, now 0.1.0; `schema` had reported a
+    stale 0.0.1). Classifiers and keywords added; the demo GIF is left out of the sdist.
+  - `.gitignore` covers project-level skill installs, `.env` and a stray tracker.
+  - A wheel built and installed into a clean venv runs `doctor --fix`, `skills install` and
+    `schema`.
+  - Checked: MIT LICENSE, the four `*.example.yaml` files, no absolute home paths or username
+    in any tracked file or past blob, largest blob is the demo GIF.
+- 672 offline tests (from 646). ruff, format and both personal-data scans are clean at every
+  commit.
+
+### Still owed or untested
+
+- **CI has never run**: there is no GitHub remote yet. The first push runs it, including
+  Windows and Python 3.11.
+- **Windows is untested** (the Task Scheduler entry, paths, the browser).
+- **Python 3.11** was last run locally in Milestone 0. This milestone ran 3.13 only, because
+  testing 3.11 needed downloading lxml for it.
+- **Onboarding has not been timed with a real person**. The 15-minute target is an estimate
+  from persona runs.
+- **Codex CLI is untested, by decision** (see Milestone 5).
+- **Not on PyPI.** The README installs from a clone, but some `doctor` fixes still say
+  `uv tool install 'jobhunt[…]'` / `uv tool upgrade jobhunt`, which only work once jobhunt is
+  published there (check whether the name is free first).
+- Calibrate on persona fixtures has too few jobs for any band label. Labels are covered by unit
+  tests on synthetic trackers.
+- Cosmetic: with `priority_threshold: 0`, a first `jobhunt run` reports "0 new, 2 replaced"
+  judgment tasks while 10 are pending. The run report shows the second match pass only.
+
+### Publishing to GitHub (for the maintainer; nothing here was pushed)
+
+1. Create an empty public repository on GitHub, with no README, license or .gitignore. For
+   example: `gh repo create jobhunt --public`.
+2. Replace `OWNER` in the clone URLs in `README.md` and `CONTRIBUTING.md`. Optionally add
+   `[project.urls]` (Homepage, Issues) to `pyproject.toml`. Commit.
+3. Every commit is authored with your personal email. Rewriting history was ruled out; if you
+   want a noreply address, use it for future commits only (`git config user.email`).
+4. `git remote add origin git@github.com:<you>/jobhunt.git`, then `git push -u origin main`.
+5. Watch the first CI run under Actions (Linux, macOS and Windows on 3.11 and 3.13) and fix
+   what fails there. Windows is the likeliest.
+6. Optional: branch protection on `main`, private vulnerability reporting, and a `v0.1.0` tag.
+   Then, if you want `uv tool install jobhunt` to work, run `uv build` and `uv publish` to PyPI.
