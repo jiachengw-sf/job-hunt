@@ -67,6 +67,7 @@ GROUP_HELP = {
     "profile": "Your profile (resume content): confirm the draft, set or show values.",
     "setup": "Onboarding: the local form for preferences and screening answers.",
     "answers": "The answer bank: show, add, edit, confirm wordings, list new questions.",
+    "schedule": "Run `jobhunt run` on a schedule: launchd, cron or Task Scheduler.",
     "notify": "Push notifications: send a test message to your configured channels.",
     "outreach": "Referral, coffee-chat and follow-up drafts you send yourself (never sent).",
     "essays": "Essay drafts: list prompts, draft and review tasks, show drafts, approve yours.",
