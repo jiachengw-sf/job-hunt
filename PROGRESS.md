@@ -726,13 +726,14 @@ venv with a scratch `HOME`. Persona `newgrad-analyst`, offline fixtures, no `[br
 
 ### Publishing to GitHub (for the maintainer; nothing here was pushed)
 
-1. Create an empty public repository on GitHub, with no README, license or .gitignore. For
-   example: `gh repo create jobhunt --public`.
-2. Replace `OWNER` in the clone URLs in `README.md` and `CONTRIBUTING.md`. Optionally add
-   `[project.urls]` (Homepage, Issues) to `pyproject.toml`. Commit.
+1. Create an empty public repository on GitHub, with no README, license or .gitignore:
+   `gh repo create jiachengw-sf/jobhunt --public` (you're signed in to `gh` as jiachengw-sf).
+2. The clone URLs in `README.md` and `CONTRIBUTING.md` and `[project.urls]` in `pyproject.toml`
+   already point at `github.com/jiachengw-sf/jobhunt`. If you pick another name, change them.
 3. Every commit is authored with your personal email. Rewriting history was ruled out; if you
    want a noreply address, use it for future commits only (`git config user.email`).
-4. `git remote add origin git@github.com:<you>/jobhunt.git`, then `git push -u origin main`.
+4. `git remote add origin https://github.com/jiachengw-sf/jobhunt.git`, then
+   `git push -u origin main`.
 5. Watch the first CI run under Actions (Linux, macOS and Windows on 3.11 and 3.13) and fix
    what fails there. Windows is the likeliest.
 6. Optional: branch protection on `main`, private vulnerability reporting, and a `v0.1.0` tag.

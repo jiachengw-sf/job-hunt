@@ -62,7 +62,7 @@ You need Python 3.11+ and [uv](https://docs.astral.sh/uv/) (or pipx), plus an AI
 Claude Code or Codex CLI. Pre-fill also needs Google Chrome or Playwright's Chromium.
 
 ```bash
-git clone https://github.com/OWNER/jobhunt.git
+git clone https://github.com/jiachengw-sf/jobhunt.git
 cd jobhunt
 uv tool install '.[browser]'
 ```
