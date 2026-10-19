@@ -81,9 +81,12 @@ drafts:
   unchanged_edit_ratio: 0.05   # approving an essay you changed less than this gets a gentle nudge
   outreach_max_chars: 600      # referral, coffee-chat and follow-up drafts stay short
 
-notifications:
-  ntfy_topic: null
-  discord_webhook: null
-  smtp: null
+notifications:               # the terminal digest is always on: `jobhunt digest`
+  ntfy_topic: null             # ntfy.sh topic (pick a long random name), or your own server's URL
+  discord_webhook: null        # a webhook URL for a private channel
+  smtp: null                   # {host, port, username, password_env, to}: email to yourself
+  digest: daily                # every_run | daily | off: when `jobhunt run` pushes the digest
+  alerts: true                 # push high-priority new postings right away
+  alert_priority: 0.75
 
 writing_style_skill: null   # name of a personal writing-style skill to hand essay drafting to

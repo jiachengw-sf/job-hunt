@@ -11,6 +11,7 @@ from typing import Any
 import click
 from pydantic import BaseModel, Field
 
+from jobhunt.cli.answers import _new_questions
 from jobhunt.cli.discovery import FIXTURES_HELP, _prepare, make_client
 from jobhunt.cli.framework import Result, agent_command
 from jobhunt.config import load_user_file, load_watchlist, tracker_xlsx_path
@@ -31,6 +32,8 @@ from jobhunt.fit.jobview import load_jobs
 from jobhunt.fit.recall import make_embedder
 from jobhunt.locking import file_lock
 from jobhunt.models import Answers, Config, Preferences, Profile
+from jobhunt.notify.channels import configured
+from jobhunt.notify.digest import after_run
 from jobhunt.paths import Paths
 from jobhunt.store import open_store
 from jobhunt.tracker.backends import Backend, SheetsBackend, TrackerLocked, XlsxBackend
@@ -150,6 +153,9 @@ class RunReport(BaseModel):
         None, description="Application classes for the top jobs (`jobhunt inspect` for detail)."
     )
     sync: SyncReport | None
+    notify: dict[str, Any] | None = Field(
+        None, description="Digest counts, fast alerts sent, and where the digest was pushed."
+    )
 
 
 class MarkReport(BaseModel):
@@ -290,11 +296,15 @@ def register(cli: click.Group) -> None:
     )
     @click.option("--no-sync", is_flag=True, help="Skip the tracker sync.")
     @click.option("--no-inspect", is_flag=True, help="Skip reading and classifying forms.")
-    def run_cmd(fixtures: Path | None, no_sync: bool, no_inspect: bool, dry_run: bool) -> Result:
-        """The scheduled pipeline: fetch → gate → recall → score → classify → sync. No AI needed.
+    @click.option("--no-notify", is_flag=True, help="Skip fast alerts and the pushed digest.")
+    def run_cmd(
+        fixtures: Path | None, no_sync: bool, no_inspect: bool, no_notify: bool, dry_run: bool
+    ) -> Result:
+        """The scheduled pipeline: fetch → gate → recall → score → classify → notify → sync.
 
-        Classify reads the application forms of the top jobs (cached for a week). Notifications
-        join in a later milestone.
+        No AI needed. Classify reads the application forms of the top jobs (cached for a week).
+        Notify pushes fast alerts for high-priority new postings and, when due, the digest to
+        your configured channels (ntfy, Discord, email); `jobhunt digest` shows it here.
         """
         from jobhunt.cli.apply import form_inputs, loader_factory, run_inspect, threshold_jobs
 
@@ -351,6 +361,20 @@ def register(cli: click.Group) -> None:
                 srep, sync_actions = _do_sync(conn, cfg, paths, inp, dry_run)
                 actions += sync_actions
             fetch = _refresh_yields(conn, fetch)
+            notify = None
+            if not no_notify:
+                notify = after_run(
+                    conn,
+                    cfg,
+                    configured(cfg.notifications, cfg.http.user_agent),
+                    _new_questions(paths),
+                    run_started=inp.now,
+                    now=utc_now(),
+                    dry_run=dry_run,
+                )
+                for ch, res in notify["digest_pushed"].items():
+                    if res != "sent":
+                        actions.append(f"The digest couldn't reach {ch} ({res}).")
         if raised.get("ai_instructions"):
             actions.append(
                 f"{len(raised['ai_instructions'])} new posting(s) contain text aimed at AI "
@@ -363,6 +387,7 @@ def register(cli: click.Group) -> None:
                 match=rep,
                 forms=forms,
                 sync=srep,
+                notify=notify,
             ),
             user_actions=actions + _question_actions(rep.gates),
             next_actions=[

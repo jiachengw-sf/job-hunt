@@ -170,9 +170,16 @@ class SmtpConfig(Strict):
 
 
 class NotificationsConfig(Strict):
-    ntfy_topic: str | None = None
+    ntfy_topic: str | None = Field(
+        None, description="An ntfy.sh topic name, or the full URL of a topic on your own server."
+    )
     discord_webhook: str | None = None
     smtp: SmtpConfig | None = None
+    digest: Literal["every_run", "daily", "off"] = Field(
+        "daily", description="When `jobhunt run` pushes the digest to the channels above."
+    )
+    alerts: bool = Field(True, description="Push high-priority new postings right away.")
+    alert_priority: float = Field(0.75, ge=0, le=1)
 
 
 class Config(Strict):
