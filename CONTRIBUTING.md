@@ -7,8 +7,8 @@ for both. [AGENTS.md](AGENTS.md) has the full module map and is also what AI cod
 ## Setup
 
 ```bash
-git clone https://github.com/jiachengw-sf/jobhunt.git
-cd jobhunt
+git clone https://github.com/jiachengw-sf/job-hunt.git
+cd job-hunt
 uv sync
 uv run playwright install chromium
 ```

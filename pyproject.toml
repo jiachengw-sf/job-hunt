@@ -34,9 +34,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/jiachengw-sf/jobhunt"
-Issues = "https://github.com/jiachengw-sf/jobhunt/issues"
-Changelog = "https://github.com/jiachengw-sf/jobhunt/blob/main/PROGRESS.md"
+Homepage = "https://github.com/jiachengw-sf/job-hunt"
+Issues = "https://github.com/jiachengw-sf/job-hunt/issues"
+Changelog = "https://github.com/jiachengw-sf/job-hunt/blob/main/PROGRESS.md"
 
 [project.optional-dependencies]
 # Reads Ashby application forms (Milestone 3) and pre-fills (Milestone 4). `jobhunt doctor` reports when it is missing.

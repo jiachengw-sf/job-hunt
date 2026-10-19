@@ -724,17 +724,11 @@ venv with a scratch `HOME`. Persona `newgrad-analyst`, offline fixtures, no `[br
 - **Live pre-fill was verified field by field.** No live posting was Ready for a test persona,
   so the full `jobhunt prefill` flow has only run on fixtures.
 
-### Publishing to GitHub (for the maintainer; nothing here was pushed)
+### Publishing to GitHub
 
-1. Create an empty public repository on GitHub, with no README, license or .gitignore:
-   `gh repo create jiachengw-sf/jobhunt --public` (you're signed in to `gh` as jiachengw-sf).
-2. The clone URLs in `README.md` and `CONTRIBUTING.md` and `[project.urls]` in `pyproject.toml`
-   already point at `github.com/jiachengw-sf/jobhunt`. If you pick another name, change them.
-3. Every commit is authored with your personal email. Rewriting history was ruled out; if you
-   want a noreply address, use it for future commits only (`git config user.email`).
-4. `git remote add origin https://github.com/jiachengw-sf/jobhunt.git`, then
-   `git push -u origin main`.
-5. Watch the first CI run under Actions (Linux, macOS and Windows on 3.11 and 3.13) and fix
-   what fails there. Windows is the likeliest.
+Published on 2026-10-19 as https://github.com/jiachengw-sf/job-hunt (public, `main`). It was first
+pushed as `jobhunt`, then renamed to `job-hunt` to match the maintainer's other repo names; GitHub
+redirects the old URL. The Python package and command stay `jobhunt`. Remaining:
+
 6. Optional: branch protection on `main`, private vulnerability reporting, and a `v0.1.0` tag.
    Then, if you want `uv tool install jobhunt` to work, run `uv build` and `uv publish` to PyPI.
