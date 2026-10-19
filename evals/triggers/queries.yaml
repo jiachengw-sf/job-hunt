@@ -1,0 +1,166 @@
+# Trigger evals: ~20 queries per skill, half should trigger it, half are near-misses that
+# should not (they belong to another skill or to no skill). Each runs 3 times per tool.
+# `explicit: true` queries invoke the skill by name (the only way jobhunt-apply may run).
+version: 1
+skills:
+  jobhunt-setup:
+    trigger:
+      - I just installed jobhunt, help me get it set up
+      - Set up jobhunt with my resume at ~/Documents/resume.pdf
+      - I want to start using jobhunt for my internship search
+      - I got a new resume, can you update my jobhunt profile from it?
+      - Change my jobhunt preferences, I'm open to remote roles now
+      - Connect my jobhunt tracker to Google Sheets
+      - Turn on phone notifications for new jobs in jobhunt
+      - Make jobhunt check for new postings automatically every few hours
+      - jobhunt doctor says my setup is broken, can you fix it?
+      - Onboard me to the job hunt tool
+    near_miss:
+      - Run my job hunt for today
+      - What new jobs did jobhunt find this morning?
+      - Help me install Python 3.12 on my Mac
+      - Set up a cron job that backs up my photos every night
+      - Fill out my Ready applications
+      - Write a cover letter for the Northwind internship
+      - Research Bluefin Analytics before my interview
+      - How do I write a good resume for a software internship?
+      - Set up a Python virtual environment for my class project
+      - Configure Discord notifications for my GitHub repo
+  jobhunt-daily:
+    trigger:
+      - Run my job hunt
+      - Run my job hunt for today
+      - What's new in my job search today?
+      - Which jobs should I apply to today?
+      - Catch me up on jobhunt
+      - Check jobhunt for new postings and tell me what to do
+      - Do my daily job search check-in
+      - Any new internships worth applying to since yesterday?
+      - Go through today's job hunt digest with me
+      - Process my pending jobhunt tasks and show me the digest
+    near_miss:
+      - Set up jobhunt for the first time
+      - Pre-fill the applications for my Ready jobs
+      - Draft an answer to "Why do you want to work here?" for job 12
+      - Follow up on my application to Quillstack
+      - What's the weather today?
+      - Summarize today's tech news
+      - Write my daily standup update for work
+      - How many applications should I send per week to get interviews?
+      - Search Indeed for software jobs in Chicago
+      - Plan my study schedule for today
+  jobhunt-judge:
+    trigger:
+      - Do the pending fit judgment tasks in jobhunt
+      - jobhunt says I have requirement_evidence tasks, please do them
+      - My bands in jobhunt are all provisional, can you judge them?
+      - How well do I actually fit job 14 that jobhunt found? Do the judgment task
+      - Judge the requirement evidence for the Bluefin posting in jobhunt
+      - Work through the jobhunt judgment queue
+      - jobhunt ingest rejected my fit result for task req-3, fix it
+      - Match my resume lines to the requirements for jobhunt job 7
+      - Resolve the unclear gates jobhunt flagged for the Quillstack role
+      - Finish the jobhunt fit tasks so the bands stop being provisional
+    near_miss:
+      - Research Northwind Robotics for me
+      - Run my job hunt for today
+      - Draft my essay for the Northwind application
+      - Is my resume good enough for FAANG?
+      - Review my code for bugs
+      - Judge this poem I wrote
+      - Compare these two job offers for me
+      - Rewrite my resume bullets to sound stronger
+      - Should I take the Stripe offer or the Google offer?
+      - What skills do data analysts need?
+  jobhunt-research:
+    trigger:
+      - Research Bluefin Analytics for me
+      - What does Northwind Robotics do? Write me a quick company brief
+      - Look into Quillstack's funding and size before I apply
+      - Give me a sourced brief on Pinecrest Systems
+      - jobhunt has a company_research task pending, do it
+      - Find recent news and red flags for Harborlight Bank
+      - What's the engineering culture like at Bluefin? Use jobhunt research
+      - Does Northwind have an internship program with return offers? Research it
+      - Research the company for jobhunt job 3
+      - What's Quillstack's interview process? Check their site
+    near_miss:
+      - Do the jobhunt fit judgment tasks
+      - Write a cover letter for Bluefin Analytics
+      - Ask my friend at Bluefin for a referral
+      - Research the history of the Roman Empire
+      - Find me a good laptop under $1000
+      - Research the best programming language to learn first
+      - What are the top AI papers this week?
+      - Run my job hunt
+      - Compare Python and Java for backend work
+      - Look up the weather in Chicago
+  jobhunt-apply:
+    trigger:
+      - {query: "/jobhunt-apply", explicit: true}
+      - {query: "/jobhunt-apply 12", explicit: true}
+      - {query: "/jobhunt-apply fill my ready batch", explicit: true}
+      - {query: "/jobhunt-apply only the Greenhouse jobs", explicit: true}
+      - {query: "/jobhunt-apply 3 5 8", explicit: true}
+      - {query: "/jobhunt-apply start the pre-fill", explicit: true}
+      - {query: "/jobhunt-apply dry run first please", explicit: true}
+      - {query: "/jobhunt-apply the top 5", explicit: true}
+      - {query: "/jobhunt-apply Northwind jobs", explicit: true}
+      - {query: "/jobhunt-apply go", explicit: true}
+    near_miss:
+      - Pre-fill my Ready job applications now
+      - Fill out the Northwind application for me
+      - Submit my applications
+      - Apply to all the Ready jobs jobhunt found
+      - Open the application forms and fill them in
+      - Can jobhunt fill applications automatically?
+      - Help me apply to job 12
+      - Start filling my job applications
+      - Fill this Google Form for me
+      - Apply for a passport renewal
+  jobhunt-essays:
+    trigger:
+      - Draft an answer to "Why do you want to work at Northwind Robotics?"
+      - Help with the essay questions on my Northwind application
+      - jobhunt lists Essay jobs, help me with the first one
+      - Write a cover letter for job 12 using my resume
+      - Do the essay_review task jobhunt created
+      - Draft the "tell us about a project you're proud of" answer for Quillstack
+      - My application asks why I'm interested, help me write it
+      - Do the pending jobhunt essay draft task
+      - Review my jobhunt essay draft once before I edit it
+      - Which of my jobhunt jobs need essays, and draft one
+    near_miss:
+      - Draft a referral request to my friend at Northwind
+      - Follow up on my Quillstack application
+      - Write an essay on climate change for my English class
+      - Proofread my college application essay
+      - Research Northwind Robotics
+      - Write a LinkedIn post about my internship
+      - Rewrite my resume summary
+      - Pre-fill my applications
+      - Write a thank-you note after my interview
+      - Draft an email to my professor asking for an extension
+  jobhunt-outreach:
+    trigger:
+      - Draft a referral request to a classmate who works at Northwind
+      - Follow up on my application to Quillstack, it's been two weeks
+      - jobhunt says follow-ups are due, draft them
+      - Ask someone at Bluefin for a coffee chat about the team
+      - Write a short message asking my old teammate for a referral at Pinecrest
+      - Which of my applications need a follow-up?
+      - Draft a polite nudge to the recruiter for job 12
+      - I know someone at Harborlight Bank, help me ask them for a referral
+      - Draft an informational interview request for Quillstack
+      - I sent the follow-up for job 4, record it in jobhunt
+    near_miss:
+      - Write the "Why us?" essay for Northwind
+      - Send an email to my landlord about the heater
+      - Research Quillstack's funding
+      - Draft a thank-you email to my aunt
+      - Message my team on Slack that I'll be late
+      - Run my job hunt
+      - Write a cold email to sell my startup's product
+      - Unsubscribe me from recruiter newsletters
+      - Post on LinkedIn that I'm open to work
+      - Forward this email thread to my manager
