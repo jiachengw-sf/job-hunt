@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import sqlite3
 import stat
@@ -84,9 +85,9 @@ def test_packet_for_every_live_job(cli, persona_home, persona, fx):
         assert code == ExitCode.OK, env
         p = Path(env["data"]["path"])
         assert p.exists()
-        if hasattr(stat, "S_IMODE"):
+        if os.name != "nt":  # Windows has no POSIX mode bits
             assert stat.S_IMODE(p.stat().st_mode) & 0o077 == 0  # owner-only
-        page = p.read_text()
+        page = p.read_text(encoding="utf-8")
         assert "<script>alert" not in page
         assert "jobhunt never submits" in page
         for s in secrets_of(persona):
