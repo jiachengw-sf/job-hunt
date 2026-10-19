@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from contextlib import nullcontext
 from pathlib import Path
 
@@ -29,7 +30,19 @@ from jobhunt.store import open_store
 FIXTURES_HELP = "Read sources from this fixture directory instead of the network (tests, demos)."
 
 
+FIXTURES_ENV = "JOBHUNT_FIXTURES"
+
+
+def fixtures_dir(fixtures: Path | None) -> Path | None:
+    """``--fixtures``, else ``$JOBHUNT_FIXTURES`` (demos and end-to-end runs by an AI tool)."""
+    if fixtures is None and os.environ.get(FIXTURES_ENV):
+        return Path(os.environ[FIXTURES_ENV])
+    return fixtures
+
+
 def make_client(cfg: Config, fixtures: Path | None) -> HttpClient:
+    """The HTTP client for public sources; fixtures serve saved snapshots instead."""
+    fixtures = fixtures_dir(fixtures)
     if fixtures is not None:
         if not fixtures.is_dir():
             raise ValidationFailed(f"--fixtures {fixtures} is not a directory.")

@@ -16,7 +16,7 @@ import click
 from pydantic import BaseModel, Field
 
 from jobhunt.bank.keys import BUILTIN, AnswerContext
-from jobhunt.cli.discovery import FIXTURES_HELP, _prepare, make_client
+from jobhunt.cli.discovery import FIXTURES_HELP, _prepare, fixtures_dir, make_client
 from jobhunt.cli.framework import Result, agent_command
 from jobhunt.cli.onboarding import default_resume
 from jobhunt.discovery.text import utc_now
@@ -61,7 +61,7 @@ def form_inputs(paths: Paths, cfg: Config, now: str) -> Inputs:
 
 
 def loader_factory(cfg: Config, client: HttpClient, fixtures: Path | None):
-    if fixtures is not None:
+    if fixtures_dir(fixtures) is not None:
         return lambda: ashby.fixture_session(client)
     if not cfg.forms.ashby_browser:
         return null_loader_factory

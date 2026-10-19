@@ -144,3 +144,10 @@ def test_eval_fit_runs_on_persona_set(cli):
     assert m["gates_accuracy"] >= 0.95
     assert m["final_ndcg10"] >= 0.9
     assert m["band_within_one"] >= 0.9
+
+
+def test_fixtures_env_serves_snapshots(cli, persona_home, monkeypatch):
+    persona_home("first-year-intern")
+    monkeypatch.setenv("JOBHUNT_FIXTURES", BASE)
+    code, env, _ = cli("run", "--no-sync", "--no-inspect")
+    assert code == ExitCode.OK and env["data"]["match"]["gates"]["jobs"] >= 1
