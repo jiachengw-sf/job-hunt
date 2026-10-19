@@ -12,7 +12,7 @@ from tests.conftest import PERSONAS_DIR
 
 
 def secrets_of(persona: str) -> list[str]:
-    a = yaml.safe_load((PERSONAS_DIR / persona / "answers.yaml").read_text())
+    a = yaml.safe_load((PERSONAS_DIR / persona / "answers.yaml").read_text(encoding="utf-8"))
     ident = a.get("identity") or {}
     out = [ident.get(k) for k in ("email", "phone", "legal_last_name", "address_line1")]
     return [s for s in out if s]

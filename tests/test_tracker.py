@@ -278,7 +278,7 @@ def test_xlsx_user_edits_survive_sync(conn, tmp_path: Path):
 
 def test_xlsx_open_in_excel_is_skipped(tmp_path: Path):
     path = tmp_path / "tracker.xlsx"
-    (tmp_path / "~$tracker.xlsx").write_text("lock")
+    (tmp_path / "~$tracker.xlsx").write_text("lock", encoding="utf-8")
     with pytest.raises(TrackerLocked) as e:
         XlsxBackend(path)
     assert e.value.user_actions

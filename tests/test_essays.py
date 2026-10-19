@@ -36,7 +36,7 @@ def setup(cli, persona_home, fx):
     def _go(config: str = "") -> tuple[Path, int]:
         home = persona_home("intl-sponsorship")
         if config:
-            (home / "config.yaml").write_text(config)
+            (home / "config.yaml").write_text(config, encoding="utf-8")
         assert cli("run", "--fixtures", str(fx), "--no-sync", "--no-inspect")[0] == 0
         with _db(home) as c:
             ids = [str(r[0]) for r in c.execute("SELECT id FROM jobs WHERE live=1")]
@@ -106,7 +106,7 @@ def test_draft_task_has_prompts_sources_and_no_personal_data(cli, setup):
     refs = {s["ref"] for s in t["sources"]}
     assert "headline" in refs and t["style_skill"] is None
     text = json.dumps(t)
-    answers = (home / "answers.yaml").read_text()
+    answers = (home / "answers.yaml").read_text(encoding="utf-8")
     for needle in ("@", "555-01"):
         if needle in answers:
             assert needle not in text.replace("@context", "")
@@ -335,6 +335,8 @@ def test_answers_json_fills_the_approved_text(cli, setup):
     with _db(home) as c:
         job, _ = prepare_job(c, jid, inp, paths, "2026-10-18T00:00:00Z", dry_run=False)
     assert job.status == "queued"
-    sheet = AnswerSheet.model_validate_json((paths.prefill / str(jid) / "answers.json").read_text())
+    sheet = AnswerSheet.model_validate_json(
+        (paths.prefill / str(jid) / "answers.json").read_text(encoding="utf-8")
+    )
     essay = next(f for f in sheet.fields if f.value == "Parcel robots are my thing.")
     assert essay.action == "fill"

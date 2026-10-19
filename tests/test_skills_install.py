@@ -22,19 +22,23 @@ def test_install_both_tools(cli):
     claude, codex = _dirs()
     for d in (claude, codex):
         assert sorted(p.name for p in d.iterdir() if p.is_dir()) == sk.skill_names()
-    apply_c = (claude / "jobhunt-apply" / "SKILL.md").read_text()
+    apply_c = (claude / "jobhunt-apply" / "SKILL.md").read_text(encoding="utf-8")
     assert "disable-model-invocation: true" in apply_c.split("\n---\n")[0]
     assert not (claude / "jobhunt-apply" / "agents").exists()
-    assert (codex / "jobhunt-apply" / "agents" / "openai.yaml").read_text() == sk.CODEX_SIDECAR
-    assert (codex / "jobhunt-apply" / "SKILL.md").read_text() == (
+    assert (codex / "jobhunt-apply" / "agents" / "openai.yaml").read_text(
+        encoding="utf-8"
+    ) == sk.CODEX_SIDECAR
+    assert (codex / "jobhunt-apply" / "SKILL.md").read_text(encoding="utf-8") == (
         SRC / "jobhunt-apply" / "SKILL.md"
-    ).read_text()
-    assert (claude / "jobhunt-daily" / "SKILL.md").read_text() == (
+    ).read_text(encoding="utf-8")
+    assert (claude / "jobhunt-daily" / "SKILL.md").read_text(encoding="utf-8") == (
         SRC / "jobhunt-daily" / "SKILL.md"
-    ).read_text()
+    ).read_text(encoding="utf-8")
     assert (claude / "jobhunt-judge" / "references" / "result-format.md").is_file()
     # the shipped skills stay portable
-    assert "disable-model-invocation" not in (SRC / "jobhunt-apply" / "SKILL.md").read_text()
+    assert "disable-model-invocation" not in (SRC / "jobhunt-apply" / "SKILL.md").read_text(
+        encoding="utf-8"
+    )
     _, again, _ = cli("skills", "install", "--tool", "all")
     for o in again["data"]["tools"]:
         assert o["installed"] == [] and len(o["unchanged"]) == 7
@@ -54,16 +58,18 @@ def test_users_own_skill_is_never_overwritten(cli):
     claude, _ = _dirs()
     mine = claude / "jobhunt-daily"
     mine.mkdir(parents=True)
-    (mine / "SKILL.md").write_text("---\nname: jobhunt-daily\ndescription: mine\n---\nmine\n")
+    (mine / "SKILL.md").write_text(
+        "---\nname: jobhunt-daily\ndescription: mine\n---\nmine\n", encoding="utf-8"
+    )
     code, env, _ = cli("skills", "install", "--tool", "claude-code")
     assert code == ExitCode.OK
     assert "jobhunt-daily" in env["data"]["tools"][0]["skipped"]
     assert env["hints"]["user_actions"]
-    assert "mine" in (mine / "SKILL.md").read_text()
+    assert "mine" in (mine / "SKILL.md").read_text(encoding="utf-8")
     _, rm, _ = cli("skills", "remove", "--tool", "claude-code")
     assert "jobhunt-daily" not in rm["data"]["tools"][0]["removed"] and mine.exists()
     cli("skills", "install", "--tool", "claude-code", "--force")
-    assert "mine" not in (mine / "SKILL.md").read_text()
+    assert "mine" not in (mine / "SKILL.md").read_text(encoding="utf-8")
 
 
 def test_symlink_mode_copies_the_explicit_only_skill(cli):
@@ -93,6 +99,9 @@ def test_doctor_sees_installed_skills_and_a_loose_apply(cli):
     assert c.status == "ok"
     claude, _ = _dirs()
     md = claude / "jobhunt-apply" / "SKILL.md"
-    md.write_text(md.read_text().replace("disable-model-invocation: true\n", ""))
+    md.write_text(
+        md.read_text(encoding="utf-8").replace("disable-model-invocation: true\n", ""),
+        encoding="utf-8",
+    )
     [c] = [c for c in check_skills() if c.name == "skills.claude-code"]
     assert c.status == "warn" and "without being asked" in c.summary

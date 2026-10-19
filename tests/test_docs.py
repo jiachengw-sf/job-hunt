@@ -69,9 +69,9 @@ def test_demo_uses_a_synthetic_persona_only():
         assert f"{var}=" in setup  # never the real home or the network
     assert (REPO / "docs" / "demo.gif").stat().st_size < 5_000_000
     for persona_dir in PERSONAS:  # no contact detail or legal name, even a synthetic one
-        ident = yaml.safe_load((PERSONAS_DIR / persona_dir / "answers.yaml").read_text()).get(
-            "identity", {}
-        )
+        ident = yaml.safe_load(
+            (PERSONAS_DIR / persona_dir / "answers.yaml").read_text(encoding="utf-8")
+        ).get("identity", {})
         for k in ("email", "phone", "legal_last_name", "address_line1"):
             if ident.get(k):
                 assert ident[k] not in tape, k

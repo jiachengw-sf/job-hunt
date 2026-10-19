@@ -47,9 +47,9 @@ def db(home: Path) -> sqlite3.Connection:
 def setup_persona(cli, persona_home, persona: str, fx: Path) -> Path:
     home = persona_home(persona)
     shutil.copy(RESUMES / f"{persona}.pdf", home / "resume" / "resume.pdf")
-    prof = yaml.safe_load((home / "profile.yaml").read_text())
+    prof = yaml.safe_load((home / "profile.yaml").read_text(encoding="utf-8"))
     prof["resumes"] = [{"file": "resume.pdf", "default": True}]
-    (home / "profile.yaml").write_text(yaml.safe_dump(prof, sort_keys=False))
+    (home / "profile.yaml").write_text(yaml.safe_dump(prof, sort_keys=False), encoding="utf-8")
     code, env, _ = cli("run", "--fixtures", str(fx), "--no-sync", "--no-inspect")
     assert code == ExitCode.OK, env
     with db(home) as c:
@@ -156,7 +156,10 @@ def test_detached_driver_end_to_end(cli, persona_home, fx_all):
             break
         time.sleep(0.5)
     d = st["data"]
-    assert d["driver"] == "waiting_for_you", (d, (home / "logs" / "prefill.log").read_text())
+    assert d["driver"] == "waiting_for_you", (
+        d,
+        (home / "logs" / "prefill.log").read_text(encoding="utf-8"),
+    )
     assert {j["status"] for j in d["jobs"]} == {"ready_for_review"}
     for j in d["jobs"]:
         assert j["review"]["filled"] == j["review"]["to_fill"]
@@ -164,7 +167,11 @@ def test_detached_driver_end_to_end(cli, persona_home, fx_all):
         assert status_of(home, j["job_id"])[0] == "Prefilled"
     for s in secrets_of("senior-backend"):
         assert s not in json.dumps(st)
-    log = (home / "work" / "prefill" / "fixture-requests.jsonl").read_text().splitlines()
+    log = (
+        (home / "work" / "prefill" / "fixture-requests.jsonl")
+        .read_text(encoding="utf-8")
+        .splitlines()
+    )
     sent = [json.loads(x) for x in log]
     assert not [r for r in sent if r["method"] != "GET" and any(s in r["url"] for s in SUBMITS)]
 

@@ -30,7 +30,7 @@ def fx(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
 
 def secrets_of(persona: str) -> list[str]:
-    a = yaml.safe_load((PERSONAS_DIR / persona / "answers.yaml").read_text())
+    a = yaml.safe_load((PERSONAS_DIR / persona / "answers.yaml").read_text(encoding="utf-8"))
     ident = a.get("identity") or {}
     out = [ident.get(k) for k in ("email", "phone", "legal_last_name", "address_line1")]
     return [s for s in out if s]
@@ -128,11 +128,11 @@ def test_posting_view_never_keeps_a_closed_job_live(cli, persona_home, fx, tmp_p
             "raw.githubusercontent.com/SimplifyJobs/Summer*/dev/.github/scripts/listings.json"
         )
     )
-    rows = json.loads(listing.read_text())
+    rows = json.loads(listing.read_text(encoding="utf-8"))
     for r in rows:
         if r["url"].endswith("/jobs/1099"):
             r["active"] = False
-    listing.write_text(json.dumps(rows))
+    listing.write_text(json.dumps(rows), encoding="utf-8")
     cli("fetch", "--fixtures", str(later))
     with db(home) as c:
         live, closed = c.execute("SELECT live, closed_at FROM jobs WHERE id=?", (jid,)).fetchone()

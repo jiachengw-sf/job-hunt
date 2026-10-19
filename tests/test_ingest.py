@@ -28,7 +28,7 @@ Our on-call rotation is one week in six."""
 
 def _setup(cli, persona_home, persona: str = "senior-backend", rich: bool = False) -> Path:
     home = persona_home(persona)
-    (home / "config.yaml").write_text("fit:\n  priority_threshold: 0\n")
+    (home / "config.yaml").write_text("fit:\n  priority_threshold: 0\n", encoding="utf-8")
     cli("run", "--fixtures", BASE, "--no-sync", "--no-inspect")
     if rich:
         db = sqlite3.connect(home / "jobhunt.db")
@@ -41,7 +41,7 @@ def _setup(cli, persona_home, persona: str = "senior-backend", rich: bool = Fals
 
 def _task(home: Path, job_id: int) -> dict:
     [f] = (home / "work" / "tasks").glob(f"req-{job_id}-*.json")
-    return json.loads(f.read_text())
+    return json.loads(f.read_text(encoding="utf-8"))
 
 
 def _write(task: dict, result: dict) -> Path:
@@ -219,7 +219,7 @@ def test_bad_results_are_rejected_with_specific_errors(cli, persona_home, mutate
     [rej] = env["data"]["rejected"]
     assert any(path in e["path"] and words in e["message"] for e in rej["errors"]), rej["errors"]
     assert rej["attempts"] == 1 and f.exists()
-    errors = json.loads((f.parent / f"{task['task_id']}.errors.json").read_text())
+    errors = json.loads((f.parent / f"{task['task_id']}.errors.json").read_text(encoding="utf-8"))
     assert errors["errors"] == rej["errors"]
     _, shown, _ = cli("show", "1")
     assert shown["data"]["fit"]["provisional"] is True
@@ -264,9 +264,9 @@ def test_fix_after_rejection_then_accept(cli, persona_home):
 def test_malformed_and_unknown_files(cli, persona_home):
     home = _setup(cli, persona_home)
     res = home / "work" / "results"
-    (res / "req-1-nope.json").write_text("{not json")
-    (res / "ghost.json").write_text(json.dumps({"task_id": "ghost"}))
-    (res / "mismatch.json").write_text(json.dumps({"task_id": "other"}))
+    (res / "req-1-nope.json").write_text("{not json", encoding="utf-8")
+    (res / "ghost.json").write_text(json.dumps({"task_id": "ghost"}), encoding="utf-8")
+    (res / "mismatch.json").write_text(json.dumps({"task_id": "other"}), encoding="utf-8")
     code, env, _ = cli("ingest")
     assert code == ExitCode.VALIDATION
     msgs = {r["task_id"]: r["errors"][0]["message"] for r in env["data"]["rejected"]}

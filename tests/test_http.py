@@ -140,7 +140,7 @@ def test_retry_after_parsing():
 def test_fixture_transport_serves_files_with_etags(tmp_path: Path):
     f = tmp_path / "api.example" / "v1" / "jobs.json"
     f.parent.mkdir(parents=True)
-    f.write_text('{"jobs": []}')
+    f.write_text('{"jobs": []}', encoding="utf-8")
     t = FixtureTransport(tmp_path)
     r1 = t("https://api.example/v1/jobs?content=true", {}, 1)
     assert r1.status == 200 and r1.json() == {"jobs": []}
@@ -152,7 +152,7 @@ def test_fixture_transport_serves_files_with_etags(tmp_path: Path):
 def test_fixture_transport_serves_html_pages(tmp_path: Path):
     page = tmp_path / "jobs.example" / "acme" / "123" / "apply.html"
     page.parent.mkdir(parents=True)
-    page.write_text("<form></form>")
+    page.write_text("<form></form>", encoding="utf-8")
     t = FixtureTransport(tmp_path)
     r = t("https://jobs.example/acme/123/apply?src=x", {}, 1)
     assert r.status == 200 and r.body == b"<form></form>"

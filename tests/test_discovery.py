@@ -344,7 +344,7 @@ def test_empty_source_holds_closures_then_warns(cli, persona_home, world):
     home = persona_home("senior-backend")
     fetch(cli, world)
     kw = world.path / "api.ashbyhq.com/posting-api/job-board/kitewire.json"
-    kw.write_text('{"apiVersion": "1", "jobs": []}')
+    kw.write_text('{"apiVersion": "1", "jobs": []}', encoding="utf-8")
     for run in (1, 2):
         data = fetch(cli, world)
         y = next(s for s in data["sources"] if s["source_id"] == "ashby:kitewire")

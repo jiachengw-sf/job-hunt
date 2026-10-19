@@ -45,9 +45,17 @@ def test_persistent_profile_launches(isolated_home):
         "    page.set_content('<p id=x>ok</p>')\n"
         "    print(json.dumps({'text': page.inner_text('#x')}))\n"
     )
-    proc = subprocess.run(
-        [sys.executable, "-c", code], capture_output=True, text=True, timeout=120, env=os.environ
-    )
+    try:  # a first Chromium launch on a fresh Windows runner can be slow
+        proc = subprocess.run(
+            [sys.executable, "-c", code],
+            capture_output=True,
+            text=True,
+            timeout=300,
+            env=os.environ,
+        )
+    except subprocess.TimeoutExpired as e:
+        out = (e.stdout or b"")[-2000:], (e.stderr or b"")[-2000:]
+        pytest.fail(f"browser launch timed out after 300s; stdout/stderr tail: {out!r}")
     if proc.returncode != 0 and "Executable doesn't exist" in proc.stderr:
         pytest.skip("no browser binary installed")
     assert proc.returncode == 0, proc.stderr

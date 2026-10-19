@@ -210,11 +210,11 @@ GH_COMPLIANCE = [
 def write_greenhouse() -> None:
     for board, jobs in GH_JOBS.items():
         listing = BASE / f"boards-api.greenhouse.io/v1/boards/{board}/jobs.json"
-        listed = {str(j["id"]): j for j in json.loads(listing.read_text())["jobs"]}
+        listed = {str(j["id"]): j for j in json.loads(listing.read_text(encoding="utf-8"))["jobs"]}
         for jid, tpl in jobs.items():
             single = BASE / f"boards-api.greenhouse.io/v1/boards/{board}/jobs/{jid}.json"
             if single.exists():
-                job = json.loads(single.read_text())
+                job = json.loads(single.read_text(encoding="utf-8"))
             elif jid in listed:
                 job = dict(listed[jid])
             else:  # listed on Simplify only, with its own posting text on the ATS
@@ -236,7 +236,7 @@ def write_greenhouse() -> None:
             job["data_compliance"] = [{"type": "gdpr", "requires_consent": False}]
             out = OUT / f"boards-api.greenhouse.io/v1/boards/{board}/jobs/{jid}.json"
             out.parent.mkdir(parents=True, exist_ok=True)
-            out.write_text(json.dumps(job, indent=1) + "\n")
+            out.write_text(json.dumps(job, indent=1) + "\n", encoding="utf-8")
 
 
 def _li(label: str, inner: str, required: bool) -> str:
@@ -342,7 +342,7 @@ def lever_page(site: str, jid: str, tpl: str) -> str:
         f'<div class="application-additional"><textarea name="comments" placeholder="Add a cover letter or anything else you want to share."></textarea></div>'
         f'<input type="hidden" name="h-captcha-response" value=""><div id="h-captcha" class="h-captcha"></div>'
         f'<button id="btn-submit" type="button" class="template-btn-submit">Submit application</button>'
-        f"</form><script>{(JS / 'lever.js').read_text()}</script></body></html>\n"
+        f"</form><script>{(JS / 'lever.js').read_text(encoding='utf-8')}</script></body></html>\n"
     )  # fmt: skip
 
 
@@ -351,7 +351,7 @@ def write_lever() -> None:
         for jid, tpl in jobs.items():
             out = OUT / f"jobs.lever.co/{site}/{jid}/apply.html"
             out.parent.mkdir(parents=True, exist_ok=True)
-            out.write_text(lever_page(site, jid, tpl))
+            out.write_text(lever_page(site, jid, tpl), encoding="utf-8")
 
 
 def _fe(
@@ -441,7 +441,9 @@ def write_ashby() -> None:
         for jid, tpl in jobs.items():
             out = OUT / f"jobs.ashbyhq.com/{board}/{jid}/form.json"
             out.parent.mkdir(parents=True, exist_ok=True)
-            out.write_text(json.dumps(ashby_posting(board, jid, tpl), indent=1) + "\n")
+            out.write_text(
+                json.dumps(ashby_posting(board, jid, tpl), indent=1) + "\n", encoding="utf-8"
+            )
 
 
 def _esc(s: str) -> str:
@@ -524,7 +526,7 @@ def gh_page(job: dict) -> str:
         f'<div class="eeoc__container"><h3>Voluntary Self-Identification</h3>{"".join(eeo)}</div>'
         f'<button type="submit" class="btn btn--pill">Submit application</button><p id="fx-status"></p></form></main>'
         f'<script type="application/json" id="fx-locations">{json.dumps(LOCATIONS)}</script>'
-        f"<script>{(JS / 'greenhouse.js').read_text()}</script></body></html>\n"
+        f"<script>{(JS / 'greenhouse.js').read_text(encoding='utf-8')}</script></body></html>\n"
     )  # fmt: skip
 
 
@@ -578,30 +580,32 @@ def ashby_page(posting: dict) -> str:
         f'{"".join(_ab_entry(fe) for fe in entries)}'
         f'<div class="ashby-survey"><p>U.S. EQUAL EMPLOYMENT OPPORTUNITY INFORMATION (voluntary)</p>{"".join(_ab_entry(fe) for fe in survey)}</div>'
         '<button class="ashby-application-form-submit-button"><span>Submit Application</span></button><p id="fx-status"></p></div>'
-        f"<script>{(JS / 'ashby.js').read_text()}</script></body></html>\n"
+        f"<script>{(JS / 'ashby.js').read_text(encoding='utf-8')}</script></body></html>\n"
     )  # fmt: skip
 
 
 def _endpoint(path: str, spec: dict) -> None:
     out = PAGES / path
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(spec, indent=1) + "\n")
+    out.write_text(json.dumps(spec, indent=1) + "\n", encoding="utf-8")
 
 
 def write_pages() -> None:
     for board, jobs in GH_JOBS.items():
         for jid in jobs:
             job = json.loads(
-                (OUT / f"boards-api.greenhouse.io/v1/boards/{board}/jobs/{jid}.json").read_text()
+                (OUT / f"boards-api.greenhouse.io/v1/boards/{board}/jobs/{jid}.json").read_text(
+                    encoding="utf-8"
+                )
             )
             out = PAGES / f"job-boards.greenhouse.io/{board}/jobs/{jid}.html"
             out.parent.mkdir(parents=True, exist_ok=True)
-            out.write_text(gh_page(job))
+            out.write_text(gh_page(job), encoding="utf-8")
     for board, jobs in ASHBY_JOBS.items():
         for jid, tpl in jobs.items():
             out = PAGES / f"jobs.ashbyhq.com/{board}/{jid}/application.html"
             out.parent.mkdir(parents=True, exist_ok=True)
-            out.write_text(ashby_page(ashby_posting(board, jid, tpl)))
+            out.write_text(ashby_page(ashby_posting(board, jid, tpl)), encoding="utf-8")
     host = GH_UPLOAD.split("/")[2]
     _endpoint(f"{host}/index.POST.json", {"status": 204})
     _endpoint("job-boards.greenhouse.io/_default.POST.json", {"json": {"ok": True}})

@@ -143,10 +143,10 @@ def test_history_scan_finds_data_a_later_commit_removed(tmp_path: Path):
     git("init", "-q")
     git("config", "user.email", "dev@example.com")
     git("config", "user.name", "Dev")
-    (tmp_path / "notes.txt").write_text(f"contact {leaked}\n")
+    (tmp_path / "notes.txt").write_text(f"contact {leaked}\n", encoding="utf-8")
     git("add", ".")
     git("commit", "-qm", "add notes")
-    (tmp_path / "notes.txt").write_text("nothing here\n")
+    (tmp_path / "notes.txt").write_text("nothing here\n", encoding="utf-8")
     git("commit", "-qam", f"scrub notes, ask {leaked}")
     assert scan_repo(tmp_path) == []  # the working tree is clean...
     found = {(f.path.split("@")[0], f.kind) for f in scan_history(tmp_path)}

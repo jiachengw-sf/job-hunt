@@ -84,7 +84,7 @@ def test_launchd_plist(cli, home, fake):
     pl = plistlib.loads(path.read_bytes())
     assert pl["Label"] == sch.LABEL and pl["StartInterval"] == 4 * 3600
     assert pl["ProgramArguments"][-1] == "run"
-    assert pl["StandardOutPath"].endswith("logs/run.log")
+    assert Path(pl["StandardOutPath"]).parts[-2:] == ("logs", "run.log")
     _, st, _ = cli("schedule", "status", "--platform", "launchd")
     assert st["data"]["status"]["installed"] is True
     cli("schedule", "remove", "--platform", "launchd")
@@ -96,7 +96,7 @@ def test_windows_task(cli, home, fake):
     assert code == ExitCode.OK
     create = next(c for c in fake.calls if c[:2] == ["schtasks", "/Create"])
     assert create[create.index("/MO") + 1] == "6" and "/TN" in create
-    script = (home / "run-scheduled.cmd").read_text()
+    script = (home / "run-scheduled.cmd").read_text(encoding="utf-8")
     assert "run >>" in script and "JOBHUNT_HOME" in script
     _, rm, _ = cli("schedule", "remove", "--platform", "windows")
     assert rm["data"]["action"] == "removed"

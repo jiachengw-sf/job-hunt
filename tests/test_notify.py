@@ -40,7 +40,7 @@ def posts(monkeypatch: pytest.MonkeyPatch) -> list[dict]:
 
 
 def _secrets(persona: str) -> list[str]:
-    a = yaml.safe_load((PERSONAS_DIR / persona / "answers.yaml").read_text())
+    a = yaml.safe_load((PERSONAS_DIR / persona / "answers.yaml").read_text(encoding="utf-8"))
     ident = a.get("identity") or {}
     return [
         v for k in ("email", "phone", "legal_last_name", "address_line1") if (v := ident.get(k))
@@ -52,7 +52,9 @@ CFG = "notifications:\n  ntfy_topic: jh-test-topic\n  discord_webhook: https://d
 
 def test_digest_lists_what_waits_on_you_and_moves_on(cli, persona_home, world):
     home = persona_home("intl-sponsorship")
-    (home / "config.yaml").write_text("fit:\n  priority_threshold: 0\n")  # read every form
+    (home / "config.yaml").write_text(
+        "fit:\n  priority_threshold: 0\n", encoding="utf-8"
+    )  # read every form
     assert cli("run", "--fixtures", str(world), "--no-sync")[0] == ExitCode.OK
     code, env, _ = cli("digest")
     assert code == ExitCode.OK
@@ -70,7 +72,7 @@ def test_digest_lists_what_waits_on_you_and_moves_on(cli, persona_home, world):
 
 def test_run_pushes_alerts_once_and_the_digest_daily(cli, persona_home, world, posts):
     home = persona_home("first-year-intern")
-    (home / "config.yaml").write_text(CFG + "  alert_priority: 0\n")
+    (home / "config.yaml").write_text(CFG + "  alert_priority: 0\n", encoding="utf-8")
     code, env, _ = cli("run", "--fixtures", str(world), "--no-sync")
     assert code == ExitCode.OK
     n = env["data"]["notify"]
@@ -98,7 +100,7 @@ def test_run_pushes_alerts_once_and_the_digest_daily(cli, persona_home, world, p
 
 def test_dry_run_and_no_notify_push_nothing(cli, persona_home, world, posts):
     home = persona_home("first-year-intern")
-    (home / "config.yaml").write_text(CFG)
+    (home / "config.yaml").write_text(CFG, encoding="utf-8")
     cli("run", "--fixtures", str(world), "--no-sync", "--dry-run")
     cli("run", "--fixtures", str(world), "--no-sync", "--no-notify")
     assert posts == []
@@ -106,7 +108,7 @@ def test_dry_run_and_no_notify_push_nothing(cli, persona_home, world, posts):
 
 def test_failed_channel_is_reported(cli, persona_home, world, monkeypatch):
     home = persona_home("first-year-intern")
-    (home / "config.yaml").write_text("notifications:\n  ntfy_topic: t\n")
+    (home / "config.yaml").write_text("notifications:\n  ntfy_topic: t\n", encoding="utf-8")
 
     def down(url, body, headers):
         raise ch.NotifyError("URLError: offline")
@@ -127,7 +129,7 @@ def test_notify_test_and_missing_channels(cli, persona_home, posts):
     assert code == ExitCode.VALIDATION
     code, env, _ = cli("digest", "--push")
     assert code == ExitCode.VALIDATION
-    (home / "config.yaml").write_text(CFG)
+    (home / "config.yaml").write_text(CFG, encoding="utf-8")
     code, env, _ = cli("notify", "test", "--dry-run")
     assert env["data"]["results"] == {"ntfy": "would send", "discord": "would send"} and not posts
     code, env, _ = cli("notify", "test")

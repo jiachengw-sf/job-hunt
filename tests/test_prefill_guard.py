@@ -41,7 +41,7 @@ def test_engine_clicks_only_through_the_wrapper():
     for py in PREFILL.rglob("*.py"):
         if py.name == "guard.py":
             continue
-        for n, line in enumerate(py.read_text().splitlines(), 1):
+        for n, line in enumerate(py.read_text(encoding="utf-8").splitlines(), 1):
             code = line.split("#", 1)[0]
             if banned.search(code):
                 offenders.append(f"{py.relative_to(REPO)}:{n}: {line.strip()}")

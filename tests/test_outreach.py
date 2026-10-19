@@ -19,7 +19,7 @@ BASE = str(REPO / "tests" / "fixtures" / "sources" / "base")
 @pytest.fixture
 def home(cli, persona_home) -> Path:
     h = persona_home("first-year-intern")
-    (h / "config.yaml").write_text("fit:\n  priority_threshold: 0\n")
+    (h / "config.yaml").write_text("fit:\n  priority_threshold: 0\n", encoding="utf-8")
     cli("run", "--fixtures", BASE, "--no-sync", "--no-inspect")
     return h
 
@@ -128,6 +128,6 @@ def test_there_is_no_send_code_path():
     assert cmds == ["outreach mark-sent"]
     for f in [*(REPO / "src/jobhunt/drafts").glob("*.py"), REPO / "src/jobhunt/cli/outreach.py",
               REPO / "src/jobhunt/ingest/outreach.py"]:  # fmt: skip
-        text = f.read_text()
+        text = f.read_text(encoding="utf-8")
         for banned in ("smtplib", "urllib", "jobhunt.http", "webbrowser", "subprocess"):
             assert banned not in text, f"{banned} in {f.name}"

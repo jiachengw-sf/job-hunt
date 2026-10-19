@@ -96,7 +96,7 @@ def judge_all(home: Path, edit=None) -> list[str]:
     """Write a fake result for every pending task file; ``edit(task, result)`` may alter it."""
     written = []
     for f in sorted((home / "work" / "tasks").glob("req-*.json")):
-        task = json.loads(f.read_text())
+        task = json.loads(f.read_text(encoding="utf-8"))
         res = fake_result(task)
         if edit:
             edit(task, res)

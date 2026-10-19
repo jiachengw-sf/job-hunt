@@ -24,7 +24,9 @@ RESUMES = REPO / "tests" / "fixtures" / "resumes"
 
 
 def persona_contact(persona: str) -> dict:
-    return yaml.safe_load((PERSONAS_DIR / persona / "answers.yaml").read_text())["identity"]
+    return yaml.safe_load((PERSONAS_DIR / persona / "answers.yaml").read_text(encoding="utf-8"))[
+        "identity"
+    ]
 
 
 @pytest.mark.parametrize("persona", PERSONAS)
@@ -41,7 +43,7 @@ def test_resume_text_contact_and_draft(persona, ext):
     assert ident["email"] not in red and c.phone not in red and c.name not in red
     draft = rs.draft_profile(text, c, path.name)
     truth = Profile.model_validate(
-        yaml.safe_load((PERSONAS_DIR / persona / "profile.yaml").read_text())
+        yaml.safe_load((PERSONAS_DIR / persona / "profile.yaml").read_text(encoding="utf-8"))
     )
     assert [e["school"] for e in draft["education"]] == [e.school for e in truth.education]
     assert [(e["org"], e["title"]) for e in draft["experience"]] == [
@@ -52,7 +54,7 @@ def test_resume_text_contact_and_draft(persona, ext):
 
 def test_unsupported_resume_format(tmp_path):
     f = tmp_path / "cv.rtf"
-    f.write_text("{\\rtf1}")
+    f.write_text("{\\rtf1}", encoding="utf-8")
     from jobhunt.errors import ValidationFailed
 
     with pytest.raises(ValidationFailed):
@@ -72,7 +74,7 @@ def test_resume_add_profile_confirm_and_set(cli, isolated_home):
     redacted = Path(d["redacted_text"]).read_text(encoding="utf-8")
     assert ident["email"] not in redacted
     # contact details wait for the form, owner-only
-    contact = json.loads(server.contact_path(paths).read_text())
+    contact = json.loads(server.contact_path(paths).read_text(encoding="utf-8"))
     assert contact["email"] == ident["email"]
     # an unreviewed draft can't be confirmed
     code, env, _ = cli("profile", "confirm")
@@ -82,7 +84,7 @@ def test_resume_add_profile_confirm_and_set(cli, isolated_home):
         assert code == ExitCode.OK, e2
     code, env, _ = cli("profile", "confirm")
     assert code == ExitCode.OK, env
-    prof = Profile.model_validate(yaml.safe_load(paths.profile.read_text()))
+    prof = Profile.model_validate(yaml.safe_load(paths.profile.read_text(encoding="utf-8")))
     assert prof.resumes[0].file == "senior-backend.pdf" and prof.resumes[0].default
     # set: list index, append, list literal, validation
     code, env, _ = cli("profile", "set", "experience[0].title", "Principal Backend Engineer")
@@ -96,7 +98,7 @@ def test_resume_add_profile_confirm_and_set(cli, isolated_home):
     assert code == ExitCode.VALIDATION
     code, _, _ = cli("profile", "set", "experience[9].title", "x")
     assert code == ExitCode.VALIDATION
-    prof = Profile.model_validate(yaml.safe_load(paths.profile.read_text()))
+    prof = Profile.model_validate(yaml.safe_load(paths.profile.read_text(encoding="utf-8")))
     assert prof.experience[0].title == "Principal Backend Engineer"
     assert "Rust" in prof.skills["skills"] and "tools" not in prof.skills
     # a second resume joins the confirmed profile instead of redrafting
@@ -104,7 +106,7 @@ def test_resume_add_profile_confirm_and_set(cli, isolated_home):
         "resume", "add", str(RESUMES / "senior-backend.docx"), "--label", "docx copy"
     )
     assert code == ExitCode.OK and env["data"]["draft"] is None
-    prof = Profile.model_validate(yaml.safe_load(paths.profile.read_text()))
+    prof = Profile.model_validate(yaml.safe_load(paths.profile.read_text(encoding="utf-8")))
     assert [r.file for r in prof.resumes if r.default] == ["senior-backend.docx"]
 
 
@@ -131,8 +133,10 @@ def _post_from_values(vals: dict) -> dict[str, list[str]]:
 @pytest.mark.parametrize("persona", PERSONAS)
 def test_form_round_trip_is_lossless(persona):
     """Opening the form on a persona's files and saving unchanged gives the same data."""
-    prefs = yaml.safe_load((PERSONAS_DIR / persona / "preferences.yaml").read_text())
-    answers = yaml.safe_load((PERSONAS_DIR / persona / "answers.yaml").read_text())
+    prefs = yaml.safe_load(
+        (PERSONAS_DIR / persona / "preferences.yaml").read_text(encoding="utf-8")
+    )
+    answers = yaml.safe_load((PERSONAS_DIR / persona / "answers.yaml").read_text(encoding="utf-8"))
     vals = F.prefill(prefs, answers, profile=None, contact=None)
     html = F.render(vals, token="t", new_questions=[])
     assert "<script>" in html and 'name="token" value="t"' in html
@@ -153,7 +157,9 @@ def test_form_round_trip_is_lossless(persona):
 
 def test_form_prefills_from_resume_and_profile():
     prof = Profile.model_validate(
-        yaml.safe_load((PERSONAS_DIR / "newgrad-analyst" / "profile.yaml").read_text())
+        yaml.safe_load(
+            (PERSONAS_DIR / "newgrad-analyst" / "profile.yaml").read_text(encoding="utf-8")
+        )
     )
     contact = {
         "name": "Jordan Mockley",
@@ -262,8 +268,8 @@ def test_server_token_host_origin_and_save(running_server):
         "frame-ancestors" in hdrs.get("Content-Security-Policy", "")
         or hdrs.get("X-Frame-Options") == "DENY"
     )
-    prefs = yaml.safe_load((home / "preferences.yaml").read_text())
-    answers = yaml.safe_load((home / "answers.yaml").read_text())
+    prefs = yaml.safe_load((home / "preferences.yaml").read_text(encoding="utf-8"))
+    answers = yaml.safe_load((home / "answers.yaml").read_text(encoding="utf-8"))
     vals = F.prefill(prefs, answers, profile=None, contact=None)
     vals["a:standard.sms_consent"] = "no"
     body = urllib.parse.urlencode(
@@ -282,7 +288,9 @@ def test_server_token_host_origin_and_save(running_server):
         f"{base}/save", body, {"Origin": base, "Content-Type": "application/x-www-form-urlencoded"}
     )
     assert code == 303 and "saved=1" in hdrs["Location"]
-    saved = Answers.model_validate(yaml.safe_load((home / "answers.yaml").read_text()))
+    saved = Answers.model_validate(
+        yaml.safe_load((home / "answers.yaml").read_text(encoding="utf-8"))
+    )
     assert saved.standard.sms_consent == "no"
     assert saved.identity.email == answers["identity"]["email"]
     st = server.read_state(paths)

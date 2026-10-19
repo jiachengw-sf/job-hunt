@@ -22,15 +22,19 @@ AB = OVERLAY / "jobs.ashbyhq.com"
 
 
 def gh(board: str, jid: str) -> FormSpec:
-    return greenhouse.parse(json.loads((GH / board / "jobs" / f"{jid}.json").read_text()))
+    return greenhouse.parse(
+        json.loads((GH / board / "jobs" / f"{jid}.json").read_text(encoding="utf-8"))
+    )
 
 
 def lv(site: str, jid: str) -> FormSpec:
-    return lever.parse((LV / site / jid / "apply.html").read_text())
+    return lever.parse((LV / site / jid / "apply.html").read_text(encoding="utf-8"))
 
 
 def ab(board: str, jid: str) -> FormSpec:
-    return ashby.parse(json.loads((AB / board / jid / "form.json").read_text())["jobPosting"])
+    return ashby.parse(
+        json.loads((AB / board / jid / "form.json").read_text(encoding="utf-8"))["jobPosting"]
+    )
 
 
 SPECS = {
@@ -77,7 +81,7 @@ def test_greenhouse_adds_hispanic_question_before_race():
     assert race.shown_if and race.shown_if.field == "hispanic_ethnicity"
     assert race.shown_if.options == ["No"]
     # no race question, no Hispanic question
-    data = json.loads((GH / "northwind" / "jobs" / "1004.json").read_text())
+    data = json.loads((GH / "northwind" / "jobs" / "1004.json").read_text(encoding="utf-8"))
     for block in data["compliance"]:
         block["questions"] = [q for q in block["questions"] if q["label"] != "Race"]
     assert "hispanic_ethnicity" not in {f.id for f in greenhouse.parse(data).fields}

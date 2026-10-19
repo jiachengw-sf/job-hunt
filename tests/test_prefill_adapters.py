@@ -134,7 +134,7 @@ def test_greenhouse_race_stays_hidden_after_hispanic_yes(browser_context, fx):
 
 def test_greenhouse_rejects_unaccepted_resume_type(browser_context, fx, tmp_path):
     md = tmp_path / "resume.md"
-    md.write_text("# Synthetic resume\n")
+    md.write_text("# Synthetic resume\n", encoding="utf-8")
     sheet = make_sheet("intl-sponsorship", "gh_A", md)
     _, _, _, router, outcomes = run_fill(browser_context, fx, "gh_A", sheet)
     by = {o.id: o for o in outcomes}

@@ -105,7 +105,7 @@ def test_schema_all_spills_to_out_file(cli, tmp_path):
     code, env, _ = cli("schema", "--all", "--out", str(out))
     assert code == 0
     assert env["page"]["out_file"] == str(out)
-    full = json.loads(out.read_text())
+    full = json.loads(out.read_text(encoding="utf-8"))
     assert set(full["commands"]) == set(REGISTRY)
     assert full["exit_codes"]["9"]
 

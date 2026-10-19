@@ -29,7 +29,7 @@ def test_defaults_load_without_user_config():
 
 def test_user_config_overrides_only_given_keys(isolated_home: Path):
     isolated_home.mkdir(parents=True)
-    (isolated_home / "config.yaml").write_text("prefill:\n  batch_size: 3\n")
+    (isolated_home / "config.yaml").write_text("prefill:\n  batch_size: 3\n", encoding="utf-8")
     cfg = load_config()
     assert cfg.prefill.batch_size == 3
     assert cfg.volume_guard.window_days == 90
@@ -37,21 +37,23 @@ def test_user_config_overrides_only_given_keys(isolated_home: Path):
 
 def test_bad_yaml_reports_line(isolated_home: Path):
     isolated_home.mkdir(parents=True)
-    (isolated_home / "config.yaml").write_text("prefill:\n  batch_size: [3\n")
+    (isolated_home / "config.yaml").write_text("prefill:\n  batch_size: [3\n", encoding="utf-8")
     with pytest.raises(ConfigError, match="line"):
         load_config()
 
 
 def test_http_interval_cannot_go_below_one_second(isolated_home: Path):
     isolated_home.mkdir(parents=True)
-    (isolated_home / "config.yaml").write_text("http:\n  min_host_interval_seconds: 0.1\n")
+    (isolated_home / "config.yaml").write_text(
+        "http:\n  min_host_interval_seconds: 0.1\n", encoding="utf-8"
+    )
     with pytest.raises(ConfigError, match="min_host_interval_seconds"):
         load_config()
 
 
 def test_research_budget_is_capped(isolated_home: Path):
     isolated_home.mkdir(parents=True)
-    (isolated_home / "config.yaml").write_text("research:\n  max_searches: 50\n")
+    (isolated_home / "config.yaml").write_text("research:\n  max_searches: 50\n", encoding="utf-8")
     with pytest.raises(ConfigError, match="max_searches"):
         load_config()
 
@@ -80,21 +82,23 @@ def test_onboarding_gate(isolated_home: Path, persona_home):
 @pytest.mark.parametrize("persona", PERSONAS)
 def test_personas_validate(persona):
     d = PERSONAS_DIR / persona
-    Profile.model_validate(yaml.safe_load((d / "profile.yaml").read_text()))
-    Preferences.model_validate(yaml.safe_load((d / "preferences.yaml").read_text()))
-    Answers.model_validate(yaml.safe_load((d / "answers.yaml").read_text()))
+    Profile.model_validate(yaml.safe_load((d / "profile.yaml").read_text(encoding="utf-8")))
+    Preferences.model_validate(yaml.safe_load((d / "preferences.yaml").read_text(encoding="utf-8")))
+    Answers.model_validate(yaml.safe_load((d / "answers.yaml").read_text(encoding="utf-8")))
     assert (d / "resume.md").exists()
 
 
 def test_personas_cover_required_scenarios():
     prefs = {
         p: Preferences.model_validate(
-            yaml.safe_load((PERSONAS_DIR / p / "preferences.yaml").read_text())
+            yaml.safe_load((PERSONAS_DIR / p / "preferences.yaml").read_text(encoding="utf-8"))
         )
         for p in PERSONAS
     }
     answers = {
-        p: Answers.model_validate(yaml.safe_load((PERSONAS_DIR / p / "answers.yaml").read_text()))
+        p: Answers.model_validate(
+            yaml.safe_load((PERSONAS_DIR / p / "answers.yaml").read_text(encoding="utf-8"))
+        )
         for p in PERSONAS
     }
     assert prefs["first-year-intern"].roles.seniority.value == ["internship"]
@@ -111,16 +115,22 @@ def test_examples_validate_and_carry_placeholders():
         ("answers", Answers),
         ("watchlist", Watchlist),
     ]:
-        data = yaml.safe_load((REPO / f"{name}.example.yaml").read_text())
+        data = yaml.safe_load((REPO / f"{name}.example.yaml").read_text(encoding="utf-8"))
         model.model_validate(data)
     # copying an example unedited must not pass onboarding
-    assert find_placeholders(yaml.safe_load((REPO / "profile.example.yaml").read_text()))
-    assert find_placeholders(yaml.safe_load((REPO / "answers.example.yaml").read_text()))
+    assert find_placeholders(
+        yaml.safe_load((REPO / "profile.example.yaml").read_text(encoding="utf-8"))
+    )
+    assert find_placeholders(
+        yaml.safe_load((REPO / "answers.example.yaml").read_text(encoding="utf-8"))
+    )
 
 
 def test_unedited_example_fails_onboarding(isolated_home: Path):
     isolated_home.mkdir(parents=True)
-    (isolated_home / "profile.yaml").write_text((REPO / "profile.example.yaml").read_text())
+    (isolated_home / "profile.yaml").write_text(
+        (REPO / "profile.example.yaml").read_text(encoding="utf-8"), encoding="utf-8"
+    )
     with pytest.raises(ConfigError, match="placeholder"):
         load_user_file("profile")
 

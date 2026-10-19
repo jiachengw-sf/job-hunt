@@ -53,7 +53,9 @@ def test_offline_skips_sources(cli):
 
 def test_invalid_config_fails_with_location(cli, isolated_home: Path):
     cli("doctor", "--offline", "--fix")
-    (isolated_home / "config.yaml").write_text("version: 1\nprefill:\n  batch_sise: 3\n")
+    (isolated_home / "config.yaml").write_text(
+        "version: 1\nprefill:\n  batch_sise: 3\n", encoding="utf-8"
+    )
     code, env, _ = cli("doctor", "--offline")
     assert code == ExitCode.CHECKS_FAILED
     cfg = _checks(env)["config"]
@@ -64,7 +66,7 @@ def test_invalid_config_fails_with_location(cli, isolated_home: Path):
 def test_placeholder_config_fails(cli, isolated_home: Path):
     cli("doctor", "--offline", "--fix")
     (isolated_home / "config.yaml").write_text(
-        "version: 1\nnotifications:\n  ntfy_topic: CHANGE_ME\n"
+        "version: 1\nnotifications:\n  ntfy_topic: CHANGE_ME\n", encoding="utf-8"
     )
     _, env, _ = cli("doctor", "--offline")
     cfg = _checks(env)["config"]
@@ -92,7 +94,7 @@ def test_persona_onboarding_files_pass(cli, persona_home, persona):
 def test_broken_persona_file_fails_with_reason(cli, persona_home):
     home = persona_home("senior-backend")
     (home / "preferences.yaml").write_text(
-        "version: 1\nroles:\n  seniority:\n    value: [wizard]\n"
+        "version: 1\nroles:\n  seniority:\n    value: [wizard]\n", encoding="utf-8"
     )
     code, env, _ = cli("doctor", "--offline", "--fix")
     assert code == ExitCode.CHECKS_FAILED

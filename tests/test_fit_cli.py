@@ -61,8 +61,8 @@ def test_dry_run_match_writes_nothing(cli, persona_home):
 
 
 def _sensitive_values(persona: str) -> list[str]:
-    a = yaml.safe_load((PERSONAS_DIR / persona / "answers.yaml").read_text())
-    p = yaml.safe_load((PERSONAS_DIR / persona / "profile.yaml").read_text())
+    a = yaml.safe_load((PERSONAS_DIR / persona / "answers.yaml").read_text(encoding="utf-8"))
+    p = yaml.safe_load((PERSONAS_DIR / persona / "profile.yaml").read_text(encoding="utf-8"))
     ident = a.get("identity", {})
     vals = [ident.get(k) for k in ("email", "phone", "legal_last_name", "address_line1")]
     vals += [ed["school"] for ed in p.get("education", [])]
@@ -73,12 +73,14 @@ def _sensitive_values(persona: str) -> list[str]:
 @pytest.mark.parametrize("persona", PERSONAS)
 def test_judgment_tasks_hold_no_personal_data(cli, persona_home, persona):
     home = persona_home(persona)
-    (home / "config.yaml").write_text("fit:\n  priority_threshold: 0\n")  # a task for every job
+    (home / "config.yaml").write_text(
+        "fit:\n  priority_threshold: 0\n", encoding="utf-8"
+    )  # a task for every job
     cli("run", "--fixtures", BASE, "--no-sync")
     tasks = list((home / "work" / "tasks").glob("*.json"))
     assert tasks
     for t in tasks:
-        text = t.read_text()
+        text = t.read_text(encoding="utf-8")
         task = json.loads(text)
         assert task["posting"].startswith("<untrusted_content")
         assert task["posting"].rstrip().endswith("</untrusted_content>")
@@ -116,7 +118,7 @@ def test_mark_and_sync_round_trip(cli, persona_home):
 def test_sync_skips_open_xlsx(cli, persona_home):
     home = persona_home("first-year-intern")
     cli("run", "--fixtures", BASE)
-    (home / "~$tracker.xlsx").write_text("")
+    (home / "~$tracker.xlsx").write_text("", encoding="utf-8")
     code, env, _ = cli("sync")
     assert code == ExitCode.OK
     assert "open in a spreadsheet app" in env["data"]["skipped"]
