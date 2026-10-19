@@ -30,6 +30,7 @@ from jobhunt.config import read_yaml
 from jobhunt.models import Profile
 from jobhunt.onboarding import form as F
 from jobhunt.paths import Paths, get_paths, secure_file
+from jobhunt.procs import pid_alive
 
 IDLE_MINUTES = 60
 MAX_BODY = 1_000_000
@@ -65,20 +66,6 @@ def write_state(paths: Paths, state: dict[str, Any]) -> None:
     tmp.write_text(json.dumps(state, indent=2), encoding="utf-8")
     secure_file(tmp)
     tmp.replace(p)
-
-
-def pid_alive(pid: int | None) -> bool:
-    if not pid:
-        return False
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
-    except OSError:
-        return False
-    return True
 
 
 class FormApp:

@@ -42,6 +42,7 @@ from jobhunt.prefill.fixtures import FixtureRouter
 from jobhunt.prefill.guard import RouteGuard
 from jobhunt.prefill.review import TabReview, highlight, review, screenshot
 from jobhunt.prefill.values import read_sheet
+from jobhunt.procs import pid_alive
 
 log = logging.getLogger("jobhunt.prefill")
 
@@ -92,20 +93,6 @@ def read_state(paths: Paths) -> dict[str, Any] | None:
         return json.loads(state_path(paths).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return None
-
-
-def pid_alive(pid: int | None) -> bool:
-    if not pid:
-        return False
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
-    except OSError:
-        return False
-    return True
 
 
 def running(paths: Paths) -> dict[str, Any] | None:
