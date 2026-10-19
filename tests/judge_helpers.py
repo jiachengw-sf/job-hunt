@@ -101,6 +101,6 @@ def judge_all(home: Path, edit=None) -> list[str]:
         if edit:
             edit(task, res)
         Path(task["result_path"]).parent.mkdir(parents=True, exist_ok=True)
-        Path(task["result_path"]).write_text(json.dumps(res))
+        Path(task["result_path"]).write_text(json.dumps(res), encoding="utf-8")
         written.append(task["task_id"])
     return written

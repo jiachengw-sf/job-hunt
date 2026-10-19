@@ -47,7 +47,7 @@ def _task(home: Path, job_id: int) -> dict:
 def _write(task: dict, result: dict) -> Path:
     p = Path(task["result_path"])
     p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(json.dumps(result))
+    p.write_text(json.dumps(result), encoding="utf-8")
     return p
 
 

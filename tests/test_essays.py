@@ -51,7 +51,7 @@ def setup(cli, persona_home, fx):
 def _task(cli, jid: int) -> dict:
     code, env, _ = cli("essays", "draft", str(jid))
     assert code == ExitCode.OK, env
-    return json.loads(Path(env["data"]["task_path"]).read_text())
+    return json.loads(Path(env["data"]["task_path"]).read_text(encoding="utf-8"))
 
 
 def _posting_quote(task: dict) -> str:
@@ -86,7 +86,7 @@ def _good(task: dict) -> dict:
 
 
 def _ingest(cli, task: dict, res: dict) -> tuple[int, dict]:
-    Path(task["result_path"]).write_text(json.dumps(res))
+    Path(task["result_path"]).write_text(json.dumps(res), encoding="utf-8")
     code, env, _ = cli("ingest")
     return code, env
 
@@ -126,7 +126,7 @@ def test_good_draft_is_saved_as_a_draft_to_edit(cli, setup):
     code, env = _ingest(cli, t, _good(t))
     assert code == ExitCode.OK, env
     [f] = env["data"]["accepted"][0]["summary"]["files"]
-    body = Path(f).read_text()
+    body = Path(f).read_text(encoding="utf-8")
     assert body.startswith("# DRAFT — edit before use") and "That is why" in body
     _, shown, _ = cli("essays", "show", str(jid))
     d = shown["data"]["drafts"][0]
@@ -214,7 +214,7 @@ def _drafted(cli, setup):
     assert _ingest(cli, t, _good(t))[0] == ExitCode.OK
     code, env, _ = cli("essays", "review", str(jid))
     assert code == ExitCode.OK and env["data"]["status"] == "written"
-    rt = json.loads(Path(env["data"]["task_path"]).read_text())
+    rt = json.loads(Path(env["data"]["task_path"]).read_text(encoding="utf-8"))
     assert rt["fresh_context"] and rt["drafts"][0]["sentences"]
     return home, jid, rt
 
@@ -234,7 +234,7 @@ def test_review_edits_are_applied_by_code_once(cli, setup):
     d = shown["data"]["drafts"][0]
     assert d["status"] == "reviewed" and "fits what I want to learn" in d["text"]
     assert d["review_edits"][0]["reason"] == "more specific"
-    assert "fits what I want to learn" in Path(d["file"]).read_text()
+    assert "fits what I want to learn" in Path(d["file"]).read_text(encoding="utf-8")
     _, again, _ = cli("essays", "review", str(jid))
     assert again["data"]["status"] == "reviewed" and again["data"]["task_id"] is None
 
@@ -260,14 +260,14 @@ def test_review_never_overwrites_your_edits(cli, setup):
     _home, jid, rt = _drafted(cli, setup)
     _, shown, _ = cli("essays", "show", str(jid))
     f = Path(shown["data"]["drafts"][0]["file"])
-    f.write_text(f.read_text() + "\nMy own closing line.\n")
+    f.write_text(f.read_text(encoding="utf-8") + "\nMy own closing line.\n", encoding="utf-8")
     edit = {"field_id": rt["drafts"][0]["field_id"], "old": "stands out to me",
             "new": "matters to me", "reason": "tone"}  # fmt: skip
     code, env = _ingest(cli, rt, _review(rt, [edit]))
     assert code == ExitCode.OK
     [alt] = env["data"]["accepted"][0]["summary"]["kept_your_edits"]
-    assert "matters to me" in Path(alt).read_text()
-    assert "My own closing line." in f.read_text()
+    assert "matters to me" in Path(alt).read_text(encoding="utf-8")
+    assert "My own closing line." in f.read_text(encoding="utf-8")
 
 
 def test_approve_records_edits_and_nudges_when_unchanged(cli, setup):
@@ -279,7 +279,7 @@ def test_approve_records_edits_and_nudges_when_unchanged(cli, setup):
     assert "almost exactly as drafted" in env["hints"]["user_actions"][0]
     _, shown, _ = cli("essays", "show", str(jid))
     f = Path(shown["data"]["drafts"][0]["file"])
-    f.write_text("# my notes\nI have wanted to build robots since I was a kid.​\n")
+    f.write_text("# my notes\nI have wanted to build robots since I was a kid.​\n", encoding="utf-8")
     code, env, _ = cli("essays", "approve", str(jid))
     a = env["data"]["approved"][0]
     assert a["unchanged"] is False and a["edit_ratio"] > 0.5
@@ -303,11 +303,13 @@ def test_approved_essay_reaches_answers_json_and_packet(cli, setup):
     assert j["status"] == "skipped" and "essays approve" in j["reason"]
     _, shown, _ = cli("essays", "show", str(jid))
     f = Path(shown["data"]["drafts"][0]["file"])
-    f.write_text("Robots that sort parcels are the kind of thing I want to build.\n")
+    f.write_text(
+        "Robots that sort parcels are the kind of thing I want to build.\n", encoding="utf-8"
+    )
     cli("essays", "approve", str(jid))
     code, env, _ = cli("packet", str(jid))
     assert code == ExitCode.OK
-    page = Path(env["data"]["path"]).read_text()
+    page = Path(env["data"]["path"]).read_text(encoding="utf-8")
     assert "Robots that sort parcels" in page
     code, env, _ = cli("prefill", str(jid), "--dry-run")
     j = env["data"]["jobs"][0]
@@ -324,7 +326,9 @@ def test_answers_json_fills_the_approved_text(cli, setup):
 
     home, jid, _ = _drafted(cli, setup)
     _, shown, _ = cli("essays", "show", str(jid))
-    Path(shown["data"]["drafts"][0]["file"]).write_text("Parcel robots are my thing.\n")
+    Path(shown["data"]["drafts"][0]["file"]).write_text(
+        "Parcel robots are my thing.\n", encoding="utf-8"
+    )
     cli("essays", "approve", str(jid))
     paths = get_paths()
     inp = form_inputs(paths, load_config(paths), "2026-10-18T00:00:00Z")

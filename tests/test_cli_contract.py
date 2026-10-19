@@ -118,7 +118,7 @@ def test_output_cap_spills_to_file(capsys, monkeypatch):
     assert len(out) <= MAX_CHARS
     env = json.loads(out)
     assert env["page"]["out_file"]
-    with open(env["page"]["out_file"]) as f:
+    with open(env["page"]["out_file"], encoding="utf-8") as f:
         assert "commands" in json.load(f)
 
 

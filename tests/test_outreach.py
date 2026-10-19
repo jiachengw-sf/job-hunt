@@ -27,7 +27,7 @@ def home(cli, persona_home) -> Path:
 def _task(cli, *args: str) -> dict:
     code, env, _ = cli("outreach", "draft", *args)
     assert code == ExitCode.OK, env
-    return json.loads(Path(env["data"]["task_path"]).read_text())
+    return json.loads(Path(env["data"]["task_path"]).read_text(encoding="utf-8"))
 
 
 def _good(task: dict) -> dict:
@@ -48,7 +48,7 @@ def _good(task: dict) -> dict:
 
 
 def _ingest(cli, task: dict, res: dict) -> tuple[int, dict]:
-    Path(task["result_path"]).write_text(json.dumps(res))
+    Path(task["result_path"]).write_text(json.dumps(res), encoding="utf-8")
     code, env, _ = cli("ingest")
     return code, env
 
@@ -81,7 +81,7 @@ def test_followup_cycle_respects_timing_and_the_cap(cli, home):
         assert code == ExitCode.OK, env
         s = env["data"]["accepted"][0]["summary"]
         assert s["key"] == f"followup-{n}"
-        body = Path(s["file"]).read_text()
+        body = Path(s["file"]).read_text(encoding="utf-8")
         assert "jobhunt never sends anything" in body
         code, sent, _ = cli("outreach", "mark-sent", "1", "--kind", "followup")
         assert code == ExitCode.OK and sent["data"]["key"] == f"followup-{n}"

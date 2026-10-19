@@ -43,7 +43,10 @@ def test_small_output_not_spilled(tmp_path: Path):
 def test_large_output_spilled(tmp_path: Path):
     env = Envelope(ok=True, data={"blob": "x" * 20000})
     out = spill_if_large(env, out=None, spill_dir=tmp_path, command="x")
-    assert out.page.out_file and Path(out.page.out_file).read_text().count("x") >= 20000
+    assert (
+        out.page.out_file
+        and Path(out.page.out_file).read_text(encoding="utf-8").count("x") >= 20000
+    )
     assert len(out.model_dump_json()) < 2000
 
 

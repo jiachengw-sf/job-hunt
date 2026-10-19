@@ -135,7 +135,7 @@ def test_eval_fit_runs_on_persona_set(cli):
     d = (
         env["data"]
         if "macro" in env["data"]
-        else json.loads(Path(env["data"]["out_file"]).read_text())
+        else json.loads(Path(env["data"]["out_file"]).read_text(encoding="utf-8"))
     )
     m = d["macro"]
     assert set(d["personas"]) == set(PERSONAS)

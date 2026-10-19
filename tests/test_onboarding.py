@@ -69,7 +69,7 @@ def test_resume_add_profile_confirm_and_set(cli, isolated_home):
     assert ident["email"] not in blob and ident["phone"][-4:] not in blob
     paths = get_paths()
     assert (paths.resume_dir / "senior-backend.pdf").exists()
-    redacted = Path(d["redacted_text"]).read_text()
+    redacted = Path(d["redacted_text"]).read_text(encoding="utf-8")
     assert ident["email"] not in redacted
     # contact details wait for the form, owner-only
     contact = json.loads(server.contact_path(paths).read_text())

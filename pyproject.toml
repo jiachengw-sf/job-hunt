@@ -77,7 +77,12 @@ target-version = "py311"
 src = ["src", "tests"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "PLW1514"]
+# PLW1514 (open/read_text/write_text without encoding) is a preview rule: Windows defaults to
+# cp1252, so every text read and write names its encoding. Only explicitly selected preview
+# rules are enabled.
+preview = true
+explicit-preview-rules = true
 ignore = ["RUF012", "RUF001", "RUF002", "RUF003"]  # en dashes and curly quotes are matched on purpose
 
 

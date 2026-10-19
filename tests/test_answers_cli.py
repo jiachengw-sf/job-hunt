@@ -27,7 +27,7 @@ def test_answers_add_refuses_sensitive_and_show_hides_values(cli, persona_home, 
     assert "form" in env["hints"]["user_actions"][0]
     code, env, _ = cli("answers", "show")  # large: spilled to a file
     assert code == ExitCode.OK
-    env = {**env, "data": json.loads(Path(env["page"]["out_file"]).read_text())}
+    env = {**env, "data": json.loads(Path(env["page"]["out_file"]).read_text(encoding="utf-8"))}
     rows = {r["key"]: r for r in env["data"]["builtin"]}
     assert rows["identity.email"]["answered"] and rows["identity.email"]["value"] is None
     assert rows["work_auth.sponsorship"]["value"] is None

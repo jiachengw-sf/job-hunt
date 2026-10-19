@@ -27,7 +27,7 @@ def home(cli, persona_home) -> Path:
 def _task(cli) -> dict:
     code, env, _ = cli("research", "Bluefin Analytics")
     assert code == ExitCode.OK, env
-    return json.loads(Path(env["data"]["task_path"]).read_text())
+    return json.loads(Path(env["data"]["task_path"]).read_text(encoding="utf-8"))
 
 
 def _good(task: dict) -> dict:
@@ -84,7 +84,7 @@ def _good(task: dict) -> dict:
 
 
 def _write(task: dict, res: dict) -> None:
-    Path(task["result_path"]).write_text(json.dumps(res))
+    Path(task["result_path"]).write_text(json.dumps(res), encoding="utf-8")
 
 
 def test_task_has_budget_rules_and_no_personal_data(cli, home):
