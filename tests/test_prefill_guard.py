@@ -6,6 +6,11 @@ import re
 
 import pytest
 
+try:
+    from playwright.sync_api import Error as PlaywrightError
+except ImportError:  # browser extra not installed: the browser tests skip
+    PlaywrightError = Exception  # type: ignore[assignment,misc]
+
 from jobhunt.cli.main import cli as cli_group
 from jobhunt.prefill.guard import RouteGuard, SubmitRefused, refusal, safe_click, safe_press
 from tests.conftest import REPO
@@ -191,7 +196,17 @@ def test_no_submit_request_leaves_during_fill_then_human_can_submit(ats):
     assert {b["url"] for b in guard.blocked} == {"https://ats.test/submit"}
 
     guard.release(page)  # handoff: the human clicks Submit themselves
-    page.goto("https://ats.test/form")
+    # The blocked submit makes Chrome show its error page a moment later; on Windows that late
+    # navigation can interrupt the next goto, so let it land first and retry once if it races.
+    page.wait_for_load_state()
+    for attempt in range(3):
+        try:
+            page.goto("https://ats.test/form")
+            break
+        except PlaywrightError as e:
+            if "interrupted by another navigation" not in str(e) or attempt == 2:
+                raise
+            page.wait_for_load_state()
     with page.expect_navigation():
         page.locator("#go").click()  # the human's click, not the engine's
     assert ("POST", "https://ats.test/submit") in seen
