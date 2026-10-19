@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import json
 import re
 
 import click
 import pytest
+import yaml
 
 import jobhunt.cli.main  # noqa: F401  (registers every command)
 from jobhunt.cli.framework import REGISTRY
-from tests.conftest import REPO
+from tests.conftest import PERSONAS, PERSONAS_DIR, REPO
 
 DOCS = ["README.md", "CONTRIBUTING.md", "AGENTS.md"]
 
@@ -55,3 +57,18 @@ def test_local_links_resolve(doc):
         if "://" in target or target.startswith("mailto:"):
             continue
         assert (REPO / target).exists(), f"{doc}: broken link {target}"
+
+
+def test_demo_uses_a_synthetic_persona_only():
+    session = json.loads((REPO / "docs" / "demo" / "session.json").read_text(encoding="utf-8"))
+    assert session["persona"] in PERSONAS
+    assert (REPO / "docs" / "demo.gif").stat().st_size < 5_000_000
+    text = json.dumps(session)
+    assert "/Users/" not in text and "/home/" not in text and "/var/folders" not in text
+    for persona in PERSONAS:  # no contact detail or legal name, even a synthetic one
+        ident = yaml.safe_load((PERSONAS_DIR / persona / "answers.yaml").read_text()).get(
+            "identity", {}
+        )
+        for k in ("email", "phone", "legal_last_name", "address_line1"):
+            if ident.get(k):
+                assert ident[k] not in text, k

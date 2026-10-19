@@ -8,6 +8,11 @@ you to review, and keeps everything in a spreadsheet you own.
 **You always click Submit.** jobhunt has no code path that submits an application or sends a
 message.
 
+![A terminal session: jobhunt doctor, run, ingest, match, digest, mark and calibrate for a synthetic persona](docs/demo.gif)
+
+The demo uses the synthetic persona `intl-sponsorship` and offline fixtures. Re-record it with
+`uv run python docs/demo/record.py`, then `swift docs/demo/render.swift` (macOS).
+
 ## How it works
 
 - **A Python core with no AI inside** (`jobhunt` CLI). It handles discovery, dedupe, gates,

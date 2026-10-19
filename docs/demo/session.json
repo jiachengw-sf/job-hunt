@@ -1,0 +1,154 @@
+{
+ "persona": "intl-sponsorship",
+ "steps": [
+  {
+   "cmd": "jobhunt doctor --fix --offline --human",
+   "out": [
+    "[ok  ] python: Python 3.13.14",
+    "[ok  ] install: Development install (editable)",
+    "[ok  ] data_dir: Data directory ~/.jobhunt",
+    "[ok  ] config: ~/.jobhunt/config.yaml is valid",
+    "[ok  ] store: Database schema v8",
+    "[WARN] onboarding.profile: profile.yaml not created yet",
+    "        fix: Ask your AI tool to run the jobhunt-setup skill (onboarding).",
+    "[WARN] onboarding.preferences: preferences.yaml not created yet",
+    "        fix: Ask your AI tool to run the jobhunt-setup skill (onboarding).",
+    "[WARN] onboarding.answers: answers.yaml not created yet",
+    "        fix: Ask your AI tool to run the jobhunt-setup skill (onboarding).",
+    "[ok  ] browser: Playwright + Chrome (/Applications/Google Chrome.app/Contents/MacOS/Google Chrome)",
+    "[WARN] skills.claude-code: 0/7 jobhunt skills for claude-code",
+    "        fix: Run `jobhunt skills install`.",
+    "[ok  ] recall: Recall: BM25 only (optional: `uv tool install 'jobhunt[recall]'` adds embeddings)",
+    "[ok  ] tracker: XLSX tracker at ~/.jobhunt/tracker.xlsx",
+    "[skip] sources: Skipped (--offline)",
+    "",
+    "  \u2026",
+    "",
+    "8 ok, 4 warnings, 0 failing, 1 skipped"
+   ]
+  },
+  {
+   "say": "# Onboarding done for the synthetic persona 'intl-sponsorship'. Offline fixtures."
+  },
+  {
+   "cmd": "jobhunt run --human",
+   "out": [
+    "Fetch (ok): 13 fetched, 11 new, 0 closed",
+    "  greenhouse:northwind                      ok            fetched     4  new    4  gated out    0",
+    "  ashby:quillstack                          ok            fetched     1  new    1  gated out    0",
+    "  simplify:Summer2027-Internships           ok            fetched     8  new    6  gated out    1",
+    "",
+    "Gates: 10 passed, 0 unclear, 1 gated out of 11 live jobs",
+    "  dropped by: term 1",
+    "Recall (bm25): kept 10 of 10 \u2014 install the [recall] extra for embedding recall; using BM25 only",
+    "Bands: good 1, unknown 9 (10 provisional)",
+    "Judgment tasks: 0 new, 2 replaced, 10 pending",
+    "",
+    "Top priorities:",
+    "  #10    0.61  good*       Northwind Robotics: Robotics Intern",
+    "  #4     0.53  ?*          Northwind Robotics: Hardware Test Intern",
+    "  #5     0.50  ?*          Quillstack: Product Engineering Intern",
+    "  #1     0.46  ?*          Northwind Robotics: Software Engineering Intern, Summer 2027",
+    "  #11    0.44  ?*          Mapleleaf Energy: Grid Analytics Intern",
+    "  #8     0.41  ?*          Cobalt Freight: Software Intern",
+    "  #2     0.41  ?*          Northwind Robotics: Machine Learning Intern, Summer 2027",
+    "  #6     0.41  ?*          Bluefin Analytics: Software Engineer Intern",
+    "  #7     0.41  ?*          Harborlight Bank: Technology Intern - Summer 2027",
+    "  #3     0.36  ?*          Northwind Robotics: Future Opportunities - Robotics Software",
+    "  (* provisional: some evidence not judged yet)",
+    "",
+    "  \u2026"
+   ]
+  },
+  {
+   "say": "# Your AI tool does the judgment tasks (jobhunt-judge); a stand-in here."
+  },
+  {
+   "cmd": "jobhunt ingest > /dev/null",
+   "out": []
+  },
+  {
+   "cmd": "jobhunt match --human",
+   "out": [
+    "Gates: 10 passed, 0 unclear, 1 gated out of 11 live jobs",
+    "  dropped by: term 1",
+    "Recall (bm25): kept 10 of 10 \u2014 install the [recall] extra for embedding recall; using BM25 only",
+    "Bands: good 1, stretch 9 (0 provisional)",
+    "  \u2026"
+   ]
+  },
+  {
+   "cmd": "jobhunt digest --human",
+   "out": [
+    "jobhunt digest \u2014 0 new Ready job(s)",
+    "",
+    "Ready to pre-fill (4):",
+    "- Northwind Robotics \u2014 Robotics Intern, good, priority 0.61",
+    "  https://job-boards.greenhouse.io/northwind/jobs/1099",
+    "- Quillstack \u2014 Product Engineering Intern, stretch, priority 0.54",
+    "  https://jobs.ashbyhq.com/quillstack/9e8d7c6b-5a49-4382-9170-6f5e4d3c2b01",
+    "- Northwind Robotics \u2014 Software Engineering Intern, Summer 2027, stretch, priority 0.50",
+    "  https://job-boards.greenhouse.io/northwind/jobs/1001",
+    "- Northwind Robotics \u2014 Future Opportunities - Robotics Software, stretch, priority 0.40",
+    "  https://job-boards.greenhouse.io/northwind/jobs/1003",
+    "",
+    "Questions only you can answer (2):",
+    "- Do you have a valid driver's license? (on 2 form(s))",
+    "- Will you require [Company] to sponsor you for a work permit now or in the future for the location(s) you selected? (on 1 form(s))",
+    "",
+    "Essay jobs (1):",
+    "- Northwind Robotics \u2014 Machine Learning Intern, Summer 2027, stretch, priority 0.45: Why do you want to work at Northwind Robotics?",
+    "  https://job-boards.greenhouse.io/northwind/jobs/1002",
+    "",
+    "Apply by hand (3):",
+    "- Mapleleaf Energy \u2014 Grid Analytics Intern, stretch, priority 0.47 \u2014 `jobhunt packet 11`",
+    "  https://careers.mapleleaf-energy.example/jobs/intern-123",
+    "- Cobalt Freight \u2014 Software Intern, stretch, priority 0.45 \u2014 `jobhunt packet 8`",
+    "  https://careers-cobaltfreight.icims.com/jobs/5521/software-intern/job",
+    "- Harborlight Bank \u2014 Technology Intern - Summer 2027, stretch, priority 0.44 \u2014 `jobhunt packet 7`",
+    "  https://harborlight.wd5.myworkdayjobs.com/en-US/careers/job/Charlotte-NC/Technology-Intern_R-10023",
+    "  \u2026"
+   ]
+  },
+  {
+   "say": "# You applied and heard back. Record it (or edit Status in the sheet):"
+  },
+  {
+   "cmd": "jobhunt mark 10 Applied > /dev/null",
+   "out": []
+  },
+  {
+   "cmd": "jobhunt mark 10 Interviewing > /dev/null",
+   "out": []
+  },
+  {
+   "cmd": "jobhunt mark 1 Applied > /dev/null",
+   "out": []
+  },
+  {
+   "cmd": "jobhunt mark 1 Rejected > /dev/null",
+   "out": []
+  },
+  {
+   "cmd": "jobhunt mark 5 Applied > /dev/null",
+   "out": []
+  },
+  {
+   "cmd": "jobhunt mark 3 Skipped --reason domain > /dev/null",
+   "out": []
+  },
+  {
+   "cmd": "jobhunt calibrate --human",
+   "out": [
+    "Applied 3: 2 replies, 1 no reply yet (no reply never counts against fit)",
+    "band       applied replies interview offer  label",
+    "strong           0       0         -     -  insufficient data",
+    "good             1       1      100%    0%  insufficient data",
+    "stretch          2       1        0%    0%  insufficient data",
+    "not_a_fit        0       0         -     -  insufficient data",
+    "Skipped: domain 1",
+    "Rates use replies only: an application with no reply is never evidence of poor fit. A band needs 5 replies for a label. Suggestions are for you to approve; nothing is changed until you edit config.yaml."
+   ]
+  }
+ ]
+}
