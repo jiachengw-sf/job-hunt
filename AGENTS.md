@@ -11,14 +11,16 @@ An open-source job-hunt agent with two layers:
 1. **`jobhunt` Python core — no AI inside.** Discovery, dedupe, gates, recall, form inspection, the
    answer bank, pre-fill, the SQLite store and tracker sync. It never calls an AI API and ships no keys.
 2. **Skills (`skills/*/SKILL.md`).** Tell the user's own AI tool how to drive the CLI and where to
-   use judgment. The AI runs on the user's subscription.
+   use judgment. The AI runs on the user's subscription. `jobhunt skills install` puts them in
+   `~/.claude/skills/` and `~/.agents/skills/`; users then say "run my job hunt".
 
 The model **proposes** (writes JSON to `~/.jobhunt/work/results/`); code **validates and commits**
 (`jobhunt ingest`). Only the CLI writes state.
 
 ## Non-negotiables
 
-1. No code path submits an application. There is no `submit` command; the human clicks Submit.
+1. No code path submits an application or sends a message. There is no `submit` or `send`
+   command; the human clicks Submit and sends their own outreach.
 2. No logins, account creation, CAPTCHA solving, stealth plugins or proxies.
 3. Never guess an answer. Values come from the profile, a user-confirmed answer-bank entry, or
    user-approved text; anything else goes back to the user.
@@ -80,12 +82,20 @@ src/jobhunt/
   tracker/        states.yml state machine, XLSX / Google Sheets backends, three-way sync
   prefill/        answers.json + validator, submit guard (click wrapper, route guard), browser,
                   Greenhouse / Lever / Ashby adapters, review (highlights, screenshots), driver
+  ingest/         `jobhunt ingest`: validates work/results/ against each task kind (quotes,
+                  citations, budgets, limits), then applies; verify.py holds the normalization
+  drafts/         grounding checks, essays (draft → one review → user approval), outreach
+  research.py     company research tasks (budget, 25-word quotes, 14-day cache)
+  notify/         digest, fast alerts, ntfy / Discord / SMTP channels
+  schedule.py     launchd / cron / Task Scheduler entry for `jobhunt run`
+  skills.py       `jobhunt skills install` (tool paths, explicit-only settings)
   doctor.py       environment checks
   models/         pydantic models for config, profile, preferences, answers, watchlist
   store/          SQLite schema + numbered migrations (events table is append-only)
   cli/            framework (@agent_command) and commands
   defaults/       system-layer config, synonyms.yaml (skill aliases), states.yml
   devtools/       pii_scan (CI personal-data check)
+skills/           the seven portable skills (open-spec frontmatter; shipped in the wheel)
 tests/personas/   four synthetic users — use these, never real data
 tests/fixtures/sources/  offline snapshots of every source (`jobhunt fetch --fixtures <dir>`)
 tests/fixtures/forms/    form specs (`overlay/`) and browser pages (`pages/`), from make_forms.py
@@ -111,7 +121,8 @@ evals/fit/        seed fit eval set: 40 synthetic postings x 4 personas (`jobhun
 - Recall relevance helps ranking but is never shown or described as "fit".
 - Code marks a requirement `stated` only when a profile line literally names the skill; the
   evidence is that line's exact text and `ref`. An `inferred` match never satisfies a must-have.
-- Bands are `provisional` until judgment tasks (`~/.jobhunt/work/tasks/`) are ingested.
+- Bands are `provisional` until judgment tasks (`~/.jobhunt/work/tasks/`) are ingested. An
+  ingested judgment stays in force while the posting and profile are unchanged.
 - Unclear gates route to the user when they involve sensitive answers (work authorization,
   citizenship, clearance, class year, languages) and to a judgment task otherwise.
 - Judgment tasks carry the de-identified profile only. Postings are wrapped in
@@ -119,6 +130,27 @@ evals/fit/        seed fit eval set: 40 synthetic postings x 4 personas (`jobhun
 - The spreadsheet is a view. Agent-owned columns are pushed; user-owned columns (Status, Applied
   on, Referral contact, Next step, Follow-up on, Outcome, Notes, Skip reason) are pulled back
   and the user's edits win. The agent only moves Status forward (`states.yml`).
+
+## AI task rules
+
+- Task kinds: `requirement_evidence` (jobhunt-judge), `company_research` (jobhunt-research),
+  `essay_draft` / `essay_review` (jobhunt-essays), `outreach_draft` (jobhunt-outreach).
+  `jobhunt tasks` lists pending ones; each task file holds its instructions and result schema.
+- Ingest checks results against code truth (the stored posting, the profile, a gate re-run,
+  re-fetched pages), never against the task file alone. A rejection keeps the task pending and
+  writes `<task_id>.errors.json` with a JSON path per problem.
+- Drafted sentences cite a source; a sentence may not add a number, a known skill or a
+  leadership claim its source lacks. Hidden and zero-width Unicode is stripped from all
+  generated text. Essays get exactly one review pass, applied by code as `{old, new, reason}`.
+- Drafts are the user's to edit: approval records the edit ratio, and nothing is ever sent.
+  There is no send code path; `outreach mark-sent` only records what the user sent.
+- Research: at most 5 searches and 8 fetches, no subagents; every fact is a fetched URL plus a
+  quote of 25 words or fewer that ingest finds on the page.
+- Notifications go only to the user and carry no answers or contact details.
+- Skills use open-spec frontmatter only. `jobhunt skills install` adds the tool-specific
+  explicit-only setting to jobhunt-apply in that tool's copy (Claude Code:
+  `disable-model-invocation: true`; Codex: `agents/openai.yaml` with
+  `policy.allow_implicit_invocation: false`).
 
 ## Working on the code
 
