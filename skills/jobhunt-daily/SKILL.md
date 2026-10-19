@@ -50,6 +50,9 @@ contract: every command prints one JSON envelope; relay `hints.user_actions` ver
 8. **Wrap up.** `jobhunt sync`. Then a short list: what was done, what's waiting on the user
    (with the exact command or file), and when the next scheduled run is
    (`jobhunt schedule status`).
+9. **Calibration (weekly, or when asked whether the bands are right).** `jobhunt calibrate
+   --human` and show it. No reply is never a sign of poor fit. Suggestions are the user's to
+   approve: they add `config_snippet` to `~/.jobhunt/config.yaml` themselves. Never edit it.
 
 ## When things go wrong
 
