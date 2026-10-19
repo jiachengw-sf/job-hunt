@@ -94,12 +94,14 @@ src/jobhunt/
   store/          SQLite schema + numbered migrations (events table is append-only)
   cli/            framework (@agent_command) and commands
   defaults/       system-layer config, synonyms.yaml (skill aliases), states.yml
-  devtools/       pii_scan (CI personal-data check)
+  devtools/       pii_scan (CI personal-data check), trigger_eval, daily_e2e
 skills/           the seven portable skills (open-spec frontmatter; shipped in the wheel)
 tests/personas/   four synthetic users — use these, never real data
 tests/fixtures/sources/  offline snapshots of every source (`jobhunt fetch --fixtures <dir>`)
 tests/fixtures/forms/    form specs (`overlay/`) and browser pages (`pages/`), from make_forms.py
 evals/fit/        seed fit eval set: 40 synthetic postings x 4 personas (`jobhunt eval-fit`)
+evals/triggers/   skill trigger queries and results (`python -m jobhunt.devtools.trigger_eval`)
+evals/daily/      daily-flow end-to-end results (`python -m jobhunt.devtools.daily_e2e`)
 ```
 
 ## Pre-fill rules

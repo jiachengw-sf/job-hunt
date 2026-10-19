@@ -511,8 +511,112 @@ Verified runs (2026-10-18):
   subprocess, and in-process tests share one session browser.
 - Windows is untested, and CI has still not run (no GitHub remote).
 
-## Milestone 5 — Skills (next)
+## Milestone 5 — Skills (2026-10-19) — met in Claude Code; Codex not verified
 
-All seven skills, ingest validation with quote and provenance checks, essays with the reviewer
-pass (approved drafts feed pre-fill), research with budgets, outreach, notifications, scheduler,
-`skills install`. The apply skill drives `jobhunt prefill` and relays its `user_actions`.
+Done when the full daily flow works for a persona in **both** Claude Code and Codex and the
+trigger evals pass in both. **Claude Code: met. Codex: not installed on this machine, so
+nothing was run in Codex** (the Codex paths, sidecar and eval adapter are built from its docs
+but untested).
+
+- **`jobhunt ingest`** (`ingest/`): validates every result in `work/results/` against its task
+  kind and against code truth (the stored posting, the profile lines, a gate re-run, the
+  preferences), not the task file. Rejections keep the task pending (attempts + 1) and write
+  `<task_id>.errors.json` with a JSON path and fix per problem; exit 4. Accepted results move
+  to `results/ingested/` with their task file. `jobhunt tasks` lists pending work.
+  - `requirement_evidence`: every requirement text, gate quote and dealbreaker quote must be in
+    the posting; every `evidence_quote` must be the cited profile line; `stated` needs the line
+    to name the skill; `none` means `unmet`; `inferred` needs a note; every task requirement,
+    unclear AI gate and dealbreaker must be answered. Applied as AI requirement rows plus
+    `judgments` (resolved gates, dealbreaker hits as a failing `dealbreaker` gate), then the job
+    is refit, so bands stop being provisional. A changed posting or profile (`basis_hash`)
+    drops them and writes a new task; an unchanged one is never re-tasked.
+  - Postings where code finds no requirements now ask the AI to extract them (found while
+    building this: every base-fixture task had no requirements and couldn't add any).
+- **Research** (`jobhunt research`): cached brief (14 days) or a task with the hard budget (5
+  searches, 8 fetches, no subagents). Ingest checks the counts, quote length (≤ 25 words),
+  that each URL was a listed source, and **re-fetches each cited page once** to find the quote.
+  Facts from pages that no longer load are dropped, never kept unverified. Briefs feed the
+  tracker's Company brief column and Companies tab.
+- **Essays** (`jobhunt essays list|draft|review|show|approve`): drafts are sentences that each
+  cite a profile line, base answer, brief fact or posting quote; ingest rejects any number,
+  known skill or leadership word the source lacks, strips hidden/zero-width Unicode and
+  enforces the form's character limit. One review pass (a fresh-context task) returns
+  `{old, new, reason}` edits that code applies (each `old` exactly once, no new claims) and
+  never overwrites a file the user already edited. Drafts land in `work/essays/` marked
+  "draft — edit before use"; `approve` reads the user's text, records the edit ratio and
+  nudges when unchanged. Approved essays fill answers.json and the hand-off packet, so Essay
+  jobs can be pre-filled.
+- **Outreach** (`jobhunt outreach due|draft|show|mark-sent`): referral, coffee-chat and
+  follow-up drafts with the same grounding and a 600-character limit. Follow-ups are due 7 days
+  after applying or the last follow-up, at most 2 (config). **There is no send code path**
+  (a test checks the modules and the command list); `mark-sent` only records what the user
+  sent.
+- **Notifications** (`jobhunt digest`, `jobhunt notify test`, and a notify step in
+  `jobhunt run`): the terminal digest (Ready, questions, Essay prompts and deadlines, Manual,
+  closures, legitimacy flags, follow-ups, referral questions, pending AI tasks); optional ntfy
+  (topic or own server), Discord (mentions off) and SMTP to the user's own address (password
+  from an env var). Fast alerts: one urgent push per new non-baseline posting at or above
+  `alert_priority`, once per job; the digest is pushed daily by default. Every attempt is
+  logged; failures are reported.
+- **Scheduler** (`jobhunt schedule install|status|remove`): launchd LaunchAgent, a marked
+  crontab line, or a named Task Scheduler task calling a `.cmd` wrapper. Idempotent, touches
+  only its own entry, `--dry-run` prints it. `python -m jobhunt` works as a fallback.
+- **Skills** (`skills/`): the seven skills with open-spec frontmatter only (descriptions
+  316–434 characters, bodies 39–63 lines, detail in `references/`). A test lints them and
+  checks that every backticked `jobhunt …` command exists.
+- **`jobhunt skills install`**: copies into `~/.claude/skills` / `~/.agents/skills` (or the
+  project-level `.claude/skills` / `.agents/skills`). Checked against the current docs:
+  Claude Code's copy of jobhunt-apply gets `disable-model-invocation: true`; Codex's copy gets
+  `agents/openai.yaml` with `policy.allow_implicit_invocation: false`. Marker files make
+  re-runs no-ops and protect same-named skills the user wrote. The wheel ships the skills.
+  `doctor` warns if apply could run unasked.
+- **AGENTS.md** gained the new modules and an "AI task rules" section; CLAUDE.md points to it.
+- **`JOBHUNT_FIXTURES`** serves offline snapshots when an AI tool drives `jobhunt run`.
+- 646 offline tests (from 498), ruff and the personal-data scan clean at every commit.
+
+Verified runs:
+
+- **Trigger evals, Claude Code** (`evals/triggers/results/claude-code.md`): 7 skills × 20
+  queries (half near-misses) × 3 runs = 420 headless runs, default model, Skill tool only.
+  **140/140 queries pass** (≥ 2 of 3 runs right); 2 single runs missed (a setup scheduling
+  request and a judge ingest-rejection request each answered once without loading the skill).
+  Implicit pre-fill requests never loaded jobhunt-apply; `/jobhunt-apply` always ran it.
+- **Daily flow, Claude Code** (`evals/daily/results/claude-code.md`): "Run my job hunt." for
+  synthetic `intl-sponsorship` on offline fixtures. All 9 checks pass: the daily skill ran the
+  pipeline, did all 10 judgment tasks through the judge skill (fixing its ingest rejections),
+  showed the digest, batched the questions and sent the sponsorship one to the local form,
+  offered `/jobhunt-apply` without starting it, and synced. It ignored the AI-aimed text in a
+  fixture posting and told the user. Nothing was pre-filled, applied or sent. 154 s, ≈ $0.89.
+- **Codex: not run.** `codex` is not installed here. Owed: install and sign in to Codex, then
+  `uv run python -m jobhunt.devtools.trigger_eval --tool codex` and
+  `uv run python -m jobhunt.devtools.daily_e2e --tool codex`. The Codex event parsing in both
+  is written from the docs and untested.
+
+### Notes and decisions
+
+- Quote matching is exact after normalization (NFKC, hidden characters removed, curly quotes
+  and dashes unified, case folded, whitespace collapsed). Nothing fuzzy.
+- Grounding catches numbers, leadership words and skills **listed in `synonyms.yaml`**; an
+  unlisted skill name (e.g. Haskell) isn't caught. Adding aliases there widens the check.
+- An `inferred` must-have still scores as `met_inferred` (Milestone 2 weights) and blocks
+  `strong`; ingest doesn't rewrite the AI's status.
+- A dealbreaker hit becomes a failing `dealbreaker` gate, so the job is gated out with the
+  quote as evidence.
+- Explicit invocation leaves no marker in Claude Code's stream-json, so trigger evals score
+  `/jobhunt-apply` by the reply following the skill (it mentions pre-fill). Implicit triggers
+  are scored by the Skill tool call.
+- A full 420-run eval used most of a 5-hour usage window: the runner stops at 80% (it reached
+  100% once with 5 runs in flight) and `--resume` finishes the rest. Saved results keep model
+  replies only for explicit invocations (one reply named a Homebrew formula with an @ sign,
+  which the personal-data scan read as an email).
+- The daily harness pre-approves `jobhunt` and file tools, but the user's own Claude Code
+  permission settings apply on top: the agent also ran read-only `cat` and `python3`.
+- `notify test` sends without recording; ntfy.sh topics are public, so the setup skill says to
+  pick an unguessable name.
+- Windows (Task Scheduler) is untested, and CI has still not run (no GitHub remote).
+
+## Milestone 6 — Calibrate + share (next)
+
+`calibrate`, README for first-time users, `CONTRIBUTING.md` (new sources and ATS adapters;
+Workday first), a demo GIF with a persona. Also owed from Milestone 5: the Codex trigger evals
+and daily flow, once Codex is installed.
