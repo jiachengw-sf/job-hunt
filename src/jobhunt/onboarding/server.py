@@ -212,9 +212,15 @@ def _handler(app: FormApp) -> type[BaseHTTPRequestHandler]:
     return H
 
 
+def _log(msg: str) -> None:
+    """Startup progress for form.log (stderr is redirected there by `launch`)."""
+    print(f"{now_iso()} form server pid {os.getpid()}: {msg}", file=sys.stderr, flush=True)
+
+
 def make_server(paths: Paths, token: str, port: int = 0) -> ThreadingHTTPServer:
     """Bind 127.0.0.1 and record the URL in the state file (not yet serving)."""
     app = FormApp(paths, token)
+    _log("app ready, binding 127.0.0.1")
     httpd = ThreadingHTTPServer(("127.0.0.1", port), _handler(app))
     httpd.app = app  # type: ignore[attr-defined]
     real_port = httpd.server_address[1]
@@ -230,6 +236,7 @@ def make_server(paths: Paths, token: str, port: int = 0) -> ThreadingHTTPServer:
             "started_at": now_iso(),
         },
     )
+    _log(f"listening on port {real_port}; state written to {state_path(paths)}")
     return httpd
 
 
@@ -278,7 +285,7 @@ def launch(paths: Paths, *, port: int = 0, wait_s: float = 20.0) -> dict[str, An
     else:
         kwargs["start_new_session"] = True
     proc = subprocess.Popen(
-        [sys.executable, "-m", "jobhunt.onboarding.server", "--port", str(port)], **kwargs
+        [sys.executable, "-u", "-m", "jobhunt.onboarding.server", "--port", str(port)], **kwargs
     )
     deadline = time.monotonic() + wait_s
     while time.monotonic() < deadline:
@@ -331,7 +338,9 @@ def main() -> None:
     ap.add_argument("--idle-minutes", type=float, default=IDLE_MINUTES)
     args = ap.parse_args()
     token = os.environ.get("JOBHUNT_FORM_TOKEN") or secrets.token_urlsafe(24)
-    serve(get_paths(), token, args.port, args.idle_minutes)
+    paths = get_paths()
+    _log(f"starting (python {sys.version.split()[0]}, home {paths.home})")
+    serve(paths, token, args.port, args.idle_minutes)
 
 
 if __name__ == "__main__":
