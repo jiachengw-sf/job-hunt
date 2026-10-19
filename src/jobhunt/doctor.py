@@ -272,9 +272,21 @@ def check_skills() -> list[Check]:
         ]
     out = []
     for tool, skills_dir in tools.items():
+        from jobhunt.skills import EXPLICIT_ONLY, explicit_ok
+
         present = [s for s in SKILL_NAMES if (skills_dir / s / "SKILL.md").exists()]
         name = f"skills.{tool}"
-        if len(present) == len(SKILL_NAMES):
+        loose = [s for s in EXPLICIT_ONLY if s in present and not explicit_ok(tool, skills_dir / s)]
+        if loose:
+            out.append(
+                Check(
+                    name=name,
+                    status="warn",
+                    summary=f"{', '.join(loose)} could run without being asked for",
+                    fix="Run `jobhunt skills install` (it makes the apply skill explicit-only).",
+                )
+            )
+        elif len(present) == len(SKILL_NAMES):
             out.append(
                 Check(name=name, status="ok", summary=f"All {len(present)} skills in {skills_dir}")
             )
@@ -284,7 +296,7 @@ def check_skills() -> list[Check]:
                     name=name,
                     status="warn",
                     summary=f"{len(present)}/{len(SKILL_NAMES)} jobhunt skills for {tool}",
-                    fix="Run `jobhunt skills install` (available from Milestone 5).",
+                    fix="Run `jobhunt skills install`.",
                 )
             )
     return out

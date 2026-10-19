@@ -47,6 +47,10 @@ dev = [
 [tool.hatch.build.targets.wheel]
 packages = ["src/jobhunt"]
 
+# The skills ship inside the package so `jobhunt skills install` works from a plain install.
+[tool.hatch.build.targets.wheel.force-include]
+"skills" = "jobhunt/_skills"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"

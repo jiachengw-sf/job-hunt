@@ -35,6 +35,7 @@ from jobhunt.cli.outreach import register as register_outreach
 from jobhunt.cli.prefill import register as register_prefill
 from jobhunt.cli.research import register as register_research
 from jobhunt.cli.schedule import register as register_schedule
+from jobhunt.cli.skills import register as register_skills
 from jobhunt.doctor import DoctorReport, doctor
 from jobhunt.envelope import Envelope, ErrorInfo
 from jobhunt.errors import EXIT_CODE_MEANINGS, ExitCode, NotFound, ValidationFailed
@@ -210,6 +211,7 @@ register_essays(cli)
 register_outreach(cli)
 register_notify(cli)
 register_schedule(cli)
+register_skills(cli)
 
 
 # --- entry point ----------------------------------------------------------------------------
