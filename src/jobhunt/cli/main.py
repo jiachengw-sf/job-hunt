@@ -30,6 +30,7 @@ from jobhunt.cli.framework import (
 )
 from jobhunt.cli.ingest import register as register_ingest
 from jobhunt.cli.onboarding import register as register_onboarding
+from jobhunt.cli.outreach import register as register_outreach
 from jobhunt.cli.prefill import register as register_prefill
 from jobhunt.cli.research import register as register_research
 from jobhunt.doctor import DoctorReport, doctor
@@ -204,6 +205,7 @@ register_apply(cli)
 register_prefill(cli)
 register_research(cli)
 register_essays(cli)
+register_outreach(cli)
 
 
 # --- entry point ----------------------------------------------------------------------------

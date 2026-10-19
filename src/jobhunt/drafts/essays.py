@@ -149,8 +149,9 @@ def read_user_text(path: Path) -> str:
     return "\n".join(body).strip()
 
 
-def _task_id(prefix: str, job_id: int, payload: object) -> str:
-    h = hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
+def _task_id(conn: sqlite3.Connection, prefix: str, job_id: int, payload: object) -> str:
+    n = conn.execute("SELECT count(*) FROM tasks WHERE job_id=?", (job_id,)).fetchone()[0]
+    h = hashlib.sha256(json.dumps([payload, n], sort_keys=True, default=str).encode()).hexdigest()
     return f"{prefix}-{job_id}-{h[:10]}"
 
 
@@ -184,7 +185,7 @@ def write_draft_task(
     pending = _pending(conn, DRAFT_KIND, job.id)
     if pending:
         return "pending", pending["id"], Path(pending["path"])
-    task_id = _task_id("essay", job.id, [p.model_dump() for p in prompts] + [now])
+    task_id = _task_id(conn, "essay", job.id, [p.model_dump() for p in prompts] + [now])
     path = tasks_dir / f"{task_id}.json"
     style = (
         f"The user's writing-style skill is {style_skill!r}: use it to draft, but keep this "
@@ -229,7 +230,7 @@ def write_review_task(
     pending = _pending(conn, REVIEW_KIND, job.id)
     if pending:
         return "pending", pending["id"], Path(pending["path"])
-    task_id = _task_id("review", job.id, [d["text"] for d in drafts] + [now])
+    task_id = _task_id(conn, "review", job.id, [d["text"] for d in drafts] + [now])
     path = tasks_dir / f"{task_id}.json"
     task = {
         "task_id": task_id,

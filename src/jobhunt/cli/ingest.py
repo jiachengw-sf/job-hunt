@@ -17,7 +17,7 @@ from jobhunt.errors import ExitCode
 from jobhunt.fit.engine import run_match
 from jobhunt.fit.recall import make_embedder
 from jobhunt.fit.tasks import TASK_KIND
-from jobhunt.ingest import essays, judgment, research  # noqa: F401  (register handlers)
+from jobhunt.ingest import essays, judgment, outreach, research  # noqa: F401  (handlers)
 from jobhunt.ingest.core import MAX_ATTEMPTS, Ctx, IngestReport, ingest
 from jobhunt.store import open_store
 

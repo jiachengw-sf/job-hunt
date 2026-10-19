@@ -67,6 +67,7 @@ GROUP_HELP = {
     "profile": "Your profile (resume content): confirm the draft, set or show values.",
     "setup": "Onboarding: the local form for preferences and screening answers.",
     "answers": "The answer bank: show, add, edit, confirm wordings, list new questions.",
+    "outreach": "Referral, coffee-chat and follow-up drafts you send yourself (never sent).",
     "essays": "Essay drafts: list prompts, draft and review tasks, show drafts, approve yours.",
 }
 
