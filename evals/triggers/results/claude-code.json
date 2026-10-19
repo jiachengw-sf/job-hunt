@@ -1,0 +1,4649 @@
+{
+ "meta": {
+  "tool": "claude-code",
+  "finished": "2026-10-19 06:52 UTC",
+  "runs_per_query": 3,
+  "model": null,
+  "executed": 420,
+  "stopped": null
+ },
+ "skills": {
+  "jobhunt-setup": {
+   "queries": 20,
+   "passed": 20,
+   "failures": [],
+   "rate": 1.0,
+   "pass": true
+  },
+  "jobhunt-daily": {
+   "queries": 20,
+   "passed": 20,
+   "failures": [],
+   "rate": 1.0,
+   "pass": true
+  },
+  "jobhunt-judge": {
+   "queries": 20,
+   "passed": 20,
+   "failures": [],
+   "rate": 1.0,
+   "pass": true
+  },
+  "jobhunt-research": {
+   "queries": 20,
+   "passed": 20,
+   "failures": [],
+   "rate": 1.0,
+   "pass": true
+  },
+  "jobhunt-apply": {
+   "queries": 20,
+   "passed": 20,
+   "failures": [],
+   "rate": 1.0,
+   "pass": true
+  },
+  "jobhunt-essays": {
+   "queries": 20,
+   "passed": 20,
+   "failures": [],
+   "rate": 1.0,
+   "pass": true
+  },
+  "jobhunt-outreach": {
+   "queries": 20,
+   "passed": 20,
+   "failures": [],
+   "rate": 1.0,
+   "pass": true
+  }
+ },
+ "runs": [
+  {
+   "skill": "jobhunt-setup",
+   "query": "I just installed jobhunt, help me get it set up",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.4
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.4
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.1
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-setup",
+   "query": "Set up jobhunt with my resume at ~/Documents/resume.pdf",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.0
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.1
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.2
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-setup",
+   "query": "I want to start using jobhunt for my internship search",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.9
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.5
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.4
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-setup",
+   "query": "I got a new resume, can you update my jobhunt profile from it?",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.4
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.7
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.6
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-setup",
+   "query": "Change my jobhunt preferences, I'm open to remote roles now",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.4
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.3
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-setup",
+   "query": "Connect my jobhunt tracker to Google Sheets",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.7
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.8
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.7
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-setup",
+   "query": "Turn on phone notifications for new jobs in jobhunt",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.7
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.2
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.1
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-setup",
+   "query": "Make jobhunt check for new postings automatically every few hours",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 1.9
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.7
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.1
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-setup",
+   "query": "jobhunt doctor says my setup is broken, can you fix it?",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.4
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.8
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.4
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-setup",
+   "query": "Onboard me to the job hunt tool",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.2
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.8
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.6
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-setup",
+   "query": "Run my job hunt for today",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.5
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.1
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.2
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-setup",
+   "query": "What new jobs did jobhunt find this morning?",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.0
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.1
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.4
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-setup",
+   "query": "Help me install Python 3.12 on my Mac",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.2
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.1
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.2
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-setup",
+   "query": "Set up a cron job that backs up my photos every night",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 14.4
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 12.5
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 16.3
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-setup",
+   "query": "Fill out my Ready applications",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.0
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 12.1
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.7
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-setup",
+   "query": "Write a cover letter for the Northwind internship",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.7
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.9
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.6
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-setup",
+   "query": "Research Bluefin Analytics before my interview",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.6
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.1
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-setup",
+   "query": "How do I write a good resume for a software internship?",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 14.7
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 18.1
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 20.7
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-setup",
+   "query": "Set up a Python virtual environment for my class project",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.5
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 9.6
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 9.7
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-setup",
+   "query": "Configure Discord notifications for my GitHub repo",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 12.5
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 14.9
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 13.0
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-daily",
+   "query": "Run my job hunt",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.4
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.8
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.6
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-daily",
+   "query": "Run my job hunt for today",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.6
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.4
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.7
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-daily",
+   "query": "What's new in my job search today?",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.3
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.5
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.6
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-daily",
+   "query": "Which jobs should I apply to today?",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.0
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.2
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.7
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-daily",
+   "query": "Catch me up on jobhunt",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.0
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.1
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-daily",
+   "query": "Check jobhunt for new postings and tell me what to do",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.3
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.5
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.7
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-daily",
+   "query": "Do my daily job search check-in",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.4
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.5
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-daily",
+   "query": "Any new internships worth applying to since yesterday?",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.7
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.5
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-daily",
+   "query": "Go through today's job hunt digest with me",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.6
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.0
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.9
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-daily",
+   "query": "Process my pending jobhunt tasks and show me the digest",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.6
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.7
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.1
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-daily",
+   "query": "Set up jobhunt for the first time",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.5
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.0
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.4
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-daily",
+   "query": "Pre-fill the applications for my Ready jobs",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.1
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.8
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 11.0
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-daily",
+   "query": "Draft an answer to \"Why do you want to work here?\" for job 12",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.3
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.2
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.1
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-daily",
+   "query": "Follow up on my application to Quillstack",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.5
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.2
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.9
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-daily",
+   "query": "What's the weather today?",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.5
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.7
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.4
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-daily",
+   "query": "Summarize today's tech news",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 5.6
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.8
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 6.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-daily",
+   "query": "Write my daily standup update for work",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 5.7
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 6.2
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.7
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-daily",
+   "query": "How many applications should I send per week to get interviews?",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.4
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 9.4
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 9.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-daily",
+   "query": "Search Indeed for software jobs in Chicago",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "anthropic-skills:built-in-browser"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 5.8
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 6.1
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-daily",
+   "query": "Plan my study schedule for today",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 1.8
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.3
+    },
+    {
+     "loaded": [
+      "anthropic-skills:daily-priorities"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.1
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-judge",
+   "query": "Do the pending fit judgment tasks in jobhunt",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.7
+    },
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.3
+    },
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.3
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-judge",
+   "query": "jobhunt says I have requirement_evidence tasks, please do them",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.5
+    },
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.3
+    },
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.0
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-judge",
+   "query": "My bands in jobhunt are all provisional, can you judge them?",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.1
+    },
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.2
+    },
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-judge",
+   "query": "How well do I actually fit job 14 that jobhunt found? Do the judgment task",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.0
+    },
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.1
+    },
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.4
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-judge",
+   "query": "Judge the requirement evidence for the Bluefin posting in jobhunt",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.0
+    },
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.5
+    },
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.7
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-judge",
+   "query": "Work through the jobhunt judgment queue",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.3
+    },
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.5
+    },
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-judge",
+   "query": "jobhunt ingest rejected my fit result for task req-3, fix it",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.7
+    },
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.3
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.6
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-judge",
+   "query": "Match my resume lines to the requirements for jobhunt job 7",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.3
+    },
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.6
+    },
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-judge",
+   "query": "Resolve the unclear gates jobhunt flagged for the Quillstack role",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.6
+    },
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.6
+    },
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 11.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-judge",
+   "query": "Finish the jobhunt fit tasks so the bands stop being provisional",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.7
+    },
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.0
+    },
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.9
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-judge",
+   "query": "Research Northwind Robotics for me",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.1
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.9
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-judge",
+   "query": "Run my job hunt for today",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.8
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.5
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.7
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-judge",
+   "query": "Draft my essay for the Northwind application",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.4
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.3
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.1
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-judge",
+   "query": "Is my resume good enough for FAANG?",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.3
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 11.1
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 11.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-judge",
+   "query": "Review my code for bugs",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "code-review"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.1
+    },
+    {
+     "loaded": [
+      "code-review"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.9
+    },
+    {
+     "loaded": [
+      "code-review"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-judge",
+   "query": "Judge this poem I wrote",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.1
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.2
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.0
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-judge",
+   "query": "Compare these two job offers for me",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 6.1
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.1
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-judge",
+   "query": "Rewrite my resume bullets to sound stronger",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "anthropic-skills:application-writing"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.8
+    },
+    {
+     "loaded": [
+      "anthropic-skills:application-writing"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.1
+    },
+    {
+     "loaded": [
+      "anthropic-skills:application-writing"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.2
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-judge",
+   "query": "Should I take the Stripe offer or the Google offer?",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.8
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 9.3
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 10.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-judge",
+   "query": "What skills do data analysts need?",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 14.0
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 12.4
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 10.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-research",
+   "query": "Research Bluefin Analytics for me",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.2
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.6
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.9
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-research",
+   "query": "What does Northwind Robotics do? Write me a quick company brief",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.7
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.6
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-research",
+   "query": "Look into Quillstack's funding and size before I apply",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.9
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.6
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 6.4
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-research",
+   "query": "Give me a sourced brief on Pinecrest Systems",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.8
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.0
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.7
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-research",
+   "query": "jobhunt has a company_research task pending, do it",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.1
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.3
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-research",
+   "query": "Find recent news and red flags for Harborlight Bank",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.7
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.9
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-research",
+   "query": "What's the engineering culture like at Bluefin? Use jobhunt research",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.3
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.2
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.4
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-research",
+   "query": "Does Northwind have an internship program with return offers? Research it",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.0
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.6
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 6.6
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-research",
+   "query": "Research the company for jobhunt job 3",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.7
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.8
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.2
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-research",
+   "query": "What's Quillstack's interview process? Check their site",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.7
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.9
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.6
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-research",
+   "query": "Do the jobhunt fit judgment tasks",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.6
+    },
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.9
+    },
+    {
+     "loaded": [
+      "jobhunt-judge"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-research",
+   "query": "Write a cover letter for Bluefin Analytics",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.0
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.2
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-research",
+   "query": "Ask my friend at Bluefin for a referral",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.8
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.4
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 12.7
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-research",
+   "query": "Research the history of the Roman Empire",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 26.3
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 29.8
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 39.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-research",
+   "query": "Find me a good laptop under $1000",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 12.8
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 12.8
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 16.0
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-research",
+   "query": "Research the best programming language to learn first",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 13.9
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 14.4
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 14.2
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-research",
+   "query": "What are the top AI papers this week?",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 9.0
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.9
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-research",
+   "query": "Run my job hunt",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.6
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 5.7
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-research",
+   "query": "Compare Python and Java for backend work",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 11.4
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 13.9
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 14.2
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-research",
+   "query": "Look up the weather in Chicago",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 5.1
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.7
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 5.7
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-apply",
+   "query": "/jobhunt-apply",
+   "expect": true,
+   "explicit": true,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "I can't start step 1 of the apply flow from this session. It needs `jobhunt prefill --dry-run`, and I don't have a shell or command tool right now. The only thing I can do here is load skills.\n\nHere's how you can continue:\n\n1. **Give me shell access.** Switch to a permission mode or session that has the Bash tool, then run `/jobhunt-apply` again. I'll do the dry run, show you which jobs are queued and which were skipped and why, and ask before filling anything.\n2. **Run it yourself.** Run `jobhunt prefill --dry-run` in your terminal and paste the output here. I'll go through it with you, but I",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.4
+    },
+    {
+     "loaded": [],
+     "text": "I can't run step 1 (`jobhunt prefill --dry-run`) because this session has no shell or command tool. The only tool I have loads skills, so I can't call `jobhunt` at all.\n\nHere's how we can go on:\n\n1. **Turn on shell access** (for example, allow the Bash tool in your permission settings) and run `/jobhunt-apply` again. I'll do the dry run, show you which jobs are queued and which were skipped and why, and ask before filling anything.\n2. **Or run it yourself and paste the output here:**\n   ```\n   jobhunt prefill --dry-run\n   ```\n   I'll go through the queued and skipped jobs with you. When you're",
+     "utilization": null,
+     "error": null,
+     "seconds": 5.9
+    },
+    {
+     "loaded": [],
+     "text": "I can't run commands in this session because no shell tool is available to me, so I haven't run `jobhunt prefill --dry-run` or anything else.\n\nTo fill your applications, you have two options:\n\n**Option 1: run the steps yourself.**\n1. Run `jobhunt prefill --dry-run` to see which Ready jobs are queued and which were skipped, with the reason.\n2. Run `jobhunt prefill` to fill a batch of 5, or `jobhunt prefill <id> <id>` for specific jobs.\n3. Check progress with `jobhunt prefill --status` until each tab shows `ready_for_review`.\n4. In each tab, check:\n   - The outlined fields. jobhunt leaves these ",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.3
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-apply",
+   "query": "/jobhunt-apply 12",
+   "expect": true,
+   "explicit": true,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "I can't start the apply flow for job 12: this session has no shell tool, so I can't run `jobhunt` commands. I haven't run anything, so nothing has been checked or filled.\n\n**To continue, either:**\n\n1. **Enable shell (Bash) access** for this session and run `/jobhunt-apply 12` again. I'll then:\n   - Run `jobhunt prefill --dry-run` to confirm job 12 is Ready and its answers.json passes validation (or tell you why it's skipped, such as unapproved essays or no adapter for its applicant system).\n   - Ask before filling anything, then run `jobhunt prefill 12` and check `--status` until the tab is re",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.2
+    },
+    {
+     "loaded": [],
+     "text": "I can't start pre-fill for job 12 yet. This session doesn't give me a shell or browser tool, so I haven't been able to run any `jobhunt` command.\n\nYou can run the steps yourself. Nothing here submits anything; you always click Submit.\n\n1. **Check first:**\n   ```\n   jobhunt prefill --dry-run\n   ```\n   Look for job 12 in the queued list. If it's skipped, the output gives the reason, such as not Ready, essays not approved, or no adapter for this ATS.\n\n2. **Fill job 12** (only if it's queued):\n   ```\n   jobhunt prefill 12\n   ```\n   This returns straight away. Check on it every 20\u201330 seconds until ",
+     "utilization": null,
+     "error": null,
+     "seconds": 9.7
+    },
+    {
+     "loaded": [],
+     "text": "I can't start the apply flow for job 12 yet. This session has no shell or command tool, so I can't run `jobhunt`. The skill's first step is a dry run, and I haven't been able to do it, so nothing has been checked or filled.\n\nYou can either turn on a shell or Bash tool so I can run the steps, or run them yourself and paste the output here.\n\n**1. Check first (no browser opens):**\n```\njobhunt prefill --dry-run 12\n```\nThis builds and validates job 12's answers. If it's skipped, the output gives the reason (not Ready, essays not approved, no adapter for this ATS, and so on). Paste that output and I",
+     "utilization": null,
+     "error": null,
+     "seconds": 9.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-apply",
+   "query": "/jobhunt-apply fill my ready batch",
+   "expect": true,
+   "explicit": true,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "I can't start the batch from this session because I don't have a shell tool here, so I can't run `jobhunt`. Nothing has been filled or changed.\n\n**You can do one of these:**\n\n1. **Turn on shell access** (Bash) for this session and ask me again. I'll check the batch, show you what's queued, and wait for your yes before filling anything.\n2. **Run the steps yourself** and paste the output to me:\n\n   ```sh\n   jobhunt prefill --dry-run\n   ```\n   This checks each Ready job without opening a browser. Paste the result and I'll list the queued jobs and why any were skipped. Then, once you decide to go ",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.1
+    },
+    {
+     "loaded": [],
+     "text": "I can't fill your batch in this session because I have no shell or terminal tool, so I can't run `jobhunt` at all. I haven't run anything yet: no dry run and no browser.\n\nHere's how to do it:\n\n**Option 1: enable a shell for me.** If you allow a terminal/Bash tool in your permission settings and ask again, I'll do these steps:\n1. Run `jobhunt prefill --dry-run` and show you which jobs are queued and which were skipped, with the reason for each.\n2. Ask you to confirm before anything opens.\n3. Start the fill and check progress until each tab is ready for you to review.\n4. Tell you what to check o",
+     "utilization": null,
+     "error": null,
+     "seconds": 11.3
+    },
+    {
+     "loaded": [],
+     "text": "I can't do this from here: this session only gives me the Skill tool, with no shell. That means I can't run `jobhunt prefill` or check its status.\n\nYou can run the batch yourself in a terminal. These are the steps the skill would have followed:\n\n1. **Check first:**\n   ```\n   jobhunt prefill --dry-run\n   ```\n   This lists the queued Ready jobs. It also lists any skipped jobs and the reason, such as not Ready, essays not approved, or no adapter for that ATS. No browser opens.\n\n2. **Fill** (5 jobs per batch by default):\n   ```\n   jobhunt prefill\n   ```\n   To fill only certain jobs, use `jobhunt p",
+     "utilization": null,
+     "error": null,
+     "seconds": 13.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-apply",
+   "query": "/jobhunt-apply only the Greenhouse jobs",
+   "expect": true,
+   "explicit": true,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "I can't run `/jobhunt-apply` in this session because I don't have a shell tool. That means I can't run `jobhunt prefill --dry-run` or see which jobs are queued or skipped. Nothing has been filled.\n\nYou can run it yourself in a terminal, limited to Greenhouse jobs:\n\n1. **Check first:**\n   ```\n   jobhunt prefill --dry-run\n   ```\n   This opens no browser. It lists each Ready job, which job board it's on (Greenhouse, Lever and so on), and why any job was skipped (not Ready, essays not approved, no adapter). Write down the IDs of the Greenhouse jobs.\n\n2. **Fill only those jobs:**\n   ```\n   jobhunt ",
+     "utilization": null,
+     "error": null,
+     "seconds": 9.4
+    },
+    {
+     "loaded": [],
+     "text": "I can't start this yet. This session doesn't give me a shell or terminal tool, so I can't run `jobhunt prefill --dry-run`, and I won't guess which of your jobs are Greenhouse or which are Ready.\n\n**What you can do:**\n\n1. **Give me shell access.** Turn on a Bash or terminal tool, or allow it in your permission mode, then run `/jobhunt-apply only the Greenhouse jobs` again. I'll then:\n   - run `jobhunt prefill --dry-run` and show you only the queued Greenhouse jobs, plus any skipped Greenhouse jobs and why they were skipped\n   - ask you to confirm before filling anything\n   - fill only those job",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.8
+    },
+    {
+     "loaded": [],
+     "text": "I can't start this yet: this session doesn't give me a shell, so I can't run `jobhunt`. My only tool here is the skill loader. I haven't run anything, and no forms have been opened or filled.\n\nYou can either turn on shell (Bash) access for this session and ask again, or run the first step yourself and paste the output here:\n\n```\njobhunt prefill --dry-run\n```\n\nFrom that output I'll pick out the Greenhouse jobs that are queued and list any Greenhouse jobs that were skipped, with the reason for each (not Ready, essays not approved, and so on). Then I'll give you the exact `jobhunt prefill <id> <i",
+     "utilization": null,
+     "error": null,
+     "seconds": 5.7
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-apply",
+   "query": "/jobhunt-apply 3 5 8",
+   "expect": true,
+   "explicit": true,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "I can't start this yet: this session doesn't give me a shell or command tool, so I can't run `jobhunt`. Nothing has been checked, filled or opened for jobs 3, 5 and 8.\n\nYou can run the steps yourself in a terminal. Start with the check, which builds and validates the answers without opening a browser:\n\n```sh\njobhunt prefill --dry-run\n```\n\nIt lists which of 3, 5 and 8 are queued and why any were skipped (for example, the job isn't Ready, its essays aren't approved, or there's no adapter for that ATS). If you paste the output here, I'll go through it with you.\n\nOnce you're happy with the list, f",
+     "utilization": null,
+     "error": null,
+     "seconds": 9.6
+    },
+    {
+     "loaded": [],
+     "text": "I can't start this yet: this session has no shell tool, so I can't run `jobhunt`. Even the read-only first step, the dry-run check, needs a shell.\n\n**To let me do it:** turn on the Bash tool or approve it in your permission settings, then run `/jobhunt-apply 3 5 8` again. I'll run the dry-run, show you which of jobs 3, 5 and 8 are queued or skipped and why, and ask before filling anything.\n\n**To do it yourself now:**\n\n1. Check the jobs first. This builds and validates the answers without opening a browser:\n   ```\n   jobhunt prefill --dry-run 3 5 8\n   ```\n   For any skipped job, look at the rea",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.9
+    },
+    {
+     "loaded": [],
+     "text": "I can't run `/jobhunt-apply` in this session because I don't have a shell tool, so I can't run `jobhunt`. I haven't run any commands, and no forms have been filled for jobs 3, 5 and 8.\n\nYou can run the steps yourself in a terminal:\n\n1. **Check jobs 3, 5 and 8 first.** This builds and validates each job's answers without opening a browser:\n   ```\n   jobhunt prefill --dry-run\n   ```\n   Look for jobs 3, 5 and 8 in the queued list. If any of them is skipped, the output gives the reason (for example: not Ready, essays not approved, or no adapter for that ATS).\n\n2. **Fill the queued jobs.** Use this",
+     "utilization": null,
+     "error": null,
+     "seconds": 10.6
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-apply",
+   "query": "/jobhunt-apply start the pre-fill",
+   "expect": true,
+   "explicit": true,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "I can't start the pre-fill from this session because I don't have a shell tool, so I can't run `jobhunt` commands. I haven't run anything and no browser has been opened.\n\nYou have two options:\n\n1. **Turn on shell access** (Bash) for this session and run `/jobhunt-apply` again. I'll then run `jobhunt prefill --dry-run`, show you which jobs are queued and why any were skipped, and ask before filling anything.\n2. **Run it yourself:**\n   ```\n   jobhunt prefill --dry-run\n   ```\n   Paste the output here. I'll go through the queued and skipped jobs with you. Once you've confirmed, you'd run `jobhunt ",
+     "utilization": null,
+     "error": null,
+     "seconds": 6.5
+    },
+    {
+     "loaded": [],
+     "text": "I can't start the pre-fill from here. This session doesn't give me a shell, so I can't run `jobhunt` commands. Nothing has been run or filled yet.\n\nYou can run the same steps in your terminal and paste the output back to me:\n\n1. **Check first:**\n   ```\n   jobhunt prefill --dry-run\n   ```\n   This builds and checks each Ready job's answers without opening a browser. It also lists any skipped jobs and why (not Ready, essays not approved, no adapter for that ATS, etc.). If you paste it here, I'll go through the queue and the skipped jobs with you.\n\n2. **Fill:** if the list looks right, run `jobhun",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.5
+    },
+    {
+     "loaded": [],
+     "text": "I can't start the pre-fill from this session because I don't have a shell tool here. My only tool right now is the skill loader, so I can't run `jobhunt` commands.\n\nThere are two ways to go on:\n\n1. **Turn on shell access** (for example, allow Bash in this session) and ask again. I'll start with `jobhunt prefill --dry-run` to list your queued and skipped jobs. Then I'll ask you to confirm before anything gets filled.\n2. **Run it yourself** and paste the output here:\n   ```\n   jobhunt prefill --dry-run\n   ```\n   I'll go through which jobs are queued and why any were skipped (not Ready, essays no",
+     "utilization": null,
+     "error": null,
+     "seconds": 5.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-apply",
+   "query": "/jobhunt-apply dry run first please",
+   "expect": true,
+   "explicit": true,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "I can't run the dry run from here. This session doesn't give me a shell, so `jobhunt` won't run for me, and nothing has been checked or filled yet.\n\nYou can run the dry run yourself in a terminal:\n\n```\njobhunt prefill --dry-run\n```\n\nIt doesn't open a browser or touch any forms. For each job marked Ready, it builds and checks the `answers.json` file. It then lists:\n\n- **Queued jobs:** the ones it would fill.\n- **Skipped jobs, each with a reason:** for example, the job isn't Ready, its essays aren't approved yet, or there's no adapter for that job's application site.\n\nPaste the output here and I",
+     "utilization": null,
+     "error": null,
+     "seconds": 5.7
+    },
+    {
+     "loaded": [],
+     "text": "I can't do the dry run yet: this session doesn't give me a shell tool, so I can't run `jobhunt prefill --dry-run`. Nothing has been checked or filled.\n\nYou have two options:\n\n1. **Turn on shell access** (for example, allow the Bash tool in your permission settings) and ask again. I'll run the dry run and show you which jobs are queued and which were skipped, with the reason for each.\n2. **Run it yourself** and paste the output here:\n   ```\n   jobhunt prefill --dry-run\n   ```\n   The dry run doesn't open a browser. It only builds and checks the answers for each Ready job. I'll go through the que",
+     "utilization": null,
+     "error": null,
+     "seconds": 6.4
+    },
+    {
+     "loaded": [],
+     "text": "I can't run the dry run in this session. The only tool I have is the skill loader, with no shell, so I can't execute `jobhunt prefill --dry-run`. I haven't run anything and no browser was opened.\n\nYou can either:\n\n1. **Turn on shell access** (allow the Bash tool in your permission settings) and ask again. I'll start with the dry run and stop to check with you before filling anything.\n2. **Run it yourself:**\n   ```\n   jobhunt prefill --dry-run\n   ```\n   Paste the output here. I'll go through which jobs are queued and why any were skipped (not Ready, essays not approved, no adapter for that ATS,",
+     "utilization": null,
+     "error": null,
+     "seconds": 5.9
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-apply",
+   "query": "/jobhunt-apply the top 5",
+   "expect": true,
+   "explicit": true,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "I can't start this yet: there's no shell tool in this session, so I can't run `jobhunt` commands.\n\n**Here's how to continue:**\n\n1. Run this yourself. It only checks your applications and doesn't open a browser:\n   ```\n   jobhunt prefill --dry-run\n   ```\n2. Paste the output here. I'll go through which Ready jobs are queued, which were skipped and why (not Ready, essays not approved, no adapter for that ATS, and so on), and confirm the top 5 with you before anything gets filled.\n\nOr, if you turn on shell access (Bash) for this session, I can run the check myself. Either way, I'll ask you before ",
+     "utilization": null,
+     "error": null,
+     "seconds": 6.1
+    },
+    {
+     "loaded": [],
+     "text": "I can't start this yet. This session doesn't give me a shell, so I can't run `jobhunt` commands. The `/jobhunt-apply` skill loaded fine, but its first step needs a terminal.\n\n**To get going, either:**\n\n- **Turn on shell access** (allow the Bash tool in your permission settings), then run `/jobhunt-apply the top 5` again. I'll start with the dry run.\n- **Or run the first step yourself** and paste the output here:\n  ```\n  jobhunt prefill --dry-run\n  ```\n  I'll show you which jobs are queued and why any were skipped (not Ready, essays not approved, no adapter for that ATS, and so on).\n\nOnce you'v",
+     "utilization": null,
+     "error": null,
+     "seconds": 6.8
+    },
+    {
+     "loaded": [],
+     "text": "I can't start this yet: this session doesn't give me a shell tool, so I can't run `jobhunt` commands.\n\nThere are two ways to continue:\n\n1. **Turn on Bash for this session** (check your permission mode or allowed tools), then run `/jobhunt-apply the top 5` again. I'll start with the dry run and show you what's queued before anything opens.\n2. **Run it yourself.** Run this first:\n   ```\n   jobhunt prefill --dry-run\n   ```\n   It checks each Ready job's answers without opening a browser. It lists the queued jobs and any it skipped, with the reason (not Ready, essays not approved, no adapter for th",
+     "utilization": null,
+     "error": null,
+     "seconds": 6.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-apply",
+   "query": "/jobhunt-apply Northwind jobs",
+   "expect": true,
+   "explicit": true,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "I can't start the Northwind applications yet because this session has no shell tool, so I can't run `jobhunt`. Nothing has been checked or filled.\n\n**Option 1: Turn on Bash for this session** (or start a session where it's available) and run `/jobhunt-apply Northwind jobs` again. I'll take it from there.\n\n**Option 2: Run the check yourself and paste the output here:**\n\n```\njobhunt prefill --dry-run\n```\n\nFrom that output I'll pick out the Northwind jobs that are queued. For any that are skipped, I'll explain the reason, such as the job not being Ready, essays not yet approved, or no adapter for",
+     "utilization": null,
+     "error": null,
+     "seconds": 5.5
+    },
+    {
+     "loaded": [],
+     "text": "I can't start the Northwind applications from this session because I don't have a shell tool, so I can't run `jobhunt` or show you real output yet. Step 1 is the dry run, which builds and checks each Ready job's answers without opening a browser:\n\n```\njobhunt prefill --dry-run\n```\n\nYou can run it yourself and paste the output here, or reopen this session with a shell tool turned on and I'll run it.\n\nWith that output, I'll:\n1. List the Northwind jobs that are queued, and any that were skipped with the reason (not Ready, essays not approved, no adapter for that applicant system, and so on).\n2. A",
+     "utilization": null,
+     "error": null,
+     "seconds": 6.3
+    },
+    {
+     "loaded": [],
+     "text": "I can't start this yet: this session doesn't give me a shell, so I can't run `jobhunt`. The only tool I have is the skill loader. I haven't run anything and don't have any results for your Northwind jobs.\n\nYou can go ahead in either of two ways:\n\n1. **Turn on shell (Bash) access for this session** and tell me. I'll start with the dry-run check, `jobhunt prefill --dry-run`. It doesn't open a browser. It shows which Northwind jobs are queued and why any are skipped (not Ready, essays not approved, no adapter for this ATS, and so on). Then I'll ask you before filling anything.\n\n2. **Run it yourse",
+     "utilization": null,
+     "error": null,
+     "seconds": 6.1
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-apply",
+   "query": "/jobhunt-apply go",
+   "expect": true,
+   "explicit": true,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "I can't start yet: this session has no shell or command tool, so I can't run `jobhunt`. Without it I can't check your queue or fill any forms, and I won't guess at what's queued.\n\n**To get going, either:**\n\n1. **Turn on command access** (Bash) for this session, then say \"go\" again. I'll start with the dry run.\n2. **Run the first step yourself** and paste the output here:\n   ```\n   jobhunt prefill --dry-run\n   ```\n   I'll go through which jobs are queued and which were skipped, with the reason for each.\n\n**What happens after that:**\n- Before anything opens, I'll ask you to confirm the list of a",
+     "utilization": null,
+     "error": null,
+     "seconds": 6.1
+    },
+    {
+     "loaded": [],
+     "text": "I can't start the fill: this session doesn't give me a shell, so I can't run `jobhunt` commands. I haven't run anything, and nothing has been filled.\n\nYou can run the first step yourself:\n\n```\njobhunt prefill --dry-run\n```\n\nIt checks each Ready job's answers without opening a browser. It lists the jobs it would fill and any it skipped, with the reason (for example: not Ready, essays not approved, or no adapter for that site). Paste the output here and I'll go through it with you.\n\nYour \"go\" doesn't skip the check. Once we've seen the dry-run, I'll ask \"Fill these N applications now? You'll rev",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.4
+    },
+    {
+     "loaded": [],
+     "text": "I couldn't start the jobhunt apply flow because this session has no shell tool, so I can't run `jobhunt` commands. Nothing has been checked or filled, and no browser has been opened.\n\nYou can get a shell tool by restarting the session with Bash allowed (or switching permission mode), then run `/jobhunt-apply` again. I'll take it from the first step.\n\nTo run it yourself in a terminal:\n\n1. **Check what's queued:**\n   ```\n   jobhunt prefill --dry-run\n   ```\n   This lists the Ready jobs and any skipped ones with the reason, such as essays not yet approved or no adapter for that applicant system. I",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.9
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-apply",
+   "query": "Pre-fill my Ready job applications now",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 9.3
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 6.7
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.3
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-apply",
+   "query": "Fill out the Northwind application for me",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.5
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.6
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 9.1
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-apply",
+   "query": "Submit my applications",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.8
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.9
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.1
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-apply",
+   "query": "Apply to all the Ready jobs jobhunt found",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.3
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 11.5
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 12.7
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-apply",
+   "query": "Open the application forms and fill them in",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.1
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.3
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.3
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-apply",
+   "query": "Can jobhunt fill applications automatically?",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.4
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.3
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.0
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-apply",
+   "query": "Help me apply to job 12",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 6.8
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 12.8
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 11.9
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-apply",
+   "query": "Start filling my job applications",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.2
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.0
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 9.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-apply",
+   "query": "Fill this Google Form for me",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.6
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.8
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.1
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-apply",
+   "query": "Apply for a passport renewal",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 10.0
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 15.9
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 17.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-essays",
+   "query": "Draft an answer to \"Why do you want to work at Northwind Robotics?\"",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.5
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.2
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-essays",
+   "query": "Help with the essay questions on my Northwind application",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.1
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.5
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-essays",
+   "query": "jobhunt lists Essay jobs, help me with the first one",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.4
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.3
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.0
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-essays",
+   "query": "Write a cover letter for job 12 using my resume",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.7
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.9
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.4
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-essays",
+   "query": "Do the essay_review task jobhunt created",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.0
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.0
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-essays",
+   "query": "Draft the \"tell us about a project you're proud of\" answer for Quillstack",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.9
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.0
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.9
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-essays",
+   "query": "My application asks why I'm interested, help me write it",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.1
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.3
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-essays",
+   "query": "Do the pending jobhunt essay draft task",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.6
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.3
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.4
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-essays",
+   "query": "Review my jobhunt essay draft once before I edit it",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.6
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.4
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-essays",
+   "query": "Which of my jobhunt jobs need essays, and draft one",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.6
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 6.5
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 10.1
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-essays",
+   "query": "Draft a referral request to my friend at Northwind",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.2
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.6
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.7
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-essays",
+   "query": "Follow up on my Quillstack application",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.1
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.7
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.0
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-essays",
+   "query": "Write an essay on climate change for my English class",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "anthropic-skills:academic-writing"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.8
+    },
+    {
+     "loaded": [
+      "anthropic-skills:academic-writing"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.3
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 24.9
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-essays",
+   "query": "Proofread my college application essay",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "anthropic-skills:application-writing"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.2
+    },
+    {
+     "loaded": [
+      "anthropic-skills:application-writing"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.7
+    },
+    {
+     "loaded": [
+      "anthropic-skills:application-writing"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.9
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-essays",
+   "query": "Research Northwind Robotics",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.5
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.3
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.3
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-essays",
+   "query": "Write a LinkedIn post about my internship",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "anthropic-skills:application-writing"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 5.1
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.3
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 11.0
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-essays",
+   "query": "Rewrite my resume summary",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "anthropic-skills:application-writing"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.8
+    },
+    {
+     "loaded": [
+      "anthropic-skills:application-writing"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.3
+    },
+    {
+     "loaded": [
+      "anthropic-skills:application-writing"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.1
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-essays",
+   "query": "Pre-fill my applications",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.3
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.4
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.1
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-essays",
+   "query": "Write a thank-you note after my interview",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "anthropic-skills:application-writing"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.5
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 6.2
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.2
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-essays",
+   "query": "Draft an email to my professor asking for an extension",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 11.5
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 10.7
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 11.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-outreach",
+   "query": "Draft a referral request to a classmate who works at Northwind",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.1
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.1
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.4
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-outreach",
+   "query": "Follow up on my application to Quillstack, it's been two weeks",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.0
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.2
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.9
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-outreach",
+   "query": "jobhunt says follow-ups are due, draft them",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.8
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.8
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.1
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-outreach",
+   "query": "Ask someone at Bluefin for a coffee chat about the team",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.2
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.8
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 5.0
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-outreach",
+   "query": "Write a short message asking my old teammate for a referral at Pinecrest",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.4
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.3
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.6
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-outreach",
+   "query": "Which of my applications need a follow-up?",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.4
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.7
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.9
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-outreach",
+   "query": "Draft a polite nudge to the recruiter for job 12",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.6
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.6
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-outreach",
+   "query": "I know someone at Harborlight Bank, help me ask them for a referral",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.4
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.7
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.1
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-outreach",
+   "query": "Draft an informational interview request for Quillstack",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.0
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.8
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.1
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-outreach",
+   "query": "I sent the follow-up for job 4, record it in jobhunt",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.9
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 11.6
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 12.0
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-outreach",
+   "query": "Write the \"Why us?\" essay for Northwind",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.0
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.4
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.0
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-outreach",
+   "query": "Send an email to my landlord about the heater",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.3
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.8
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.4
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-outreach",
+   "query": "Research Quillstack's funding",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.8
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.4
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.1
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-outreach",
+   "query": "Draft a thank-you email to my aunt",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "anthropic-skills:daily-writing"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.9
+    },
+    {
+     "loaded": [
+      "anthropic-skills:daily-writing"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.1
+    },
+    {
+     "loaded": [
+      "anthropic-skills:daily-writing"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.2
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-outreach",
+   "query": "Message my team on Slack that I'll be late",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 5.1
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 6.5
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 6.0
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-outreach",
+   "query": "Run my job hunt",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.4
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.2
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.3
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-outreach",
+   "query": "Write a cold email to sell my startup's product",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 11.7
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 11.6
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 12.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-outreach",
+   "query": "Unsubscribe me from recruiter newsletters",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "anthropic-skills:chrome-browser"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 6.8
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": 1.0,
+     "error": null,
+     "seconds": 0.7
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.4
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-outreach",
+   "query": "Post on LinkedIn that I'm open to work",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.8
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 9.4
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 12.0
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-outreach",
+   "query": "Forward this email thread to my manager",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 5.7
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 5.5
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 11.3
+    }
+   ]
+  }
+ ]
+}
