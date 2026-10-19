@@ -49,8 +49,12 @@ to copy. A Workday adapter is the most wanted contribution; see
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Tested on macOS (Python 3.13 throughout, 3.11 early on) and in Claude Code. CI is set up for
-Linux, macOS and Windows on Python 3.11 and 3.13 but hasn't run yet. The Codex CLI integration
-follows its docs and hasn't been run end to end. Windows is untested.
+Linux, macOS and Windows on Python 3.11 and 3.13 but hasn't run yet. Windows is untested.
+
+**Codex CLI is not tested.** `jobhunt skills install` puts the skills where Codex's docs say
+they go, but the maintainer doesn't use Codex and doesn't test it. If you run jobhunt in Codex,
+issues and PRs are welcome. To measure it, run
+`uv run python -m jobhunt.devtools.trigger_eval --tool codex`.
 
 ## Install
 

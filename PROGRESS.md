@@ -587,10 +587,11 @@ Verified runs:
   showed the digest, batched the questions and sent the sponsorship one to the local form,
   offered `/jobhunt-apply` without starting it, and synced. It ignored the AI-aimed text in a
   fixture posting and told the user. Nothing was pre-filled, applied or sent. 154 s, ≈ $0.89.
-- **Codex: not run.** `codex` is not installed here. Owed: install and sign in to Codex, then
-  `uv run python -m jobhunt.devtools.trigger_eval --tool codex` and
-  `uv run python -m jobhunt.devtools.daily_e2e --tool codex`. The Codex event parsing in both
-  is written from the docs and untested.
+- **Codex: not tested, by decision (2026-10-19).** The maintainer doesn't use Codex and won't
+  test it; the README says so. The install paths, the explicit-only sidecar and the harnesses'
+  `--tool codex` mode are built from Codex's docs and have never run. Anyone who wants numbers
+  can run `uv run python -m jobhunt.devtools.trigger_eval --tool codex` and
+  `uv run python -m jobhunt.devtools.daily_e2e --tool codex`.
 
 ### Notes and decisions
 
@@ -618,5 +619,4 @@ Verified runs:
 ## Milestone 6 — Calibrate + share (next)
 
 `calibrate`, README for first-time users, `CONTRIBUTING.md` (new sources and ATS adapters;
-Workday first), a demo GIF with a persona. Also owed from Milestone 5: the Codex trigger evals
-and daily flow, once Codex is installed.
+Workday first), a demo GIF with a persona. Codex is not tested by decision (see Milestone 5).
