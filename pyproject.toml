@@ -4,17 +4,25 @@ build-backend = "hatchling.build"
 
 [project]
 name = "jobhunt"
-version = "0.0.1"
+dynamic = ["version"]
 description = "A local-first job-hunt agent: deterministic Python core plus portable Agent Skills. The human always clicks Submit."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.11"
 authors = [{ name = "jobhunt contributors" }]
+keywords = ["job search", "job hunt", "agent skills", "claude code", "codex", "greenhouse", "lever", "ashby"]
 classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: End Users/Desktop",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
+  "Topic :: Office/Business",
 ]
 dependencies = [
   "click>=8.1",
@@ -43,6 +51,14 @@ dev = [
     "pytest>=8",
     "ruff>=0.6",
 ]
+
+# One version, in src/jobhunt/__init__.py.
+[tool.hatch.version]
+path = "src/jobhunt/__init__.py"
+
+# The demo GIF is for the README on GitHub; keep it out of the source distribution.
+[tool.hatch.build.targets.sdist]
+exclude = ["docs/demo.gif"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/jobhunt"]
