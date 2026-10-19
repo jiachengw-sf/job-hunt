@@ -48,8 +48,9 @@ no adapter yet. For those jobs, `jobhunt packet <id>` writes a local page with e
 to copy. A Workday adapter is the most wanted contribution; see
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Tested on macOS with Python 3.11 and 3.13, and in Claude Code. The Codex CLI integration follows
-its docs but hasn't been run end to end yet. Windows is untested.
+Tested on macOS (Python 3.13 throughout, 3.11 early on) and in Claude Code. CI is set up for
+Linux, macOS and Windows on Python 3.11 and 3.13 but hasn't run yet. The Codex CLI integration
+follows its docs and hasn't been run end to end. Windows is untested.
 
 ## Install
 
