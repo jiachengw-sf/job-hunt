@@ -2,8 +2,9 @@
 
 Sets up a synthetic persona in a scratch ``JOBHUNT_HOME`` with offline fixtures
 (``JOBHUNT_FIXTURES``), installs the skills for the tool in a scratch project, and asks the tool
-"Run my job hunt." headless. The tool may run only ``jobhunt`` commands and read/write files.
-Afterwards the store is checked:
+"Run my job hunt." headless, with ``jobhunt`` commands and the file tools pre-approved (the
+user's own permission settings still apply on top, so other read-only commands may run too;
+the transcript lists every command). Afterwards the store is checked:
 
 - the pipeline ran, judgment tasks were done and ingested, bands stopped being provisional
 - the digest was shown and the batched questions were reached
