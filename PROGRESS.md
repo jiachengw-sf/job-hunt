@@ -664,8 +664,17 @@ install to a first daily run, and the demo GIF exists. Met:
     `schema`.
   - Checked: MIT LICENSE, the four `*.example.yaml` files, no absolute home paths or username
     in any tracked file or past blob, largest blob is the demo GIF.
-- 672 offline tests (from 646). ruff, format and both personal-data scans are clean at every
-  commit.
+- **Install-aware hints** (`install.py`): every "reinstall with the X extra" or "upgrade"
+  message builds its command from how jobhunt was actually installed. It reads PEP 610
+  `direct_url.json` and covers uv tool or pipx installs from PyPI, a git URL, a local checkout or
+  a wheel, plus `uv sync` for a dev checkout. Before this, the hints assumed PyPI, where jobhunt
+  isn't published.
+- **Windows readiness (static).** Every text read and write names `encoding="utf-8"`, and ruff's
+  PLW1514 enforces it. A packet test no longer asserts POSIX mode bits on Windows. Locking
+  already used `msvcrt` there.
+- 685 offline tests (from 646). ruff, format and both personal-data scans are clean at every
+  commit. The full suite also passes on **Python 3.11.14** (685 passed), and CI's own steps
+  (locked sync, ruff, both scans, the CLI smoke script) pass locally on macOS.
 
 Verified (2026-10-19): the README walkthrough, run from a freshly built 0.1.0 wheel in a clean
 venv with a scratch `HOME`. Persona `newgrad-analyst`, offline fixtures, no `[browser]` extra.
@@ -679,18 +688,16 @@ venv with a scratch `HOME`. Persona `newgrad-analyst`, offline fixtures, no `[br
 
 - **CI has never run**: there is no GitHub remote yet. The first push runs it, including
   Windows and Python 3.11.
-- **Windows is untested** (the Task Scheduler entry, paths, the browser).
-- **Python 3.11** was last run locally in Milestone 0. This milestone ran 3.13 only, because
-  testing 3.11 needed downloading lxml for it.
+- **Windows has not run at all** (the Task Scheduler entry, paths, the browser). The static
+  fixes above remove the known risks; the first CI run is the real test.
 - **Onboarding has not been timed with a real person**. The 15-minute target is an estimate
   from persona runs.
 - **Codex CLI is untested, by decision** (see Milestone 5).
 - **The fit eval set has a single annotator.** The spec asks for two graders per pair, and the
   set is synthetic postings rather than real public ones. `eval-fit --personal` lets a user
   check against their own labels.
-- **Not on PyPI.** The README installs from a clone, but some `doctor` fixes still say
-  `uv tool install 'jobhunt[…]'` / `uv tool upgrade jobhunt`, which only work once jobhunt is
-  published there (check whether the name is free first).
+- **Not on PyPI.** The README installs from a clone, and the hints now follow the install
+  source. Publishing there is optional; check whether the name is free first.
 - Calibrate on persona fixtures has too few jobs for any band label. Labels are covered by unit
   tests on synthetic trackers.
 - Cosmetic: with `priority_threshold: 0`, a first `jobhunt run` reports "0 new, 2 replaced"
