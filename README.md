@@ -11,7 +11,7 @@ message.
 ![A terminal session: jobhunt doctor, run, ingest, match, digest, mark and calibrate for a synthetic persona](docs/demo.gif)
 
 The demo uses the synthetic persona `intl-sponsorship` and offline fixtures. Re-record it with
-`uv run python docs/demo/record.py`, then `swift docs/demo/render.swift` (macOS).
+[VHS](https://github.com/charmbracelet/vhs): `vhs docs/demo/demo.tape`.
 
 ## How it works
 

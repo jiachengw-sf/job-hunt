@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import re
 
 import click
@@ -60,15 +59,19 @@ def test_local_links_resolve(doc):
 
 
 def test_demo_uses_a_synthetic_persona_only():
-    session = json.loads((REPO / "docs" / "demo" / "session.json").read_text(encoding="utf-8"))
-    assert session["persona"] in PERSONAS
+    """The demo tape runs in a scratch home with a synthetic persona and offline fixtures."""
+    tape = (REPO / "docs" / "demo" / "demo.tape").read_text(encoding="utf-8")
+    setup = (REPO / "docs" / "demo" / "setup.sh").read_text(encoding="utf-8")
+    persona = re.search(r"^PERSONA=(\S+)$", setup, re.M)
+    assert persona and persona.group(1) in PERSONAS
+    assert "Output docs/demo.gif" in tape and "source docs/demo/setup.sh" in tape
+    for var in ("HOME", "JOBHUNT_HOME", "JOBHUNT_FIXTURES"):
+        assert f"{var}=" in setup  # never the real home or the network
     assert (REPO / "docs" / "demo.gif").stat().st_size < 5_000_000
-    text = json.dumps(session)
-    assert "/Users/" not in text and "/home/" not in text and "/var/folders" not in text
-    for persona in PERSONAS:  # no contact detail or legal name, even a synthetic one
-        ident = yaml.safe_load((PERSONAS_DIR / persona / "answers.yaml").read_text()).get(
+    for persona_dir in PERSONAS:  # no contact detail or legal name, even a synthetic one
+        ident = yaml.safe_load((PERSONAS_DIR / persona_dir / "answers.yaml").read_text()).get(
             "identity", {}
         )
         for k in ("email", "phone", "legal_last_name", "address_line1"):
             if ident.get(k):
-                assert ident[k] not in text, k
+                assert ident[k] not in tape, k
