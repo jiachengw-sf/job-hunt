@@ -213,6 +213,14 @@ def report_md(tool: str, meta: dict[str, Any], skills: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _stored(c: Case, r: Run) -> dict[str, Any]:
+    """A run as saved: the model's reply only where scoring reads it (explicit invocations)."""
+    d = asdict(r)
+    if not c.explicit:
+        d["text"] = ""
+    return d
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--tool", choices=["claude-code", "codex"], required=True)
@@ -221,6 +229,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--jobs", type=int, default=4)
     ap.add_argument("--model", default=None)
     ap.add_argument("--max-utilization", type=float, default=0.8)
+    ap.add_argument(
+        "--resume", action="store_true", help="Keep finished runs from the last result."
+    )
     args = ap.parse_args(argv)
     exe = "claude" if args.tool == "claude-code" else "codex"
     if not shutil.which(exe):
@@ -230,8 +241,15 @@ def main(argv: list[str] | None = None) -> int:
     work = Path(tempfile.mkdtemp(prefix="jobhunt-trigger-"))
     sk.install(args.tool, sk.target_dir(args.tool, "project", work), mode="copy", force=True,
                dry_run=False)  # fmt: skip
-    jobs = [(i, c) for i, c in enumerate(cases) for _ in range(args.runs)]
     runs: dict[int, list[Run]] = {}
+    prev = RESULTS / f"{args.tool}.json"
+    if args.resume and prev.exists():
+        done = {(r["skill"], r["query"]): r["runs"] for r in json.loads(prev.read_text())["runs"]}
+        for i, c in enumerate(cases):
+            kept = [Run(**r) for r in done.get((c.skill, c.query), []) if r.get("error") is None]
+            if kept:
+                runs[i] = kept[: args.runs]
+    jobs = [(i, c) for i, c in enumerate(cases) for _ in range(args.runs - len(runs.get(i, [])))]
     stopped: list[str] = []
     lock = threading.Lock()
 
@@ -246,7 +264,7 @@ def main(argv: list[str] | None = None) -> int:
                 stopped.append(f"usage window at {r.utilization:.0%}")
             n = sum(len(v) for v in runs.values())
             mark = "ok" if r.error is None and triggered(c, r) == c.expect else "MISS"
-            print(f"[{n}/{len(jobs)}] {mark} {c.skill}: {c.query[:60]} -> {r.loaded or '-'}",
+            print(f"[{n}] {mark} {c.skill}: {c.query[:60]} -> {r.loaded or '-'}",
                   file=sys.stderr, flush=True)  # fmt: skip
 
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
@@ -263,7 +281,7 @@ def main(argv: list[str] | None = None) -> int:
     }
     RESULTS.mkdir(parents=True, exist_ok=True)
     per_case = [
-        {**asdict(c), "runs": [asdict(r) for r in runs.get(i, [])]} for i, c in enumerate(cases)
+        {**asdict(c), "runs": [_stored(c, r) for r in runs.get(i, [])]} for i, c in enumerate(cases)
     ]
     detail = {"meta": meta, "skills": skills, "runs": per_case}
     (RESULTS / f"{args.tool}.json").write_text(json.dumps(detail, indent=1), encoding="utf-8")
