@@ -16,6 +16,7 @@ import json
 import os
 import secrets
 import signal
+import socketserver
 import subprocess
 import sys
 import threading
@@ -204,11 +205,23 @@ def _log(msg: str) -> None:
     print(f"{now_iso()} form server pid {os.getpid()}: {msg}", file=sys.stderr, flush=True)
 
 
+class LocalServer(ThreadingHTTPServer):
+    """``HTTPServer.server_bind`` calls ``socket.getfqdn`` on the bound address: a reverse DNS
+    lookup that can stall 30s or more on some networks (e.g. GitHub's macOS runners). The form
+    only ever binds 127.0.0.1, so skip it."""
+
+    def server_bind(self) -> None:
+        socketserver.TCPServer.server_bind(self)
+        host, port = self.server_address[:2]
+        self.server_name = str(host)
+        self.server_port = int(port)
+
+
 def make_server(paths: Paths, token: str, port: int = 0) -> ThreadingHTTPServer:
     """Bind 127.0.0.1 and record the URL in the state file (not yet serving)."""
     app = FormApp(paths, token)
     _log("app ready, binding 127.0.0.1")
-    httpd = ThreadingHTTPServer(("127.0.0.1", port), _handler(app))
+    httpd = LocalServer(("127.0.0.1", port), _handler(app))
     httpd.app = app  # type: ignore[attr-defined]
     real_port = httpd.server_address[1]
     st = read_state(paths) or {}

@@ -320,3 +320,21 @@ def test_setup_form_launch_status_stop(cli, persona_home):
         _, stopped, _ = cli("setup", "form", "--stop")
     assert stopped["data"]["running"] is False
     assert stopped["data"]["status"] in ("stopped", "saved_and_stopped")
+
+
+def test_form_server_binds_without_reverse_dns(monkeypatch, isolated_home):
+    """A slow reverse DNS lookup once stalled startup for 20s+ on macOS CI."""
+    import socket
+
+    from jobhunt.onboarding import server as srv
+    from jobhunt.paths import get_paths
+
+    def no_dns(*_a, **_k):
+        raise AssertionError("server_bind must not do a reverse DNS lookup")
+
+    monkeypatch.setattr(socket, "getfqdn", no_dns)
+    httpd = srv.make_server(get_paths(), "tok", 0)
+    try:
+        assert httpd.server_name == "127.0.0.1" and httpd.server_port > 0
+    finally:
+        httpd.server_close()
