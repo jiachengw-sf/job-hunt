@@ -686,10 +686,16 @@ venv with a scratch `HOME`. Persona `newgrad-analyst`, offline fixtures, no `[br
 
 ### Still owed or untested
 
-- **CI has never run**: there is no GitHub remote yet. The first push runs it, including
-  Windows and Python 3.11.
-- **Windows has not run at all** (the Task Scheduler entry, paths, the browser). The static
-  fixes above remove the known risks; the first CI run is the real test.
+- ~~CI has never run~~ Done after publishing (2026-10-19): CI is green on Linux, macOS and
+  Windows with Python 3.11 and 3.13. The first runs found and fixed: `os.kill(pid, 0)` killing
+  the form server and pre-fill driver on Windows (now one shared `procs.pid_alive`), the form
+  server stalling on a reverse DNS lookup while binding (macOS runners), text files read without
+  UTF-8, path-separator assumptions in tests, and a browser-test race. Guard tests cover the
+  encoding and `os.kill` cases.
+- **Windows real use is untested.** The suite passes there; the Task Scheduler entry and
+  pre-fill with an installed Google Chrome have not been tried by a person. Headless real Chrome
+  with a persistent profile hangs on GitHub's Windows runner, so the browser test uses bundled
+  Chromium.
 - **Onboarding has not been timed with a real person**. The 15-minute target is an estimate
   from persona runs.
 - **Codex CLI is untested, by decision** (see Milestone 5).
