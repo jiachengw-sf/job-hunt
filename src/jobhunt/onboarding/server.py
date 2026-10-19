@@ -257,7 +257,7 @@ def serve(paths: Paths, token: str, port: int = 0, idle_minutes: float = IDLE_MI
             write_state(paths, st)
 
 
-def launch(paths: Paths, *, port: int = 0, wait_s: float = 8.0) -> dict[str, Any]:
+def launch(paths: Paths, *, port: int = 0, wait_s: float = 20.0) -> dict[str, Any]:
     """Start the server detached and return its state once it is listening."""
     st = read_state(paths)
     if st and st.get("status") in ("waiting", "saved") and pid_alive(st.get("pid")):
@@ -283,12 +283,28 @@ def launch(paths: Paths, *, port: int = 0, wait_s: float = 8.0) -> dict[str, Any
     deadline = time.monotonic() + wait_s
     while time.monotonic() < deadline:
         cur = read_state(paths)
-        if cur and cur.get("pid") == proc.pid and cur.get("url"):
+        # Match on the one-time token, not the pid: some Python launchers re-exec themselves
+        # (e.g. macOS framework builds), so the listening process may have another pid.
+        if cur and token in (cur.get("url") or ""):
             return {**cur, "reused": False}
         if proc.poll() is not None:
             break
         time.sleep(0.1)
-    raise RuntimeError(f"The form server didn't start; see {log_dir / 'form.log'}")
+    log.close()
+    code = proc.poll()
+    why = f"it exited with code {code}" if code is not None else f"not listening after {wait_s:g}s"
+    raise RuntimeError(
+        f"The form server didn't start ({why}); see {log_dir / 'form.log'}. "
+        f"Last lines: {_log_tail(log_dir / 'form.log')}"
+    )
+
+
+def _log_tail(path: Path, lines: int = 5) -> str:
+    try:
+        tail = path.read_text(encoding="utf-8", errors="replace").strip().splitlines()[-lines:]
+    except OSError:
+        return "(no log)"
+    return " | ".join(tail) or "(empty log)"
 
 
 def stop(paths: Paths) -> dict[str, Any] | None:
