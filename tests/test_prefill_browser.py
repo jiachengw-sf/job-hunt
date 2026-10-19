@@ -40,7 +40,9 @@ def test_persistent_profile_launches(isolated_home):
         "from jobhunt.models.config import PrefillConfig\n"
         "from jobhunt.paths import get_paths\n"
         "from jobhunt.prefill.browser import persistent_context\n"
-        "with persistent_context(get_paths(), PrefillConfig(), headless=True) as ctx:\n"
+        # bundled Chromium: headless real Chrome with a persistent profile hangs on Windows CI
+        "cfg = PrefillConfig(browser='chromium')\n"
+        "with persistent_context(get_paths(), cfg, headless=True) as ctx:\n"
         "    page = ctx.new_page()\n"
         "    page.set_content('<p id=x>ok</p>')\n"
         "    print(json.dumps({'text': page.inner_text('#x')}))\n"
