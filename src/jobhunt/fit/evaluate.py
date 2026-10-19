@@ -50,7 +50,9 @@ def _load_persona(d: Path) -> tuple[Profile, Preferences, Answers]:
     out = []
     for kind in ("profile", "preferences", "answers"):
         path = d / f"{kind}.yaml"
-        out.append(validate(USER_FILES[kind], yaml.safe_load(path.read_text()), path))
+        out.append(
+            validate(USER_FILES[kind], yaml.safe_load(path.read_text(encoding="utf-8")), path)
+        )
     return out[0], out[1], out[2]  # type: ignore[return-value]
 
 
@@ -190,11 +192,11 @@ def _mean(vals: list[float | None]) -> float | None:
 
 
 def evaluate_set(set_dir: Path, cfg: Config | None = None) -> dict[str, Any]:
-    manifest = yaml.safe_load((set_dir / "manifest.yaml").read_text())
+    manifest = yaml.safe_load((set_dir / "manifest.yaml").read_text(encoding="utf-8"))
     today = date.fromisoformat(str(manifest["today"]))
     now = f"{today.isoformat()}T12:00:00Z"
-    postings = yaml.safe_load((set_dir / manifest["postings"]).read_text())
-    labels = yaml.safe_load((set_dir / manifest["labels"]).read_text())
+    postings = yaml.safe_load((set_dir / manifest["postings"]).read_text(encoding="utf-8"))
+    labels = yaml.safe_load((set_dir / manifest["labels"]).read_text(encoding="utf-8"))
     personas_dir = (set_dir / manifest["personas_dir"]).resolve()
     if cfg is None:
         with tempfile.TemporaryDirectory() as td:
@@ -264,7 +266,7 @@ def evaluate_personal(paths: Paths, cfg: Config) -> dict[str, Any]:
                 f"Create {path} with lines like `123: 2` (job id: grade 0/1/2), then re-run."
             ],
         )
-    raw = yaml.safe_load(path.read_text()) or {}
+    raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     labels = {int(k): int(v) for k, v in raw.items()}
     from jobhunt.store import open_store
 

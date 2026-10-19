@@ -244,7 +244,10 @@ def main(argv: list[str] | None = None) -> int:
     runs: dict[int, list[Run]] = {}
     prev = RESULTS / f"{args.tool}.json"
     if args.resume and prev.exists():
-        done = {(r["skill"], r["query"]): r["runs"] for r in json.loads(prev.read_text())["runs"]}
+        done = {
+            (r["skill"], r["query"]): r["runs"]
+            for r in json.loads(prev.read_text(encoding="utf-8"))["runs"]
+        }
         for i, c in enumerate(cases):
             kept = [Run(**r) for r in done.get((c.skill, c.query), []) if r.get("error") is None]
             if kept:
