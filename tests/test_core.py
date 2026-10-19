@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from jobhunt.devtools.pii_scan import scan_file, scan_repo, scan_text
+from jobhunt.devtools.pii_scan import scan_file, scan_history, scan_repo, scan_text
 from jobhunt.envelope import Envelope, decode_cursor, encode_cursor, paginate, spill_if_large
 from jobhunt.errors import LockBusy, ValidationFailed
 from jobhunt.locking import file_lock
@@ -128,3 +128,24 @@ def test_repo_has_no_personal_data():
     """The same check CI runs: the committed tree must be clean."""
     findings = scan_repo(REPO)
     assert findings == [], "\n".join(map(str, findings))
+
+
+def test_history_scan_finds_data_a_later_commit_removed(tmp_path: Path):
+    import subprocess
+
+    def git(*a: str) -> None:
+        subprocess.run(["git", *a], cwd=tmp_path, check=True, capture_output=True)
+
+    leaked = "jane" + "@" + "gmail.com"  # built at runtime so this file stays clean
+    git("init", "-q")
+    git("config", "user.email", "dev@example.com")
+    git("config", "user.name", "Dev")
+    (tmp_path / "notes.txt").write_text(f"contact {leaked}\n")
+    git("add", ".")
+    git("commit", "-qm", "add notes")
+    (tmp_path / "notes.txt").write_text("nothing here\n")
+    git("commit", "-qam", f"scrub notes, ask {leaked}")
+    assert scan_repo(tmp_path) == []  # the working tree is clean...
+    found = {(f.path.split("@")[0], f.kind) for f in scan_history(tmp_path)}
+    assert ("notes.txt", "email") in found  # ...but the old blob is still in history
+    assert any(p.startswith("commit ") for p, _ in found)  # and so is the message

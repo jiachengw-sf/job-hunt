@@ -20,9 +20,11 @@ uv run pytest
 uv run ruff check .
 uv run ruff format --check .
 uv run python -m jobhunt.devtools.pii_scan
+uv run python -m jobhunt.devtools.pii_scan --history
 ```
 
-The tests are offline. They run against synthetic fixtures and four synthetic personas in
+The `--history` scan checks every blob and commit message ever committed, because a file you
+delete later still ships in a public clone. The tests are offline. They run against synthetic fixtures and four synthetic personas in
 `tests/personas/`. The browser tests skip when no Chromium is installed; install it, because
 adapter work needs them. To try the CLI without touching your own data:
 

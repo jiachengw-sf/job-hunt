@@ -1,6 +1,7 @@
 """Fail when real-looking personal data is committed. Run in CI and as a test.
 
     python -m jobhunt.devtools.pii_scan [PATH ...]     # default: every git-tracked file
+    python -m jobhunt.devtools.pii_scan --history      # every blob and commit message ever
 
 Synthetic data must use reserved values: example.com / .example / .test / .invalid emails,
 555-01xx phone numbers, obviously fake addresses. A line can opt out with ``pii-scan: allow``.
@@ -112,13 +113,14 @@ def scan_text(text: str, path: str, denylist: list[str] | None = None) -> list[F
     return findings
 
 
-def scan_file(path: Path, root: Path, denylist: list[str]) -> list[Finding]:
-    rel = path.relative_to(root).as_posix() if path.is_relative_to(root) else str(path)
-    ext = path.suffix.lower()
+def _scan_blob(
+    rel: str, data: bytes, denylist: list[str], label: str | None = None
+) -> list[Finding]:
+    ext = Path(rel).suffix.lower()
     if ext in RESUME_EXTS and not rel.startswith("tests/"):
         return [
             Finding(
-                rel,
+                label or rel,
                 0,
                 "document",
                 "resume-type document outside tests/ (keep resumes in ~/.jobhunt/resume/)",
@@ -127,10 +129,54 @@ def scan_file(path: Path, root: Path, denylist: list[str]) -> list[Finding]:
     if ext in BINARY_EXTS or ext in RESUME_EXTS:
         return []
     try:
-        text = path.read_text(encoding="utf-8")
-    except (UnicodeDecodeError, OSError):
+        text = data.decode("utf-8")
+    except UnicodeDecodeError:
         return []
-    return scan_text(text, rel, denylist)
+    return scan_text(text, label or rel, denylist)
+
+
+def scan_file(path: Path, root: Path, denylist: list[str]) -> list[Finding]:
+    rel = path.relative_to(root).as_posix() if path.is_relative_to(root) else str(path)
+    try:
+        data = path.read_bytes()
+    except OSError:
+        return []
+    return _scan_blob(rel, data, denylist)
+
+
+def _git(root: Path, *args: str, stdin: bytes | None = None) -> bytes:
+    return subprocess.run(
+        ["git", *args], cwd=root, input=stdin, capture_output=True, check=True
+    ).stdout
+
+
+def scan_history(root: Path) -> list[Finding]:
+    """Every blob reachable from any ref, under the first path it was seen at, plus every commit
+    message. A file deleted or rewritten later still counts: it stays in a public clone."""
+    denylist = load_denylist(root)
+    paths: dict[str, str] = {}
+    for line in _git(root, "rev-list", "--objects", "--all").decode().splitlines():
+        sha, _, path = line.partition(" ")
+        if path and sha not in paths:
+            paths[sha] = path
+    findings: list[Finding] = []
+    if paths:
+        out = _git(root, "cat-file", "--batch", stdin="\n".join(paths).encode() + b"\n")
+        i = 0
+        while i < len(out):
+            nl = out.index(b"\n", i)
+            sha, kind, size = out[i:nl].decode().split()
+            body = out[nl + 1 : nl + 1 + int(size)]
+            i = nl + 1 + int(size) + 1
+            if kind == "blob":
+                rel = paths[sha]
+                findings += _scan_blob(rel, body, denylist, f"{rel}@{sha[:8]}")
+    log = _git(root, "log", "--all", "--format=%H%x00%B%x01").decode("utf-8", "replace")
+    for entry in log.split("\x01"):
+        sha, _, msg = entry.strip("\n").partition("\x00")
+        if sha:
+            findings += scan_text(msg, f"commit {sha[:8]}", denylist)
+    return findings
 
 
 def tracked_files(root: Path) -> list[Path]:
@@ -175,7 +221,10 @@ def scan_repo(root: Path, paths: list[Path] | None = None) -> list[Finding]:
 def main(argv: list[str] | None = None) -> int:
     args = sys.argv[1:] if argv is None else argv
     root = Path.cwd()
-    findings = scan_repo(root, [Path(a) for a in args] or None)
+    if "--history" in args:
+        findings = scan_history(root)
+    else:
+        findings = scan_repo(root, [Path(a) for a in args] or None)
     for f in findings:
         print(f, file=sys.stderr)
     if findings:
@@ -185,7 +234,8 @@ def main(argv: list[str] | None = None) -> int:
             file=sys.stderr,
         )
         return 1
-    print("personal-data scan: clean", file=sys.stderr)
+    scope = "git history" if "--history" in args else "files"
+    print(f"personal-data scan ({scope}): clean", file=sys.stderr)
     return 0
 
 
