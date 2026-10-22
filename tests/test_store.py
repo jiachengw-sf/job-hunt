@@ -32,6 +32,7 @@ def test_migrate_is_idempotent(tmp_path: Path):
         "0006_research.sql",
         "0007_drafts.sql",
         "0008_notifications.sql",
+        "0009_application_records.sql",
     ]
     assert migrate(c) == []
     assert current_version(c) == SCHEMA_VERSION
@@ -117,3 +118,44 @@ def test_split_sql_keeps_triggers_whole():
     sql = "CREATE TABLE a (x);\nCREATE TRIGGER t BEFORE DELETE ON a\nBEGIN SELECT 1; END;\n"
     parts = _split_sql(sql)
     assert len(parts) == 2 and parts[1].endswith("END;")
+
+
+def test_application_records_migration_keeps_existing_data(tmp_path: Path):
+    """A v8 database with jobs, tracker rows and status events upgrades without losing any."""
+    from jobhunt.store.db import MIGRATIONS
+
+    c = connect(tmp_path / "old.db")
+    for m in MIGRATIONS[:8]:
+        for stmt in _split_sql(m.sql):
+            c.execute(stmt)
+        c.execute(f"PRAGMA user_version = {m.version}")
+    jid = _add_job(c)
+    c.execute(
+        "INSERT INTO applications (job_id, status, applied_on, notes, updated_at) "
+        "VALUES (?, 'Applied', '2026-10-01', 'kept', ?)",
+        (jid, NOW),
+    )
+    c.execute(
+        "INSERT INTO events (job_id, kind, at, source_id, details_json) VALUES "
+        '(?, \'status_changed\', ?, \'mark\', \'{"from": "New", "to": "Applied"}\')',
+        (jid, NOW),
+    )
+    assert migrate(c) == ["0009_application_records.sql"]
+    app = c.execute("SELECT status, applied_on, notes FROM applications").fetchone()
+    assert tuple(app) == ("Applied", "2026-10-01", "kept")
+    assert c.execute("SELECT count(*) FROM events").fetchone()[0] == 1
+    assert c.execute("SELECT count(*) FROM application_records").fetchone()[0] == 0
+    c.execute(
+        "INSERT INTO application_records (job_id, job_key, company, title, applied_at, method, "
+        "recorded_via, created_at, updated_at) VALUES (?, 'k', 'Acme', 'Intern', ?, 'manual', "
+        "'cli', ?, ?)",
+        (jid, NOW, NOW, NOW),
+    )
+    with pytest.raises(sqlite3.IntegrityError):  # never two records for one job
+        c.execute(
+            "INSERT INTO application_records (job_id, job_key, company, title, applied_at, "
+            "method, recorded_via, created_at, updated_at) VALUES (?, 'k', 'Acme', 'Intern', ?, "
+            "'manual', 'cli', ?, ?)",
+            (jid, NOW, NOW, NOW),
+        )
+    c.close()
