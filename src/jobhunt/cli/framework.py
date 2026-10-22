@@ -111,6 +111,17 @@ def default_subcommand(root: click.Group, group: str, leaf: str) -> None:
     g.callback = callback
 
 
+def default_groups() -> set[str]:
+    """Groups that run a default subcommand when called bare (``jobhunt apps``)."""
+    from jobhunt.cli.main import cli
+
+    return {
+        name
+        for name, cmd in cli.commands.items()
+        if isinstance(cmd, click.Group) and cmd.invoke_without_command
+    }
+
+
 HumanRenderer = Callable[[Envelope], str]
 
 

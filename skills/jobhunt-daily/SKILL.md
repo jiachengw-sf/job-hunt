@@ -2,7 +2,7 @@
 name: jobhunt-daily
 description: Run the user's daily job hunt with jobhunt. Use when the user says "run my job hunt", asks what's new in their job search, which jobs to apply to today, or to catch up on jobhunt tasks. Fetches and ranks postings, does pending judgment tasks, shows the digest, asks batched questions, and lists next steps. Not for first-time setup (jobhunt-setup) or filling application forms (jobhunt-apply).
 license: MIT
-compatibility: Needs the jobhunt CLI on PATH. Uses the jobhunt-judge, jobhunt-essays and jobhunt-outreach skills when present.
+compatibility: Needs the jobhunt CLI on PATH. Uses the jobhunt-judge, jobhunt-essays, jobhunt-outreach and jobhunt-track skills when present.
 ---
 
 # jobhunt daily
@@ -30,9 +30,12 @@ contract: every command prints one JSON envelope; relay `hints.user_actions` ver
    jobhunt-judge skill: one posting per task, write the result, run `jobhunt ingest`, fix
    rejections. If there are many, do the top 10 by priority and say how many remain. Bands stay
    provisional until their task is ingested.
-3. **Digest.** `jobhunt digest --human` and show it. It lists Ready jobs, questions only the user
-   can answer, Essay jobs with prompts and deadlines, Manual jobs, closures, legitimacy flags,
-   follow-ups due and referral questions.
+3. **Digest.** Start with three lines from `jobhunt apps` (its `summary`): applications by
+   status and this week; what needs attention (follow-ups due, likely no response); upcoming
+   interviews. Offer to open the dashboard (`jobhunt dashboard`). Skip them when there are no
+   applications yet. Then `jobhunt digest --human` and show it. It lists Ready jobs, questions
+   only the user can answer, Essay jobs with prompts and deadlines, Manual jobs, closures,
+   legitimacy flags, follow-ups due and referral questions.
 4. **Batched questions.** `jobhunt answers questions`. Group the non-sensitive ones into one
    short message and ask them all at once. Save each answer the user gives with
    `jobhunt answers add` (or `jobhunt answers confirm` for a suggested match the user agrees is

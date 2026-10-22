@@ -30,6 +30,7 @@ SKILL_NAMES = [
     "jobhunt-apply",
     "jobhunt-essays",
     "jobhunt-outreach",
+    "jobhunt-track",
 ]
 
 # Public, documented endpoints the sources use. Any HTTP response counts as reachable.

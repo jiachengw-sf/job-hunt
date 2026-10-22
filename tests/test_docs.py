@@ -9,10 +9,12 @@ import pytest
 import yaml
 
 import jobhunt.cli.main  # noqa: F401  (registers every command)
-from jobhunt.cli.framework import REGISTRY
+from jobhunt.cli.framework import REGISTRY, default_groups
 from tests.conftest import PERSONAS, PERSONAS_DIR, REPO
 
 DOCS = ["README.md", "CONTRIBUTING.md", "AGENTS.md"]
+
+DEFAULT_GROUPS = default_groups()  # e.g. bare `jobhunt apps`
 
 
 def _docs():
@@ -28,7 +30,7 @@ def test_named_commands_exist(doc):
     assert cmds
     for cmd in cmds:
         words = cmd.split()
-        ok = " ".join(words) in REGISTRY or words[0] in REGISTRY
+        ok = " ".join(words) in REGISTRY or words[0] in REGISTRY.keys() | DEFAULT_GROUPS
         assert ok, f"{doc}: `jobhunt {cmd}` is not a command"
 
 

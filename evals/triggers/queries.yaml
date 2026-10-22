@@ -164,3 +164,26 @@ skills:
       - Unsubscribe me from recruiter newsletters
       - Post on LinkedIn that I'm open to work
       - Forward this email thread to my manager
+  jobhunt-track:
+    trigger:
+      - I applied to Stripe's SWE intern this afternoon
+      - Just submitted my Harborlight Bank application on Workday, log it
+      - I got an OA from Ramp
+      - Northwind Robotics rejected me today, update my tracker
+      - Where do I check my Stripe application?
+      - What haven't I heard back from?
+      - Open my applications dashboard
+      - I have a phone screen with Quillstack next Tuesday at 2pm, add it to my application
+      - How many applications have I sent this month?
+      - I applied to job 12 yesterday through a referral from my roommate
+    near_miss:
+      - Which jobs should I apply to today?
+      - Fill out my Ready applications
+      - Draft a follow-up to the recruiter at Quillstack
+      - Write the "Why us?" essay for Northwind
+      - Research Ramp before my OA
+      - Track my package from Amazon
+      - How do I check the status of my passport application?
+      - Help me prepare for my Stripe interview
+      - Set up jobhunt with my new resume
+      - Add a reminder to my calendar for tomorrow at 9

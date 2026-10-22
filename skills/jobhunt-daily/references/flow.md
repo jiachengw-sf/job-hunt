@@ -21,7 +21,8 @@ Paged lists return `page.next_cursor`; pass it back as `--cursor`.
 New → Prefilled → Applied → OA → Interviewing → Offer / Rejected / Withdrawn / Skipped.
 The user sets them in the tracker or with `jobhunt mark <id> <Status>` (Skipped needs
 `--reason domain|too_senior|location|pay|other`). When the user says they applied somewhere by
-hand, run `jobhunt mark <id> Applied` for them.
+hand, record it with `jobhunt applied <id> --via chat --at "<when>"` (the jobhunt-track skill
+has the details); it records when, how and where to check the status, not just the status.
 
 ## Being brief
 

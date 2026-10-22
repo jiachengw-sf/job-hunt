@@ -1,4 +1,4 @@
-"""The seven portable skills: open-spec frontmatter, size limits, and commands that exist."""
+"""The eight portable skills: open-spec frontmatter, size limits, and commands that exist."""
 
 from __future__ import annotations
 
@@ -9,13 +9,15 @@ import pytest
 import yaml
 
 import jobhunt.cli.main  # noqa: F401  (registers every command)
-from jobhunt.cli.framework import REGISTRY
+from jobhunt.cli.framework import REGISTRY, default_groups
 from jobhunt.doctor import SKILL_NAMES
 from tests.conftest import REPO
 
 SKILLS = REPO / "skills"
 OPEN_SPEC = {"name", "description", "license", "compatibility", "metadata"}
 NAMES = sorted(p.name for p in SKILLS.iterdir() if p.is_dir())
+
+DEFAULT_GROUPS = default_groups()  # e.g. bare `jobhunt apps`
 
 
 def _split(path: Path) -> tuple[dict, str]:
@@ -25,9 +27,9 @@ def _split(path: Path) -> tuple[dict, str]:
     return yaml.safe_load(fm), body
 
 
-def test_the_seven_skills():
+def test_the_eight_skills():
     assert sorted(SKILL_NAMES) == NAMES
-    assert len(NAMES) == 7
+    assert len(NAMES) == 8
 
 
 @pytest.mark.parametrize("name", NAMES)
@@ -64,7 +66,7 @@ def test_only_real_commands_and_no_tool_specific_paths(name):
         assert "~/.claude" not in text and "~/.codex" not in text, f
         for cmd in re.findall(r"`jobhunt ([a-z][a-z -]*)", text):
             words = cmd.split()
-            ok = " ".join(words[:2]) in REGISTRY or words[0] in REGISTRY
+            ok = " ".join(words[:2]) in REGISTRY or words[0] in REGISTRY.keys() | DEFAULT_GROUPS
             assert ok, f"{f.name}: `jobhunt {cmd}` is not a command"
 
 

@@ -70,7 +70,7 @@ def register(cli: click.Group) -> None:
     def install_cmd(
         tool: str, scope: str, project_dir: Path, mode: str, force: bool, dry_run: bool
     ) -> Result:
-        """Install the seven jobhunt skills for Claude Code and/or Codex. Safe to re-run.
+        """Install the eight jobhunt skills for Claude Code and/or Codex. Safe to re-run.
 
         jobhunt-apply is explicit-only: Claude Code's copy gets `disable-model-invocation:
         true`; Codex's copy gets agents/openai.yaml with `allow_implicit_invocation: false`.

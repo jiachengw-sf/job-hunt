@@ -1,10 +1,10 @@
 {
  "meta": {
   "tool": "claude-code",
-  "finished": "2026-10-19 06:52 UTC",
+  "finished": "2026-10-22 05:46 UTC",
   "runs_per_query": 3,
   "model": null,
-  "executed": 420,
+  "executed": 480,
   "stopped": null
  },
  "skills": {
@@ -51,6 +51,13 @@
    "pass": true
   },
   "jobhunt-outreach": {
+   "queries": 20,
+   "passed": 20,
+   "failures": [],
+   "rate": 1.0,
+   "pass": true
+  },
+  "jobhunt-track": {
    "queries": 20,
    "passed": 20,
    "failures": [],
@@ -4642,6 +4649,682 @@
      "utilization": null,
      "error": null,
      "seconds": 11.3
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-track",
+   "query": "I applied to Stripe's SWE intern this afternoon",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.8
+    },
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 5.2
+    },
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 20.1
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-track",
+   "query": "Just submitted my Harborlight Bank application on Workday, log it",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.1
+    },
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.6
+    },
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 13.2
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-track",
+   "query": "I got an OA from Ramp",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 1.9
+    },
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.5
+    },
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.1
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-track",
+   "query": "Northwind Robotics rejected me today, update my tracker",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.7
+    },
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.4
+    },
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-track",
+   "query": "Where do I check my Stripe application?",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.1
+    },
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.0
+    },
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-track",
+   "query": "What haven't I heard back from?",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.7
+    },
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.3
+    },
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.4
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-track",
+   "query": "Open my applications dashboard",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.0
+    },
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.0
+    },
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.9
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-track",
+   "query": "I have a phone screen with Quillstack next Tuesday at 2pm, add it to my application",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.0
+    },
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.1
+    },
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.3
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-track",
+   "query": "How many applications have I sent this month?",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.2
+    },
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.4
+    },
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.6
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-track",
+   "query": "I applied to job 12 yesterday through a referral from my roommate",
+   "expect": true,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.1
+    },
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.2
+    },
+    {
+     "loaded": [
+      "jobhunt-track"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 6.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-track",
+   "query": "Which jobs should I apply to today?",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.2
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 1.9
+    },
+    {
+     "loaded": [
+      "jobhunt-daily"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.3
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-track",
+   "query": "Fill out my Ready applications",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.2
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.3
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.8
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-track",
+   "query": "Draft a follow-up to the recruiter at Quillstack",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.7
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.9
+    },
+    {
+     "loaded": [
+      "jobhunt-outreach"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-track",
+   "query": "Write the \"Why us?\" essay for Northwind",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.6
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.5
+    },
+    {
+     "loaded": [
+      "jobhunt-essays"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.6
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-track",
+   "query": "Research Ramp before my OA",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.5
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.1
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-track",
+   "query": "Track my package from Amazon",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "anthropic-skills:chrome-browser"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 5.0
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 7.9
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 9.2
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-track",
+   "query": "How do I check the status of my passport application?",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 6.7
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.9
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 8.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-track",
+   "query": "Help me prepare for my Stripe interview",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 3.0
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.8
+    },
+    {
+     "loaded": [
+      "jobhunt-research"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 10.4
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-track",
+   "query": "Set up jobhunt with my new resume",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.7
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 2.7
+    },
+    {
+     "loaded": [
+      "jobhunt-setup"
+     ],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 5.5
+    }
+   ]
+  },
+  {
+   "skill": "jobhunt-track",
+   "query": "Add a reminder to my calendar for tomorrow at 9",
+   "expect": false,
+   "explicit": false,
+   "runs": [
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 4.6
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 13.7
+    },
+    {
+     "loaded": [],
+     "text": "",
+     "utilization": null,
+     "error": null,
+     "seconds": 14.0
     }
    ]
   }

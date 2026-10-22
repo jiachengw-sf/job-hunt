@@ -96,7 +96,7 @@ src/jobhunt/
   cli/            framework (@agent_command) and commands
   defaults/       system-layer config, synonyms.yaml (skill aliases), states.yml
   devtools/       pii_scan (CI personal-data check), trigger_eval, daily_e2e
-skills/           the seven portable skills (open-spec frontmatter; shipped in the wheel)
+skills/           the eight portable skills (open-spec frontmatter; shipped in the wheel)
 tests/personas/   four synthetic users — use these, never real data
 tests/fixtures/sources/  offline snapshots of every source (`jobhunt fetch --fixtures <dir>`)
 tests/fixtures/forms/    form specs (`overlay/`) and browser pages (`pages/`), from make_forms.py

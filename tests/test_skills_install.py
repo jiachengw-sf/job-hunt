@@ -41,7 +41,7 @@ def test_install_both_tools(cli):
     )
     _, again, _ = cli("skills", "install", "--tool", "all")
     for o in again["data"]["tools"]:
-        assert o["installed"] == [] and len(o["unchanged"]) == 7
+        assert o["installed"] == [] and len(o["unchanged"]) == 8
     _, st, _ = cli("skills", "status", "--tool", "all")
     for o in st["data"]["tools"]:
         assert o["missing"] == [] and o["explicit_only_ok"] == {"jobhunt-apply": True}
@@ -85,7 +85,7 @@ def test_project_scope_and_dry_run(cli, tmp_path):
     proj.mkdir()
     code, env, _ = cli("skills", "install", "--tool", "all", "--scope", "project",
                        "--project-dir", str(proj), "--dry-run")  # fmt: skip
-    assert code == ExitCode.OK and len(env["data"]["tools"][0]["installed"]) == 7
+    assert code == ExitCode.OK and len(env["data"]["tools"][0]["installed"]) == 8
     assert not (proj / ".claude").exists()
     cli("skills", "install", "--tool", "all", "--scope", "project", "--project-dir", str(proj))
     assert (proj / ".claude" / "skills" / "jobhunt-setup" / "SKILL.md").is_file()

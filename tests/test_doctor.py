@@ -106,7 +106,7 @@ def test_skills_check_detects_claude_dir(cli, isolated_home: Path):
     (isolated_home.parent / ".claude").mkdir()
     _, env, _ = cli("doctor", "--offline")
     c = _checks(env)["skills.claude-code"]
-    assert c["status"] == "warn" and "0/7" in c["summary"]
+    assert c["status"] == "warn" and "0/8" in c["summary"]
 
 
 def test_human_output(capsys):
