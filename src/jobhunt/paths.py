@@ -58,6 +58,21 @@ class Paths:
     def lock(self) -> Path:
         return self.home / ".lock"
 
+    # Application tracking: the dashboard and Markdown summary are regenerated from the store;
+    # each application's folder also keeps proof captured at apply time (JD snapshot, screenshot)
+    @property
+    def applications(self) -> Path:
+        """One folder per application: README, JD snapshot, answers sent, confirmation."""
+        return self.home / "applications"
+
+    @property
+    def dashboard(self) -> Path:
+        return self.home / "dashboard.html"
+
+    @property
+    def applications_md(self) -> Path:
+        return self.home / "APPLICATIONS.md"
+
     # Work area for the plan -> validate -> execute handoff
     @property
     def work(self) -> Path:

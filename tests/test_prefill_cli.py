@@ -6,7 +6,6 @@ import json
 import shutil
 import sqlite3
 import time
-from datetime import date
 from pathlib import Path
 
 import pytest
@@ -124,13 +123,47 @@ def test_fill_handoff_and_confirmation_in_process(cli, persona_home, fx_all, bro
 
     def on_applied(t):
         applied.append(t.job.job_id)
-        driver.mark_applied(paths, t.job.job_id, date(2026, 10, 18))
+        driver.record_confirmed(paths, t, now="2026-10-18T12:00:00Z")
 
     driver.watch(tabs, on_applied, lambda: None, deadline=time.monotonic() + 8,
                  should_stop=lambda: False, poll_s=0.2)  # fmt: skip
     assert applied == [gh.job.job_id]
     assert status_of(home, gh.job.job_id) == ("Applied", "2026-10-18")
     assert lv.status == "closed" and status_of(home, lv.job.job_id)[0] == "Prefilled"
+    assert_prefill_record(home, gh, lv)
+    driver.record_confirmed(paths, gh, now="2026-10-18T12:05:00Z")  # seen again: still one
+    with db(home) as c:
+        assert c.execute("SELECT count(*) FROM application_records").fetchone()[0] == 1
+
+
+def assert_prefill_record(home: Path, gh, lv) -> None:
+    """The confirmation created exactly one record, with its proof and where to check."""
+    with db(home) as c:
+        recs = c.execute("SELECT * FROM application_records").fetchall()
+        assert [r["job_id"] for r in recs] == [gh.job.job_id]  # none for the closed tab
+        r = recs[0]
+        events = c.execute(
+            "SELECT source_id, details_json FROM events WHERE job_id=? AND kind='status_changed'",
+            (gh.job.job_id,),
+        ).fetchall()
+    assert r["method"] == "prefilled" and r["recorded_via"] == "prefill"
+    assert r["applied_at"] == "2026-10-18T12:00:00Z" and not r["applied_at_approx"]
+    assert r["confirmation_id"]  # Greenhouse's application_id from the confirmation URL
+    assert r["status_check_method"] == "portal" and r["status_check_url"].startswith(
+        "https://my.greenhouse.io"
+    )
+    assert r["resume_file"] == "resume.pdf" and len(r["resume_sha256"]) == 64
+    sent = json.loads(r["submitted_json"])
+    assert sent and all(set(s) == {"label", "kind", "sensitive", "key"} for s in sent)
+    folder = home / "applications" / r["folder"]
+    assert r["folder"].startswith("2026-10-1")
+    for f in ("README.md", "job_description.md", "submitted_answers.md", "confirmation.png",
+              "resume.pdf"):  # fmt: skip
+        assert (folder / f).exists(), f
+    assert "captured" in (folder / "job_description.md").read_text(encoding="utf-8")
+    assert "MyGreenhouse" in (folder / "README.md").read_text(encoding="utf-8")
+    assert json.loads(events[-1]["details_json"])["to"] == "Applied"
+    assert events[-1]["source_id"] == "agent"
 
 
 def test_detached_driver_end_to_end(cli, persona_home, fx_all):

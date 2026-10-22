@@ -72,6 +72,11 @@ followups:
   after_days: 7
   max_per_application: 2
 
+tracking:                    # application records, the dashboard and APPLICATIONS.md
+  timezone: null               # e.g. America/Los_Angeles; null = this computer's time zone
+  stale_after_days: 21         # days in Applied with no update before views say "likely no response"
+  open_dashboard: true         # `jobhunt dashboard` opens the page in your browser
+
 research:
   cache_days: 14
   max_searches: 5

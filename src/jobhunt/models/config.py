@@ -144,6 +144,18 @@ class FollowupsConfig(Strict):
     max_per_application: int = Field(2, ge=0)
 
 
+class TrackingConfig(Strict):
+    timezone: str | None = Field(
+        None,
+        description="IANA time zone for showing times (e.g. America/Los_Angeles). Default: "
+        "this computer's.",
+    )
+    stale_after_days: int = Field(
+        21, ge=1, description="Days in Applied with no update before views say likely no response."
+    )
+    open_dashboard: bool = Field(True, description="`jobhunt dashboard` opens the page.")
+
+
 class DraftsConfig(Strict):
     unchanged_edit_ratio: float = Field(
         0.05, ge=0, le=1, description="Approving a draft changed less than this: a gentle nudge."
@@ -214,6 +226,7 @@ class Config(Strict):
     forms: FormsConfig = Field(default_factory=FormsConfig)
     prefill: PrefillConfig = Field(default_factory=PrefillConfig)
     followups: FollowupsConfig = Field(default_factory=FollowupsConfig)
+    tracking: TrackingConfig = Field(default_factory=TrackingConfig)
     research: ResearchConfig = Field(default_factory=ResearchConfig)
     drafts: DraftsConfig = Field(default_factory=DraftsConfig)
     notifications: NotificationsConfig = Field(default_factory=NotificationsConfig)

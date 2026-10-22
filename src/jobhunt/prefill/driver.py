@@ -8,7 +8,9 @@ as a detached process and returns at once. The driver:
    takes a screenshot, and marks the job **Prefilled**;
 3. releases the guard (handoff) only after it has stopped interacting with that tab;
 4. watches the open tabs. When a tab shows the ATS's confirmation after the human submits, the
-   job is marked **Applied** with today's date. A tab closed without submitting stays Prefilled.
+   job is marked **Applied** and its application record is created: the confirmation ID (when
+   the ATS shows one), a screenshot of the confirmation, a snapshot of the job description and
+   where to check its status. A tab closed without submitting stays Prefilled.
 
 It never clicks Submit. Its state is a JSON file that ``jobhunt prefill --status`` reads; values
 never go into it.
@@ -27,7 +29,7 @@ import sys
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -113,19 +115,41 @@ def mark_prefilled(paths: Paths, job_id: int) -> bool:
         return agent_advance(conn, job_id, "Prefilled", now_iso())
 
 
-def mark_applied(paths: Paths, job_id: int, today: date) -> bool:
+def mark_applied(
+    paths: Paths,
+    job_id: int,
+    *,
+    now: str | None = None,
+    sheet: str | None = None,
+    shot: str | None = None,
+    confirmation_id: str | None = None,
+) -> int:
+    """The human submitted: record the application (Applied, its proof and where to check its
+    status). Returns the application id."""
+    from jobhunt.cli.onboarding import default_resume
     from jobhunt.store import open_store
-    from jobhunt.tracker.store import agent_advance
-    from jobhunt.tracker.sync import set_user_field
+    from jobhunt.tracker.applications import record_application, submitted_from_sheet
+    from jobhunt.tracker.timefmt import zone
+    from jobhunt.tracker.views import refresh_views
 
-    now = now_iso()
+    cfg = load_config(paths)
+    now = now or now_iso()
+    tz = zone(cfg.tracking.timezone)
+    answers = read_sheet(Path(sheet)) if sheet and Path(sheet).exists() else None
     with file_lock(paths.lock, timeout=60), open_store(paths.db) as conn:
-        moved = agent_advance(conn, job_id, "Applied", now)
-        row = conn.execute("SELECT applied_on FROM applications WHERE job_id=?", (job_id,))
-        current = row.fetchone()
-        if moved and not (current and current["applied_on"]):
-            set_user_field(conn, job_id, "applied_on", today.isoformat(), now, source="agent")
-        return moved
+        submitted = submitted_from_sheet(conn, answers) if answers else []
+        resume = next(
+            (Path(str(s.value)) for s in submitted if s.kind == "file" and s.value), None
+        ) or default_resume(paths)
+        out = record_application(
+            conn, job_id, now=now, applied_at=now, approx=False, method="prefilled",
+            via="prefill", tz=tz, paths=paths, window_days=cfg.volume_guard.window_days,
+            max_per_company=cfg.volume_guard.max_applications_per_company, resume=resume,
+            submitted=submitted, confirmation_id=confirmation_id,
+            screenshot=Path(shot) if shot else None,
+        )  # fmt: skip
+        refresh_views(conn, paths, cfg)
+        return out.app_id
 
 
 # --- filling and watching ------------------------------------------------------------------------
@@ -192,6 +216,24 @@ def fill_tab(ctx: Any, tab: Tab, screens: Path) -> None:
         guard.release(page)
     for b in guard.blocked:
         log.info("job %s: blocked during fill: %s %s", tab.job.job_id, b["method"], b["url"])
+
+
+def record_confirmed(paths: Paths, tab: Tab, now: str | None = None) -> None:
+    """The tab shows the confirmation: capture it, then record the application."""
+    now = now or now_iso()
+    tab.applied_on = now[:10]
+    shot = confirmation_id = None
+    with contextlib.suppress(Exception):  # proof is best effort; the record is not
+        shot = screenshot(tab.page, paths.screens, tab.job.job_id, now)
+        confirmation_id = tab.adapter.confirmation_id(tab.page)
+    try:
+        tab.extra["app_id"] = mark_applied(
+            paths, tab.job.job_id, now=now, sheet=tab.job.sheet, shot=shot,
+            confirmation_id=confirmation_id,
+        )  # fmt: skip
+    except Exception as e:
+        log.warning("job %s: couldn't record the application: %s", tab.job.job_id, e)
+        tab.extra["mark_error"] = str(e)
 
 
 def check_tab(tab: Tab, on_applied: Callable[[Tab], None]) -> bool:
@@ -267,13 +309,7 @@ class Driver:
         _write_json(state_path(self.paths), self.state)
 
     def applied(self, tab: Tab) -> None:
-        today = date.today()
-        tab.applied_on = today.isoformat()
-        try:
-            mark_applied(self.paths, tab.job.job_id, today)
-        except Exception as e:
-            log.warning("job %s: couldn't mark Applied: %s", tab.job.job_id, e)
-            tab.extra["mark_error"] = str(e)
+        record_confirmed(self.paths, tab)
 
     def run_in(self, ctx: Any) -> None:
         if self.plan.fixtures:

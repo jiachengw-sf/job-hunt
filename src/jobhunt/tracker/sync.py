@@ -20,6 +20,8 @@ from datetime import date
 
 from pydantic import BaseModel, Field
 
+from jobhunt.models.config import Config
+from jobhunt.paths import Paths
 from jobhunt.tracker.backends import Backend, Grid
 from jobhunt.tracker.states import machine
 
@@ -85,6 +87,10 @@ class SyncReport(BaseModel):
         0, description="Rows whose jobhunt ID isn't in the store (left alone)."
     )
     skipped: str | None = None
+    applications_recorded: int = Field(
+        0, description="Jobs set to Applied (or later) in the sheet that got an application record."
+    )
+    warnings: list[str] = Field(default_factory=list)
 
 
 # --- values ---------------------------------------------------------------------------------
@@ -268,6 +274,7 @@ def set_user_field(
     now: str,
     *,
     source: str,
+    note: str | None = None,
 ) -> None:
     old = conn.execute(
         f"SELECT {field_name} FROM applications WHERE job_id=?", (job_id,)
@@ -281,7 +288,12 @@ def set_user_field(
         conn.execute(
             "INSERT INTO events (job_id, kind, at, source_id, details_json) VALUES (?, "
             "'status_changed', ?, ?, ?)",
-            (job_id, now, source, json.dumps({"from": old, "to": value})),
+            (
+                job_id,
+                now,
+                source,
+                json.dumps({"from": old, "to": value} | ({"note": note} if note else {})),
+            ),
         )
 
 
@@ -494,6 +506,21 @@ def runs_rows(conn: sqlite3.Connection, limit: int = 200) -> list[list[str]]:
     return out
 
 
+def _records_from_sheet(
+    conn: sqlite3.Connection, cfg: Config, paths: Paths | None, now: str, report: SyncReport
+) -> int:
+    from jobhunt.tracker.applications import records_from_status
+    from jobhunt.tracker.timefmt import zone
+
+    made = records_from_status(
+        conn, now=now, via="sheet", tz=zone(cfg.tracking.timezone), paths=paths,
+        window_days=cfg.volume_guard.window_days,
+        max_per_company=cfg.volume_guard.max_applications_per_company,
+    )  # fmt: skip
+    report.warnings += [w for m in made for w in m.warnings]
+    return sum(m.created for m in made)
+
+
 class DryGrid:
     """Reads through to the real grid; writes go nowhere (for --dry-run)."""
 
@@ -522,7 +549,12 @@ def sync(
     window_days: int,
     include_gated_out: bool,
     dry_run: bool,
+    cfg: Config | None = None,
+    paths: Paths | None = None,
 ) -> SyncReport:
+    """With ``cfg``, a job you moved to Applied (or later) in the sheet that has no application
+    record gets one, timed at this sync and flagged approximate; ``paths`` lets it write the
+    application's folder (left out in a dry run)."""
     report = SyncReport(backend=backend.name, location=backend.location, dry_run=dry_run)
 
     def tab(title: str, **kw: object) -> Grid:
@@ -533,6 +565,8 @@ def sync(
     try:
         jobs = tab("Jobs", user_columns=[c.header for c in USER_COLUMNS])
         sync_jobs(conn, jobs, now, report, include_gated_out=include_gated_out)
+        if cfg is not None:
+            report.applications_recorded = _records_from_sheet(conn, cfg, paths, now, report)
         tab("Companies").replace_all(companies_rows(conn, today, window_days))
         tab("Runs").replace_all(runs_rows(conn))
         if dry_run:

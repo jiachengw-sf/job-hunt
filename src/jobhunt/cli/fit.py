@@ -41,6 +41,7 @@ from jobhunt.tracker.backends import Backend, SheetsBackend, TrackerLocked, Xlsx
 from jobhunt.tracker.states import machine
 from jobhunt.tracker.store import mark
 from jobhunt.tracker.sync import SyncReport, sync
+from jobhunt.tracker.views import refresh_views
 
 PAGE = 20
 
@@ -92,18 +93,46 @@ def _do_sync(
             window_days=cfg.volume_guard.window_days,
             include_gated_out=cfg.tracker.include_gated_out,
             dry_run=dry_run,
+            cfg=cfg,
+            paths=None if dry_run else paths,
         )
     except TrackerLocked as e:
         return SyncReport(
             backend=backend.name, location=backend.location, dry_run=dry_run, skipped=e.message
         ), e.user_actions
-    actions = []
+    actions = list(rep.warnings)
     if rep.rejected:
         actions.append(
             f"{len(rep.rejected)} sheet value(s) weren't applied; fix them in the tracker: "
             + "; ".join(rep.rejected[:5])
         )
     return rep, actions
+
+
+def _record_marked(
+    conn: Any, paths: Paths, cfg: Config, job_id: int, applied_on: str | None, now: str,
+    dry_run: bool,
+) -> list[str]:  # fmt: skip
+    """`jobhunt mark <job> Applied` (or later) on a job with no application record makes one."""
+    from jobhunt.tracker.applications import APPLIED_STATES, get_record, record_application
+    from jobhunt.tracker.timefmt import parse_when, zone
+
+    status = conn.execute("SELECT status FROM applications WHERE job_id=?", (job_id,)).fetchone()
+    if not status or status[0] not in APPLIED_STATES:
+        return []
+    out = None
+    if get_record(conn, job_id) is None:
+        tz = zone(cfg.tracking.timezone)
+        applied_at, approx = parse_when(applied_on, now, tz) if applied_on else (now, False)
+        out = record_application(
+            conn, job_id, now=now, applied_at=applied_at, approx=approx, method="manual",
+            via="cli", tz=tz, paths=None if dry_run else paths,
+            window_days=cfg.volume_guard.window_days,
+            max_per_company=cfg.volume_guard.max_applications_per_company,
+        )  # fmt: skip
+    if not dry_run:
+        refresh_views(conn, paths, cfg, now=now)
+    return out.warnings if out else []
 
 
 def _question_actions(g: GateSummary) -> list[str]:
@@ -320,6 +349,8 @@ def register(cli: click.Group) -> None:
         inp = _inputs(paths, cfg, utc_now())
         with _lock(paths, dry_run), open_store(paths.db, dry_run=dry_run) as conn:
             rep, actions = _do_sync(conn, cfg, paths, inp, dry_run)
+            if not dry_run:
+                refresh_views(conn, paths, cfg, now=inp.now)
         if rep is None:
             return Result(data=None, next_actions=["The tracker is off (tracker.kind: none)."])
         return Result(data=rep, user_actions=actions)
@@ -398,6 +429,8 @@ def register(cli: click.Group) -> None:
                 srep, sync_actions = _do_sync(conn, cfg, paths, inp, dry_run)
                 actions += sync_actions
             fetch = _refresh_yields(conn, fetch)
+            if not dry_run:
+                refresh_views(conn, paths, cfg, now=inp.now)
             notify = None
             if not no_notify:
                 notify = after_run(
@@ -513,17 +546,23 @@ def register(cli: click.Group) -> None:
     def mark_cmd(
         job_id: int, status: str, reason: str | None, applied_on: str | None, dry_run: bool
     ) -> Result:
-        """Set a job's status as the user (any status; Skipped needs --reason)."""
-        paths, _ = _prepare(dry_run)
+        """Set a job's status as the user (any status; Skipped needs --reason).
+
+        Moving a job to Applied or later also records the application if it has no record yet
+        (`jobhunt applied` records more: when, how, and where to check its status).
+        """
+        paths, cfg = _prepare(dry_run)
         now = utc_now()
         today = datetime.now(UTC).date()
         with _lock(paths, dry_run), open_store(paths.db, dry_run=dry_run) as conn:
             change = mark(
                 conn, job_id, status, reason=reason, applied_on=applied_on, today=today, now=now
             )
+            warnings = _record_marked(conn, paths, cfg, job_id, applied_on, now, dry_run)
         return Result(
             data=MarkReport(job_id=job_id, dry_run=dry_run, change=change),
             next_actions=["Run `jobhunt sync` to update the tracker."],
+            user_actions=warnings,
         )
 
     @agent_command(cli, "calibrate", output=CalibrationReport, render=_render_calibrate)

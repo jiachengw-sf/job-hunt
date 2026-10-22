@@ -177,6 +177,10 @@ class Adapter:
         """True once the page shows the ATS's confirmation after the human submits."""
         raise NotImplementedError
 
+    def confirmation_id(self, page: Any) -> str | None:
+        """The ATS's own id for the submitted application, when the confirmation shows one."""
+        return None
+
     def set_field(self, page: Any, ff: FillField, sheet: AnswerSheet) -> None:
         raise NotImplementedError
 

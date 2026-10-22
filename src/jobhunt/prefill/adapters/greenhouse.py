@@ -17,6 +17,7 @@ Verified against live forms (2026-10-18):
 from __future__ import annotations
 
 from typing import Any, ClassVar
+from urllib.parse import parse_qs, urlsplit
 
 from jobhunt.bank.keys import country_names
 from jobhunt.prefill.adapters.base import (
@@ -52,6 +53,11 @@ class Greenhouse(Adapter):
 
     def confirmed(self, page: Any) -> bool:
         return "application_id=" in page.url or "/confirmation" in page.url
+
+    def confirmation_id(self, page: Any) -> str | None:
+        """Greenhouse adds ``application_id=`` to the confirmation URL."""
+        found = parse_qs(urlsplit(page.url).query).get("application_id")
+        return found[0] if found and found[0] else None
 
     # --- locating ---------------------------------------------------------------------------
 
