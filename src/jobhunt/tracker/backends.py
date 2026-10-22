@@ -105,9 +105,10 @@ class XlsxGrid:
         statuses: list[str] | None = None,
         due_col: int | None = None,
         link_col: int | None = None,
+        created: bool = True,
     ) -> None:
         """Frozen header, filters, column widths, a Status dropdown, status colors, overdue
-        follow-ups in red and clickable links. Re-applying replaces jobhunt's own rules only."""
+        follow-ups in red and clickable links. Re-applied on every sync (the tab is jobhunt's)."""
         from openpyxl.formatting.rule import FormulaRule
         from openpyxl.styles import Font, PatternFill
         from openpyxl.worksheet.datavalidation import DataValidation
@@ -258,6 +259,125 @@ class SheetsGrid:
         if rows:
             self._ensure_cols(max(len(r) for r in rows))
             self.ws.update(range_name="A1", values=rows, value_input_option="RAW")
+
+    def format_table(
+        self,
+        *,
+        status_col: int,
+        widths: list[int],
+        statuses: list[str] | None = None,
+        due_col: int | None = None,
+        link_col: int | None = None,
+        created: bool = True,
+    ) -> None:
+        """The same formatting as XLSX through the Sheets API. The rules are added once, when
+        jobhunt creates the tab, so your own changes to them stay; links are refreshed each
+        sync."""
+        from jobhunt.tracker.states import machine
+
+        sid = self.ws.id
+        requests: list[dict[str, Any]] = []
+        if created:
+            names = statuses or list(machine().states)
+            col = {"sheetId": sid, "startRowIndex": 1, "endRowIndex": FORMAT_ROWS,
+                   "startColumnIndex": status_col - 1, "endColumnIndex": status_col}  # fmt: skip
+            whole = {"sheetId": sid, "startRowIndex": 1, "endRowIndex": FORMAT_ROWS,
+                     "startColumnIndex": 0, "endColumnIndex": len(widths)}  # fmt: skip
+            letter = _col(status_col)
+            requests += [
+                {
+                    "updateSheetProperties": {
+                        "properties": {"sheetId": sid, "gridProperties": {"frozenRowCount": 1}},
+                        "fields": "gridProperties.frozenRowCount",
+                    }
+                },
+                {"setBasicFilter": {"filter": {"range": {"sheetId": sid, "startRowIndex": 0,
+                                                         "startColumnIndex": 0,
+                                                         "endColumnIndex": len(widths)}}}},
+                {
+                    "setDataValidation": {
+                        "range": col,
+                        "rule": {
+                            "condition": {
+                                "type": "ONE_OF_LIST",
+                                "values": [{"userEnteredValue": n} for n in names],
+                            },
+                            "showCustomUi": True,
+                            "strict": False,
+                        },
+                    }
+                },
+                {
+                    "repeatCell": {
+                        "range": {"sheetId": sid, "startRowIndex": 0, "endRowIndex": 1},
+                        "cell": {"userEnteredFormat": {"textFormat": {"bold": True}}},
+                        "fields": "userEnteredFormat.textFormat.bold",
+                    }
+                },
+            ]  # fmt: skip
+            requests += [
+                {
+                    "updateDimensionProperties": {
+                        "range": {"sheetId": sid, "dimension": "COLUMNS", "startIndex": i,
+                                  "endIndex": i + 1},
+                        "properties": {"pixelSize": w * 7},
+                        "fields": "pixelSize",
+                    }
+                }
+                for i, w in enumerate(widths)
+            ]  # fmt: skip
+            if due_col:
+                d = _col(due_col)
+                requests.append(_sheets_rule(
+                    {"sheetId": sid, "startRowIndex": 1, "endRowIndex": FORMAT_ROWS,
+                     "startColumnIndex": due_col - 1, "endColumnIndex": due_col},
+                    f'=AND(${letter}2="Applied",${d}2<>"",DATEVALUE(${d}2)<=TODAY())',
+                    OVERDUE_FILL, bold=True,
+                ))  # fmt: skip
+            requests += [
+                _sheets_rule(whole, f'=${letter}2="{name}"', color)
+                for name, color in STATUS_FILLS.items()
+            ]
+        if link_col:
+            rows = self.values()[1:]
+            cells = []
+            for r in rows:
+                v = r[link_col - 1] if len(r) >= link_col else ""
+                fmt: dict[str, Any] = {"userEnteredValue": {"stringValue": v}}
+                if v.startswith(("https://", "http://")):
+                    fmt["textFormatRuns"] = [{"startIndex": 0, "format": {"link": {"uri": v}}}]
+                cells.append({"values": [fmt]})
+            if cells:
+                requests.append({"updateCells": {
+                    "rows": cells, "fields": "userEnteredValue,textFormatRuns",
+                    "start": {"sheetId": sid, "rowIndex": 1, "columnIndex": link_col - 1},
+                }})  # fmt: skip
+        if requests:
+            self.ws.spreadsheet.batch_update({"requests": requests})
+
+
+def _sheets_rule(
+    rng: dict[str, Any], formula: str, color: str, *, bold: bool = False
+) -> dict[str, Any]:
+    rgb = {k: int(color[i : i + 2], 16) / 255 for k, i in (("red", 0), ("green", 2), ("blue", 4))}
+    fmt: dict[str, Any] = {"backgroundColor": rgb}
+    if bold:
+        fmt["textFormat"] = {"bold": True}
+    return {
+        "addConditionalFormatRule": {
+            "rule": {
+                "ranges": [rng],
+                "booleanRule": {
+                    "condition": {
+                        "type": "CUSTOM_FORMULA",
+                        "values": [{"userEnteredValue": formula}],
+                    },
+                    "format": fmt,
+                },
+            },
+            "index": 0,
+        }
+    }
 
 
 class SheetsBackend:

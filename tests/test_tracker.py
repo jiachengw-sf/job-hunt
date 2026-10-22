@@ -288,9 +288,11 @@ def test_xlsx_open_in_excel_is_skipped(tmp_path: Path):
 
 
 class FakeWorksheet:
-    def __init__(self):
+    def __init__(self, spreadsheet=None, sheet_id=0):
         self.grid = FakeGrid()
         self.col_count = 26
+        self.id = sheet_id
+        self.spreadsheet = spreadsheet
 
     def get_all_values(self):
         return self.grid.values()
@@ -316,6 +318,10 @@ class FakeWorksheet:
 class FakeSpreadsheet:
     def __init__(self):
         self.sheets: dict[str, FakeWorksheet] = {}
+        self.requests: list[dict] = []
+
+    def batch_update(self, body):
+        self.requests += body["requests"]
 
     def worksheet(self, title):
         if title not in self.sheets:
@@ -323,7 +329,7 @@ class FakeSpreadsheet:
         return self.sheets[title]
 
     def add_worksheet(self, title, rows, cols):
-        self.sheets[title] = FakeWorksheet()
+        self.sheets[title] = FakeWorksheet(self, len(self.sheets))
         return self.sheets[title]
 
 
@@ -345,3 +351,37 @@ def test_sheets_backend_round_trip(conn):
     set_cell(ws.grid, 2, "Status", "Withdrawn")
     do_sync(conn, backend)
     assert status(conn, 2) == "Withdrawn"
+
+
+def _with_application(conn):
+    from jobhunt.config import default_config_data
+    from jobhunt.models import Config
+    from jobhunt.tracker.applications import record_application
+
+    record_application(
+        conn, 1, now=NOW, applied_at=NOW, approx=False, method="manual", via="cli", tz=None,
+        paths=None, window_days=90, max_per_company=2,
+    )  # fmt: skip
+    return Config.model_validate(default_config_data())
+
+
+def test_sheets_applications_tab_is_formatted_once(conn):
+    pytest.importorskip("gspread")
+    cfg = _with_application(conn)
+    client = FakeClient()
+    backend = SheetsBackend("abc123", "unused.json", client=client)
+    sync(conn, backend, now=NOW, today=TODAY, window_days=90, include_gated_out=False,
+         dry_run=False, cfg=cfg)  # fmt: skip
+    apps = client.sheet.sheets["Applications"]
+    assert apps.grid.rows[0][0] == "Company" and apps.grid.rows[1][0] == "Acme"
+    kinds = [next(iter(r)) for r in client.sheet.requests]
+    for k in ("updateSheetProperties", "setBasicFilter", "setDataValidation",
+              "addConditionalFormatRule", "updateDimensionProperties", "updateCells"):  # fmt: skip
+        assert k in kinds, k
+    rules = sum(k == "addConditionalFormatRule" for k in kinds)
+    client.sheet.requests.clear()
+    sync(conn, backend, now=NOW, today=TODAY, window_days=90, include_gated_out=False,
+         dry_run=False, cfg=cfg)  # fmt: skip
+    kinds = [next(iter(r)) for r in client.sheet.requests]
+    assert "addConditionalFormatRule" not in kinds and rules  # not added twice
+    assert kinds == ["updateCells"]  # links refreshed

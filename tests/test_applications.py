@@ -399,3 +399,51 @@ def test_export_csv_and_xlsx(cli, persona_home):
     assert ws.data_validations.dataValidation
     code, env, _ = cli("apps", "export", "--dry-run", "--to", str(home / "none.csv"))
     assert not (home / "none.csv").exists()
+
+
+def _app_tab(xlsx: Path):
+    ws = load_workbook(xlsx)["Applications"]
+    header = [c.value for c in ws[1]]
+    return ws, header
+
+
+def test_applications_tab_round_trip(cli, persona_home):
+    home = setup(cli, persona_home)
+    cli("applied", WORKDAY, "--at", "Oct 14 9:30pm")
+    code, env, _ = cli("sync")
+    assert code == ExitCode.OK, env
+    xlsx = home / "tracker.xlsx"
+    ws, header = _app_tab(xlsx)
+    assert header[:6] == ["Company", "Position", "Location", "Applied", "Method", "Status"]
+    row = {h: c.value for h, c in zip(header, ws[2], strict=False)}
+    assert row["Company"] == "Harborlight Bank" and row["Status"] == "Applied"
+    assert row["Applied"] == "Wed, Oct 14, 2026 · 9:30 PM PDT"
+    assert row["Where to check"].endswith("/careers/userHome")
+    link = ws.cell(2, header.index("Where to check") + 1)
+    assert link.hyperlink and link.hyperlink.target == row["Where to check"]
+    assert ws.freeze_panes == "A2" and ws.auto_filter.ref
+    assert any("Status" not in str(dv.sqref) for dv in ws.data_validations.dataValidation)
+    assert len(ws.conditional_formatting) >= 2
+    # your edits in this tab come back to the store and show in the Jobs tab
+    wb = load_workbook(xlsx)
+    ws = wb["Applications"]
+    ws.cell(2, header.index("Status") + 1, "Interviewing")
+    ws.cell(2, header.index("Next step") + 1, "Onsite prep")
+    wb.save(xlsx)
+    code, env, _ = cli("sync")
+    assert code == ExitCode.OK and len(env["data"]["user_edits_applied"]) == 2, env
+    _, show, _ = cli("app", "show", "1")
+    assert show["data"]["status"] == "Interviewing" and show["data"]["next_step"] == "Onsite prep"
+    assert show["data"]["history"][-1]["who"] == "you, in the sheet"
+    jobs = load_workbook(xlsx)["Jobs"]
+    jh = [c.value for c in jobs[1]]
+    jrow = next(r for r in jobs.iter_rows(min_row=2, values_only=True)
+                if str(r[jh.index("jobhunt ID")]) == str(show["data"]["job_id"]))  # fmt: skip
+    assert jrow[jh.index("Status")] == "Interviewing"
+    # and a `jobhunt app status` change is pushed, not reverted
+    cli("app", "status", "1", "Offer")
+    cli("sync")
+    ws, header = _app_tab(xlsx)
+    assert ws.cell(2, header.index("Status") + 1).value == "Offer"
+    code, env, _ = cli("sync")
+    assert not env["data"]["user_edits_applied"] and not env["data"]["conflicts"]

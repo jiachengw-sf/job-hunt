@@ -421,6 +421,138 @@ def sync_jobs(
     grid.append_rows(new_rows)
 
 
+# --- the Applications tab -------------------------------------------------------------------
+
+APP_ID_COL = "App ID"
+APP_TAB = "Applications"
+# (header, owner, applications column for user-owned ones, app_view key)
+APP_COLUMNS: list[tuple[str, str, str | None, str]] = [
+    ("Company", "agent", None, "company"),
+    ("Position", "agent", None, "position"),
+    ("Location", "agent", None, "location"),
+    ("Applied", "agent", None, "applied"),
+    ("Method", "agent", None, "method"),
+    ("Status", "user", "status", "status"),
+    ("Last update", "agent", None, "last_update"),
+    ("Days since applied", "agent", None, "days_since_applied"),
+    ("Where to check", "agent", None, "where_to_check"),
+    ("Next step", "user", "next_step", "next_step"),
+    ("Follow-up due", "agent", None, "followup_due_on"),
+    ("Confirmation ID", "agent", None, "confirmation_id"),
+    ("Notes", "user", "notes", "notes"),
+    (APP_ID_COL, "agent", None, "app_id"),
+]
+APP_WIDTHS = [22, 34, 26, 30, 20, 14, 30, 10, 44, 30, 14, 18, 40, 8]
+APP_USER = [(h, f) for h, o, f, _ in APP_COLUMNS if o == "user"]
+
+
+def _app_key(header: str) -> str:
+    """tracker_sync column key for this tab (the Jobs tab has its own Status and Notes)."""
+    return f"{APP_TAB}:{header}"
+
+
+def sync_applications(
+    conn: sqlite3.Connection, grid: Grid, cfg: Config, now: str, report: SyncReport
+) -> bool:
+    """One row per application. Status, Next step and Notes are yours and come back to the store
+    (your edits win, three ways as in the Jobs tab); everything else is pushed. True when an edit
+    here changed the store."""
+    from jobhunt.tracker.timefmt import zone
+    from jobhunt.tracker.views import all_views
+
+    views = {v["app_id"]: v for v in all_views(conn, cfg, now=now, tz=zone(cfg.tracking.timezone))}
+    rows = grid.values()
+    created = not rows
+    if created:
+        grid.append_rows([[h for h, *_ in APP_COLUMNS]])
+        rows = [[h for h, *_ in APP_COLUMNS]]
+    header = rows[0]
+    colmap = {h.strip(): i + 1 for i, h in enumerate(header) if h.strip()}
+    missing = [h for h, *_ in APP_COLUMNS if h not in colmap]
+    if missing:
+        start = len(header) + 1
+        grid.set_cells([(1, start + i, h) for i, h in enumerate(missing)])
+        colmap |= {h: start + i for i, h in enumerate(missing)}
+    id_c = colmap[APP_ID_COL]
+    in_sheet: dict[int, int] = {}
+    for rn, row in enumerate(rows[1:], start=2):
+        raw = row[id_c - 1] if len(row) >= id_c else ""
+        if raw.isdigit() and int(raw) in views:
+            in_sheet.setdefault(int(raw), rn)
+    changed = False
+    updates: list[tuple[int, int, str]] = []
+    for app_id, rn in in_sheet.items():
+        row, v = rows[rn - 1], views[app_id]
+        job_id = v["job_id"]
+        app = _ensure_application(conn, job_id, now)
+        last = _last_synced(conn, job_id)
+        for header_, field_name in APP_USER:
+            assert field_name
+            key, c = _app_key(header_), colmap[header_]
+            sheet_raw = row[c - 1] if len(row) >= c else ""
+            sheet_v, err = _normalize_user(field_name, sheet_raw)
+            db_v = app[field_name]
+            if err:
+                report.rejected.append(f"application {app_id} {header_}: {err}")
+                continue
+            last_v = last.get(key, db_v)
+            if sheet_v != last_v:
+                if db_v != last_v and db_v != sheet_v:
+                    report.conflicts.append(
+                        f"application {app_id} {header_}: sheet {sheet_v!r} kept over {db_v!r}"
+                    )
+                if sheet_v != db_v:
+                    set_user_field(conn, job_id, field_name, sheet_v, now, source="tracker")
+                    report.user_edits_applied.append(
+                        f"application {app_id} {header_}: {db_v!r} → {sheet_v!r}"
+                    )
+                    changed = True
+                _record(conn, job_id, key, sheet_v, now)
+            elif db_v != last_v or key not in last:
+                if (sheet_raw or "") != (db_v or ""):
+                    updates.append((rn, c, db_v or ""))
+                _record(conn, job_id, key, db_v, now)
+    if changed:  # the agent columns below show the edits just applied
+        views = {
+            v["app_id"]: v for v in all_views(conn, cfg, now=now,
+                                              tz=zone(cfg.tracking.timezone))
+        }  # fmt: skip
+    for app_id, rn in in_sheet.items():
+        row, v = rows[rn - 1], views[app_id]
+        for header_, owner, _, key in APP_COLUMNS:
+            if owner != "agent":
+                continue
+            c = colmap[header_]
+            value = str(v[key]) if v[key] not in (None, "") else ""
+            if (row[c - 1] if len(row) >= c else "") != value:
+                updates.append((rn, c, value))
+    new_rows = []
+    width = max(colmap.values())
+    for app_id, v in sorted(views.items(), key=lambda kv: kv[1]["applied_at"], reverse=True):
+        if app_id in in_sheet:
+            continue
+        line = [""] * width
+        for header_, owner, _f, key in APP_COLUMNS:
+            line[colmap[header_] - 1] = str(v[key]) if v[key] not in (None, "") else ""
+            if owner == "user":
+                _record(conn, v["job_id"], _app_key(header_), v[key] or None, now)
+        new_rows.append(line)
+    report.cells_pushed += len(updates)
+    report.rows_added += len(new_rows)
+    grid.set_cells(updates)
+    grid.append_rows(new_rows)
+    fmt = getattr(grid, "format_table", None)
+    if fmt is not None:
+        fmt(
+            status_col=colmap["Status"],
+            widths=[APP_WIDTHS[i] for i in range(len(APP_COLUMNS))],
+            due_col=colmap["Follow-up due"],
+            link_col=colmap["Where to check"],
+            created=created,
+        )
+    return changed
+
+
 def companies_rows(conn: sqlite3.Connection, today: date, window_days: int) -> list[list[str]]:
     from jobhunt.fit.engine import _norm_company, recent_applications
 
@@ -539,6 +671,9 @@ class DryGrid:
     def replace_all(self, rows: list[list[str]]) -> None:
         return None
 
+    def format_table(self, **kw: object) -> None:
+        return None
+
 
 def sync(
     conn: sqlite3.Connection,
@@ -567,6 +702,12 @@ def sync(
         sync_jobs(conn, jobs, now, report, include_gated_out=include_gated_out)
         if cfg is not None:
             report.applications_recorded = _records_from_sheet(conn, cfg, paths, now, report)
+            apps = tab(APP_TAB, user_columns=[h for h, _ in APP_USER])
+            if sync_applications(conn, apps, cfg, now, report) and not dry_run:
+                # an edit in the Applications tab: show it in the Jobs tab too
+                sync_jobs(conn, jobs, now, SyncReport(backend=backend.name,
+                          location=backend.location, dry_run=False),
+                          include_gated_out=include_gated_out)  # fmt: skip
         tab("Companies").replace_all(companies_rows(conn, today, window_days))
         tab("Runs").replace_all(runs_rows(conn))
         if dry_run:
