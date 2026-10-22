@@ -89,7 +89,10 @@ def app_view(
             (rec["id"],),
         )
     ]
-    upcoming = [d for d in dates if d["kind"] == "interview" and d["at"] >= now]
+    from jobhunt.tracker.states import machine
+
+    closed = machine().get(status).terminal  # an interview after an offer or rejection is moot
+    upcoming = [d for d in dates if d["kind"] == "interview" and d["at"] >= now and not closed]
     locations = json.loads(rec["locations_json"] or "[]")
     mode = WORK_MODE.get((rec["work_mode"] or "").lower(), rec["work_mode"] or "")
     where = "; ".join(locations) or "Not listed"
@@ -331,6 +334,30 @@ def write_folder(paths: Paths, v: dict[str, Any]) -> None:
     secure_file(p)
 
 
+def write_summaries(
+    paths: Paths, views: list[dict[str, Any]], *, now: str, tz: tzinfo | None
+) -> list[str]:
+    """dashboard.html and APPLICATIONS.md (atomic writes, owner-only)."""
+    import os
+
+    from jobhunt.tracker.dashboard import render_html, render_markdown
+
+    s = summary(views, now=now, tz=tz)
+    generated = fmt_local(now, tz)
+    paths.home.mkdir(parents=True, exist_ok=True)
+    out = []
+    for path, text in (
+        (paths.dashboard, render_html(views, s, generated=generated)),
+        (paths.applications_md, render_markdown(views, s, generated=generated)),
+    ):
+        tmp = path.with_name(f".{path.name}.tmp")
+        tmp.write_text(text, encoding="utf-8")
+        os.replace(tmp, path)
+        secure_file(path)
+        out.append(str(path))
+    return out
+
+
 # --- regenerate everything --------------------------------------------------------------------
 
 
@@ -349,6 +376,7 @@ def refresh_views(
         for v in views:
             write_folder(paths, v)
         written += [str(paths.applications / v["folder"] / "README.md") for v in views]
+        written += write_summaries(paths, views, now=now, tz=tz)
     except Exception as e:  # a view is a convenience; the store is the record
         log.warning("couldn't regenerate the application views: %s", e)
     return written

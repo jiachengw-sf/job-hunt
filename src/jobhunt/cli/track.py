@@ -590,3 +590,36 @@ def _register_views(cli: click.Group) -> None:
         if not dry_run:
             (write_xlsx if fmt == "xlsx" else write_csv)(dest, rows)
         return Result(data={"file": str(dest), "rows": len(rows) - 1, "dry_run": dry_run})
+
+    @agent_command(cli, "dashboard", output=None, writes=True)
+    @click.option("--no-open", is_flag=True, help="Write the files but don't open the page.")
+    def dashboard_cmd(no_open: bool, dry_run: bool) -> Result:
+        """Regenerate the local dashboard and APPLICATIONS.md, and open the dashboard.
+
+        One self-contained HTML file (no server, nothing uploaded), readable in light and dark
+        mode and on a phone. `run`, `sync` and every status change regenerate it too.
+        """
+        paths, cfg = _prepare(dry_run)
+        now = utc_now()
+        opened = False
+        with open_store(paths.db, dry_run=True) as conn:
+            if not dry_run:
+                refresh_views(conn, paths, cfg, now=now)
+            n = conn.execute("SELECT count(*) FROM application_records").fetchone()[0]
+        if not dry_run and not no_open and cfg.tracking.open_dashboard:
+            import webbrowser
+
+            try:
+                opened = webbrowser.open(paths.dashboard.resolve().as_uri())
+            except Exception:  # no browser here (e.g. a remote shell): the path is enough
+                opened = False
+        return Result(
+            data={
+                "dashboard": str(paths.dashboard),
+                "markdown": str(paths.applications_md),
+                "applications": n,
+                "opened": opened,
+                "dry_run": dry_run,
+            },
+            user_actions=[] if opened or dry_run else [f"Open {paths.dashboard} in a browser."],
+        )
