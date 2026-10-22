@@ -187,6 +187,56 @@ step, Follow-up on, Outcome, Notes and Skip reason, and your edits always win on
 jobhunt only ever moves Status forward (New → Prefilled → Applied). Setting Skipped asks for a
 reason, which feeds calibration.
 
+## Tracking your applications
+
+Every job you apply to gets one application record: what you applied for, when, how, and where
+to check on it. A job you haven't applied to has no record.
+
+**Recording an application.** You rarely need to do this by hand:
+
+- **After pre-fill**, when you click Submit and jobhunt sees the confirmation page, it records the
+  application. It saves a screenshot, a copy of the job description, the resume you used, and the
+  Greenhouse confirmation ID.
+- **Applied somewhere else** (Workday, a hand-off packet, anywhere): tell your AI tool "I applied
+  to Stripe's SWE intern this afternoon", or run
+  `jobhunt applied <job id or URL> --at "today 3pm"`. If jobhunt doesn't know the URL yet, it asks
+  you to `jobhunt add` it first.
+- **From the sheet or `jobhunt mark`**: setting a job's Status to Applied records it too. From the
+  sheet, the time is the sync time and is flagged as approximate.
+
+Applying to the same posting twice never creates a second record. A third application to one
+company within 90 days is recorded, with the volume-guard warning.
+
+**Where to check status.** Each record says where updates will show up:
+
+- **Greenhouse** jobs point to MyGreenhouse (my.greenhouse.io). Whether it shows a status
+  depends on the employer.
+- **Workday** jobs point to that company's Candidate Home page.
+- **Everything else** (Lever, Ashby, iCIMS and others) is marked "updates come by email", because
+  jobhunt doesn't know a status portal for them and never guesses one.
+
+You can change these with `jobhunt app update <id> --portal <url> --check-note "…"`. jobhunt never
+stores passwords.
+
+**Updating status.** Tell your AI tool ("I got an OA from Ramp"), edit the Status in the sheet, or
+run `jobhunt app status <id> OA`. Every change goes into a timeline that's never rewritten. After
+21 days in Applied with no news, an application is flagged *likely no response*, but its status
+only changes when you change it.
+
+**Seeing everything.** Times are shown in your local time zone, e.g. "Wed, Oct 21, 2026 · 9:42
+PM PDT". All of these files stay on your computer, and nothing is uploaded.
+
+| View | What it is |
+|---|---|
+| `jobhunt dashboard` | Opens `~/.jobhunt/dashboard.html`: counts, what needs attention, a filterable table, and each application's timeline. Works in dark mode and on a phone. |
+| `~/.jobhunt/APPLICATIONS.md` | The same summary as Markdown, readable in any editor |
+| `~/.jobhunt/applications/<date>_<company>_<role>/` | One folder per application: details and timeline, the job description as it was, what was submitted, the confirmation screenshot, and the resume used |
+| Applications tab in the sheet | One row per application. Status, Next step and Notes sync back, and your edits win. |
+| `jobhunt apps --human`, `jobhunt app show <id> --human` | The same in the terminal |
+| `jobhunt apps export --csv` or `--xlsx` | A copy with readable column names |
+
+These views update after every `run`, `sync` and status change.
+
 ## Troubleshooting
 
 Start with `jobhunt doctor --human`. Every failing check names its fix.
