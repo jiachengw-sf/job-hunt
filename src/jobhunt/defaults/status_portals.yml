@@ -1,0 +1,71 @@
+# Where a candidate can check an application's status, per ATS. New application records get
+# these defaults; you can override any of them with `jobhunt app update`.
+#
+#   method: portal | email | none
+#   url:    a fixed URL, or a rule that derives it from the posting's own URL (never guessed)
+#   note:   the plain-language "how to check" line
+#
+# Each entry was checked against current docs or live pages (read-only) on 2026-10-21. Anything
+# not verified is `email`, and its note says so. An ATS that isn't listed falls back to `default`.
+portals:
+  greenhouse:
+    method: portal
+    url: https://my.greenhouse.io/
+    # support.greenhouse.io "MyGreenhouse application tracking": applications to
+    # Greenhouse-hosted jobs are added to the candidate's MyGreenhouse account; status
+    # (active/inactive) shows only if the employer turned it on. my.greenhouse.io redirects to
+    # its sign-in page.
+    note: >-
+      MyGreenhouse: sign in with the email you applied with (it sends a one-time code). It lists
+      your Greenhouse applications; active/inactive status shows only if the employer turned it
+      on, so updates may still come by email.
+  workday:
+    method: portal
+    url_rule: workday_user_home
+    # Live check: <tenant>.wdN.myworkdayjobs.com/[<locale>/]<site>/userHome redirects to that
+    # site's sign-in page (nvidia wd5 and salesforce wd12). Each employer has its own account.
+    note: >-
+      Workday Candidate Home for this employer: sign in with the account you created when you
+      applied (each company's Workday account is separate). Open "My Applications" for status.
+    fallback_note: >-
+      Workday: each employer has its own candidate account. jobhunt couldn't work out this
+      employer's Candidate Home link from the posting URL, so check the career site's Sign In
+      menu, or your email.
+  lever:
+    method: email
+    # No candidate-facing status page found in Lever's docs; updates come from the employer.
+    note: >-
+      No candidate portal that jobhunt knows of for Lever; updates come by email from the
+      company (check the address you applied with).
+  ashby:
+    method: email
+    # Ashby's docs describe status for hiring teams only; candidate updates are emails and
+    # scheduling invites from ashbyhq.com addresses.
+    note: >-
+      No candidate portal that jobhunt knows of for Ashby; updates and interview invites come by
+      email, often from an ashbyhq.com address.
+  icims:
+    method: email
+    note: >-
+      iCIMS: some employers offer a candidate account on their own career site, but jobhunt
+      doesn't know a portal link for it (not verified). Watch your email.
+  smartrecruiters:
+    method: email
+    note: >-
+      SmartRecruiters: jobhunt doesn't know a candidate portal link for it (not verified). Watch
+      your email.
+  taleo:
+    method: email
+    note: >-
+      Taleo: some employers' career sections have a candidate account, but jobhunt doesn't know
+      a portal link for it (not verified). Watch your email.
+  successfactors:
+    method: email
+    note: >-
+      SuccessFactors: some employers' career sites have a candidate profile, but jobhunt doesn't
+      know a portal link for it (not verified). Watch your email.
+default:
+  method: email
+  note: >-
+    jobhunt doesn't know whether this employer's application system has a candidate portal, so
+    expect updates by email. If you made an account, add it with `jobhunt app update --portal`.
