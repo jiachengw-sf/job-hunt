@@ -79,7 +79,9 @@ src/jobhunt/
   fit/            Stage 0 gates, Stage 1 recall (BM25 + optional embeddings), Stage 2
                   requirement extraction + pre-match, Stage 3 band/preference/priority, judgment
                   task files, eval-fit, calibrate (band vs. outcomes; suggests, never tunes)
-  tracker/        states.yml state machine, XLSX / Google Sheets backends, three-way sync
+  tracker/        states.yml state machine, XLSX / Google Sheets backends, three-way sync,
+                  application records (applications.py), status portals, local-time
+                  formatting, views (dashboard, APPLICATIONS.md, per-application folders)
   prefill/        answers.json + validator, submit guard (click wrapper, route guard), browser,
                   Greenhouse / Lever / Ashby adapters, review (highlights, screenshots), driver
   ingest/         `jobhunt ingest`: validates work/results/ against each task kind (quotes,
@@ -134,6 +136,25 @@ evals/daily/      daily-flow end-to-end results (`python -m jobhunt.devtools.dai
 - The spreadsheet is a view. Agent-owned columns are pushed; user-owned columns (Status, Applied
   on, Referral contact, Next step, Follow-up on, Outcome, Notes, Skip reason) are pulled back
   and the user's edits win. The agent only moves Status forward (`states.yml`).
+
+## Application tracking rules
+
+- One `application_records` row per job, created only once you applied: by the pre-fill driver
+  on confirmation, `jobhunt applied`, `jobhunt mark`, or a sheet Status of Applied or later
+  (flagged approximate). Re-recording is a no-op. Status stays in `applications`; history is
+  the append-only `status_changed` events (sources `agent` → auto, `tracker` → sheet, else you).
+- Times are stored as UTC ISO 8601 and shown with `tracker/timefmt.py` in
+  `tracking.timezone` (else the computer's). Never format a time for people by hand.
+- Where-to-check defaults come from `defaults/status_portals.yml`. A URL is fixed or derived from
+  the posting URL by a named rule; unverified systems are `email`. Never invent portal URLs.
+  Never store passwords or one-time codes.
+- Submitted answer values go only to the application folder's `submitted_answers.md`, written by
+  code; the store and envelopes keep labels. Skills never read that file.
+- "Likely no response" and "follow-up due" are view flags; they never change a status.
+- Views (dashboard, APPLICATIONS.md, folder READMEs, the Applications tab) are generated from the
+  store by `tracker/views.py`; `refresh_views` runs after every command that changes an
+  application and never fails the command. The dashboard renders posting text with
+  `textContent` only.
 
 ## AI task rules
 

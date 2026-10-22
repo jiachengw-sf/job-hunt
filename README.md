@@ -136,7 +136,8 @@ The daily skill:
 To pre-fill, invoke the apply skill yourself: `/jobhunt-apply` in Claude Code, `$jobhunt-apply`
 in Codex. It opens a browser, fills each Ready job's form from your saved answers, reads every
 value back, outlines the fields it left for you, and stops. You review each tab and click
-Submit. jobhunt notices the confirmation page and marks the job Applied.
+Submit. jobhunt notices the confirmation page, marks the job Applied and records the
+application (see [Tracking your applications](#tracking-your-applications)).
 
 ## Daily use
 
@@ -149,7 +150,9 @@ Submit. jobhunt notices the confirmation page and marks the job Applied.
 | draft an essay | "help me with the essay for <company>" | `jobhunt essays list` |
 | research a company | "research <company>" | `jobhunt research <company>` |
 | ask for a referral or follow up | "draft a follow-up for <company>" | `jobhunt outreach due` |
-| record what happened | edit Status in the sheet | `jobhunt mark <id> Interviewing` |
+| record an application | "I applied to Stripe's SWE intern this afternoon" | `jobhunt applied <id or URL> --at "today 3pm"` |
+| record what happened | "I got an OA from Ramp", or edit Status in the sheet | `jobhunt app status <app id> OA` |
+| see your applications | "what haven't I heard back from?" | `jobhunt apps --human`, `jobhunt dashboard` |
 | check whether the bands work | "are my fit bands right?" | `jobhunt calibrate --human` |
 
 Every command has `--help`. Commands print one JSON envelope, which is what the skills read. Add

@@ -738,3 +738,105 @@ redirects the old URL. The Python package and command stay `jobhunt`. Remaining:
 
 6. Optional: branch protection on `main`, private vulnerability reporting, and a `v0.1.0` tag.
    Then, if you want `uv tool install jobhunt` to work, run `uv build` and `uv publish` to PyPI.
+
+## Application tracking + readable outputs ✅ (2026-10-21)
+
+Spec: `application-tracking-prompt.md` (outside the repo). Done when, for a test persona,
+pre-fill confirmation auto-creates an application with its folder, screenshot and JD snapshot;
+a manual `jobhunt applied` for a Workday job shows the right "where to check"; a sheet status
+change shows in the dashboard timeline after sync; `jobhunt dashboard` opens a readable page;
+and `APPLICATIONS.md` reads cleanly. Met (see "Verified" below).
+
+- **Store.** Migration `0009_application_records.sql`: `application_records` (one per job,
+  `job_id` UNIQUE; the posting's details copied at apply time; `applied_at` UTC plus an
+  approximate flag; method and how it was recorded; resume name and sha256; submitted answer
+  *labels*; confirmation ID, screenshot, JD snapshot, folder; where to check; recruiter) and
+  `application_dates` (interviews, deadlines). Status, referral, next step, follow-up date,
+  outcome and notes stay in `applications`; the status history is the existing append-only
+  `status_changed` events, now with an optional note. A test migrates a populated v8 database
+  without losing anything.
+- **Recording** (`tracker/applications.py`), always exactly one record per job:
+  - pre-fill: when the driver sees the confirmation it screenshots the page, reads Greenhouse's
+    `application_id` from the URL, and records with the values it filled (`submitted_answers.md`
+    is written by code; sensitive answers are grouped and never shown to a model)
+  - `jobhunt applied <job id | job key | URL> [--at …] [--method] [--referral] [--portal]
+    [--login-email] [--check-note] [--resume] [--note] [--via cli|chat]`; an unknown URL exits 6
+    pointing to `jobhunt add`
+  - `jobhunt mark <id> Applied` (or later) on a job without a record
+  - the sheet: Status Applied or later with no record → recorded at sync time, flagged
+    "time approximate"
+  - a repeat is a no-op that names the existing record; one too many applications to a company
+    in the window is recorded with the volume-guard warning
+- **Where to check** (`defaults/status_portals.yml`, `tracker/portals.py`), checked read-only on
+  2026-10-21:
+  - Greenhouse → MyGreenhouse (`my.greenhouse.io`, which redirects to its sign-in; Greenhouse's
+    support article says applications to Greenhouse-hosted jobs appear there, with
+    active/inactive status only if the employer turns it on)
+  - Workday → that tenant's Candidate Home, derived from the posting URL
+    (`…myworkdayjobs.com/<site>/userHome`; on two live tenants it redirects to that site's sign-in)
+  - Lever, Ashby, iCIMS, SmartRecruiters, Taleo, SuccessFactors and anything unknown → `email`,
+    with a note saying jobhunt doesn't know a portal. No portal URL is guessed.
+- **Times** (`tracker/timefmt.py`): stored UTC, shown like "Wed, Oct 21, 2026 · 9:42 PM PDT" in
+  `tracking.timezone` or the computer's zone, each instant with its own DST offset. `--at`
+  reads "now", "today 3pm", "this afternoon", "yesterday 21:30", weekday names, "Oct 21 9:42pm",
+  ISO and "N days ago"; a date without a time is approximate; anything else is refused. `tzdata`
+  is a Windows-only dependency (zoneinfo has no database there).
+- **Commands:** `apps` (bare `jobhunt apps` runs `apps list`; the framework gained
+  `default_subcommand`), `apps export --csv|--xlsx`, `app show`, `app status` (any status, with
+  `--note` and `--at`), `app update` (portal, sign-in email, check note, interviews, deadlines,
+  recruiter, next step, follow-up date, outcome, notes), `dashboard [--no-open]`. `--human` gives
+  aligned tables and a timeline.
+- **Views** (`tracker/views.py`, `tracker/dashboard.py`), regenerated after `run`, `sync`,
+  `mark`, `applied`, `app status|update` and a pre-fill confirmation; a failure is logged and
+  never fails the command:
+  - `~/.jobhunt/dashboard.html`: one self-contained page (summary tiles, needs attention, a
+    filterable and sortable table, a detail dialog with the timeline, where to check and links to
+    the folder's files). Light and dark, usable at phone width (checked in a browser at 375 px).
+    Data is embedded as escaped JSON and rendered with `textContent`.
+  - `~/.jobhunt/APPLICATIONS.md`: summary, needs attention, a table per status, newest first
+    (snapshot-tested).
+  - `~/.jobhunt/applications/<date>_<company>_<role>/`: README (every field and the timeline),
+    `job_description.md` (never overwritten), `submitted_answers.md`, `confirmation.png`, and a
+    copy of the resume.
+  - Flags, never status changes: follow-up due (existing `followup_state`, or your date) and
+    likely no response (`tracking.stale_after_days`, 21). Interviews on a closed application
+    don't need attention.
+- **Sheet "Applications" tab** (XLSX and Google Sheets): one row per application; Status, Next
+  step and Notes sync back with the same three-way rule (your edits win; an edit there is also
+  pushed to the Jobs tab in the same sync). Frozen header, filters, widths, a Status dropdown,
+  status colors, overdue follow-ups in red, clickable "Where to check". On Sheets the rules are
+  added once when jobhunt creates the tab, so your own changes to them stay.
+- **Skills:** new `jobhunt-track` (record "I applied…", status news, "where do I check…", "what
+  haven't I heard back from?", the dashboard; one-line confirmations; never reads
+  `submitted_answers.md`). `jobhunt-daily` starts the digest with a three-line application
+  summary and offers the dashboard. Eight skills now; `doctor` and `skills install` count them.
+- **743 offline tests** (from 685), ruff, format and the personal-data scan clean at every
+  commit.
+
+Verified (2026-10-21, offline fixtures):
+
+- Pre-fill (`intl-sponsorship`, headless browser on the fixture pages): the human's submit on a
+  Greenhouse tab creates one record with the confirmation ID, a MyGreenhouse link, the resume's
+  hash, and a folder with README, JD snapshot, answers, `confirmation.png` and the resume; the
+  closed Lever tab gets none; seeing the confirmation again adds nothing.
+- Fresh `newgrad-analyst` home: `jobhunt applied <Workday URL>` exits 6 asking for `jobhunt add`;
+  after `add`, it records the Workday Candidate Home link and how to check. Setting Status to
+  Interviewing in the Applications tab and syncing shows "Applied → Interviewing · you, in the
+  sheet" in the dashboard timeline and `app show`. That run caught a bug the tests had missed (the
+  first row of a tab created empty landed on row 3), now fixed with a regression test.
+- Trigger evals, Claude Code: jobhunt-track 20/20 queries, 60 runs, no single miss. The other
+  seven skills kept their earlier runs (`--resume`); they were not re-run with eight installed.
+
+### Notes and decisions
+
+- One record per job (`job_key`): applying twice to the same posting can't be recorded twice.
+  Applying to another job at the same company is a new record.
+- `jobhunt mark` keeps working and now creates a record too; `jobhunt applied` records more
+  (time, method, portal).
+- The sheet path uses the sync time, not the "Applied on" date, as the spec asks; the record is
+  flagged approximate.
+- What pre-fill records as sent is what jobhunt filled; you may have changed fields before
+  submitting, and the file says so. Manual records list only essays you approved for that job.
+- Lever and Ashby confirmation IDs aren't captured (no known ID on their confirmation pages).
+- Not verified: a live MyGreenhouse or Workday sign-in (no account was used), the Sheets
+  formatting against a real spreadsheet (fake client only), and Windows in real use.
