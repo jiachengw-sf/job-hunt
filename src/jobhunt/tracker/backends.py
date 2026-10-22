@@ -86,7 +86,8 @@ class XlsxGrid:
                 self._style_header(cell)
 
     def append_rows(self, rows: list[list[str]]) -> None:
-        start = self.ws.max_row + 1 if self.values() else 1
+        # after the last row with a value (openpyxl's max_row also counts formatted empty rows)
+        start = len(self.values()) + 1
         for i, row in enumerate(rows):
             for j, v in enumerate(row, start=1):
                 cell = self.ws.cell(row=start + i, column=j, value=v if v != "" else None)
@@ -153,7 +154,7 @@ class XlsxGrid:
                     fill=PatternFill("solid", start_color=color, end_color=color),
                 ),
             )
-        if link_col:
+        if link_col and ws.max_row >= 2:  # iter_rows would create an empty row 2
             for row in ws.iter_rows(min_row=2, min_col=link_col, max_col=link_col):
                 cell = row[0]
                 v = cell.value

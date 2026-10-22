@@ -447,3 +447,15 @@ def test_applications_tab_round_trip(cli, persona_home):
     assert ws.cell(2, header.index("Status") + 1).value == "Offer"
     code, env, _ = cli("sync")
     assert not env["data"]["user_edits_applied"] and not env["data"]["conflicts"]
+
+
+def test_first_application_lands_on_row_two_of_an_empty_tab(cli, persona_home):
+    """The tab is created empty by an earlier sync; the first record still goes on row 2."""
+    home = setup(cli, persona_home)
+    cli("sync")
+    ws, _ = _app_tab(home / "tracker.xlsx")
+    assert ws.max_row == 1
+    cli("applied", WORKDAY)
+    cli("sync")
+    ws, _ = _app_tab(home / "tracker.xlsx")
+    assert ws.cell(2, 1).value == "Harborlight Bank" and ws.max_row == 2
