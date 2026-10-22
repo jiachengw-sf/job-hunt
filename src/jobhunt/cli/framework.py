@@ -72,6 +72,8 @@ GROUP_HELP = {
     "notify": "Push notifications: send a test message to your configured channels.",
     "outreach": "Referral, coffee-chat and follow-up drafts you send yourself (never sent).",
     "essays": "Essay drafts: list prompts, draft and review tasks, show drafts, approve yours.",
+    "apps": "Your applications: list them (the default), or export them as CSV or XLSX.",
+    "app": "One application: show it, change its status, or update where and how to check it.",
 }
 
 
@@ -89,6 +91,24 @@ def _group_for(root: click.Group, path: list[str]) -> click.Group:
         assert isinstance(sub, click.Group), f"{part} is a command, not a group"
         g = sub
     return g
+
+
+def default_subcommand(root: click.Group, group: str, leaf: str) -> None:
+    """Make bare ``jobhunt <group>`` run ``jobhunt <group> <leaf>``, with the same options."""
+    g = root.commands[group]
+    cmd = g.commands[leaf]
+    assert isinstance(g, click.Group)
+    g.invoke_without_command = True
+    g.no_args_is_help = False
+    g.params = list(cmd.params)
+
+    @click.pass_context
+    def callback(ctx: click.Context, **kwargs: Any) -> Any:
+        if ctx.invoked_subcommand is None:
+            return ctx.invoke(cmd, **kwargs)
+        return None
+
+    g.callback = callback
 
 
 HumanRenderer = Callable[[Envelope], str]

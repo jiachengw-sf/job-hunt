@@ -18,7 +18,7 @@ from typing import Any
 from jobhunt.models.config import Config
 from jobhunt.paths import Paths, secure_file
 from jobhunt.tracker.applications import history
-from jobhunt.tracker.timefmt import fmt_date, fmt_local, local_day, zone
+from jobhunt.tracker.timefmt import fmt_date, fmt_local, local_day, parse_utc, zone
 
 log = logging.getLogger("jobhunt")
 
@@ -172,6 +172,57 @@ def all_views(
     """Every application, newest first."""
     rows = conn.execute("SELECT * FROM application_records ORDER BY applied_at DESC, id DESC")
     return [app_view(conn, r, cfg, now=now, tz=tz) for r in rows.fetchall()]
+
+
+# --- the summary -----------------------------------------------------------------------------
+
+INTERVIEW_STATES = ("Interviewing", "Offer")
+
+
+def summary(views: list[dict[str, Any]], *, now: str, tz: tzinfo | None) -> dict[str, Any]:
+    """Counts by status, this week / month, interview rate, responses waiting, what needs you."""
+    from datetime import timedelta
+
+    today = local_day(now, tz)
+    week_start = today - timedelta(days=today.weekday())
+    by_status: dict[str, int] = {}
+    for v in views:
+        by_status[v["status"]] = by_status.get(v["status"], 0) + 1
+    interviewed = [
+        v for v in views
+        if v["status"] in INTERVIEW_STATES or any(h["to"] in INTERVIEW_STATES for h in v["history"])
+    ]  # fmt: skip
+    soon = (parse_utc(now) + timedelta(days=7)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    deadlines = [
+        v | {"deadline": d}
+        for v in views
+        for d in v["dates"]
+        if d["kind"] == "deadline" and now <= d["at"] <= soon
+    ]
+    interviews = sorted(
+        (v | {"interview": d} for v in views for d in v["upcoming_interviews"]),
+        key=lambda x: x["interview"]["at"],
+    )
+    return {
+        "total": len(views),
+        "by_status": by_status,
+        "this_week": sum(1 for v in views if date.fromisoformat(v["applied_day"]) >= week_start),
+        "this_month": sum(1 for v in views if v["applied_day"][:7] == today.isoformat()[:7]),
+        "interviews": len(interviewed),
+        "interview_rate": round(len(interviewed) / len(views), 3) if views else None,
+        "waiting": sum(1 for v in views if v["status"] == "Applied"),
+        "followups_due": [v for v in views if v["followup_due"]],
+        "stale": [v for v in views if v["stale"]],
+        "upcoming_interviews": interviews,
+        "deadlines_this_week": deadlines,
+    }
+
+
+def attention_count(s: dict[str, Any]) -> int:
+    return len(
+        {v["app_id"] for k in ("followups_due", "stale", "upcoming_interviews",
+                               "deadlines_this_week") for v in s[k]}
+    )  # fmt: skip
 
 
 # --- the per-application folder README --------------------------------------------------------

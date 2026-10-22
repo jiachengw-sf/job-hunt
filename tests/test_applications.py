@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -229,3 +230,172 @@ def test_volume_guard_warning_on_record(cli, persona_home):
     assert second["data"]["created"]
     assert any("volume guard" in w for w in second["data"]["warnings"])
     assert any("volume guard" in w for w in second["hints"]["user_actions"])
+
+
+# --- views, status and updates ------------------------------------------------------------
+
+
+def _store(tmp_path: Path):
+    from jobhunt.store import connect, migrate
+
+    c = connect(tmp_path / "unit.db")
+    migrate(c)
+    c.execute(
+        "INSERT INTO jobs (id, dedupe_key, ats, company, title, first_seen, last_seen) "
+        "VALUES (1, 'greenhouse:acme:1', 'greenhouse', 'Acme', 'Intern', ?, ?)",
+        ("2026-09-01T00:00:00Z", "2026-09-01T00:00:00Z"),
+    )
+    return c
+
+
+def _view_at(c, now: str, **cfg_over):
+    from jobhunt.config import default_config_data
+    from jobhunt.models import Config
+    from jobhunt.tracker.views import app_view
+
+    data = default_config_data()
+    data["tracking"] |= {"timezone": "America/Los_Angeles"} | cfg_over
+    cfg = Config.model_validate(data)
+    rec = c.execute("SELECT * FROM application_records").fetchone()
+    return app_view(c, rec, cfg, now=now, tz=LA)
+
+
+def _record(c, applied_at: str) -> None:
+    from jobhunt.tracker.applications import record_application
+
+    record_application(
+        c, 1, now=applied_at, applied_at=applied_at, approx=False, method="manual", via="cli",
+        tz=LA, paths=None, window_days=90, max_per_company=2,
+    )  # fmt: skip
+
+
+def test_stale_and_follow_up_boundary_days(tmp_path):
+    c = _store(tmp_path)
+    _record(c, "2026-10-01T17:00:00Z")  # Thu Oct 1, 10 AM in Los Angeles
+
+    def day(n: int) -> str:  # 4 PM in Los Angeles, n days after Oct 1
+        return (datetime(2026, 10, 1, 23, tzinfo=UTC) + timedelta(days=n)).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
+
+    v = _view_at(c, day(6))
+    assert not v["followup_due"] and v["followup_due_on"] == "2026-10-08"
+    v = _view_at(c, day(7))
+    assert v["followup_due"] and "follow-up due" in v["attention"][0]
+    assert not _view_at(c, day(20))["stale"]
+    v = _view_at(c, day(21))
+    assert v["stale"] and v["status"] == "Applied"  # flagged, never changed
+    assert any("likely no response" in a for a in v["attention"])
+    assert not _view_at(c, day(10), stale_after_days=11)["stale"]
+    assert _view_at(c, day(11), stale_after_days=11)["stale"]
+    # two follow-ups sent: no more are due
+    for n in (1, 2):
+        c.execute(
+            "INSERT INTO drafts (job_id, kind, key, status, original, text, created_at, "
+            "updated_at, sent_at) VALUES (1, 'followup', ?, 'sent', 'x', 'x', ?, ?, ?)",
+            (f"followup-{n}", day(7), day(7), day(7)),
+        )
+    assert not _view_at(c, day(30))["followup_due"]
+    # any update resets the clock; a status other than Applied is never stale
+    from jobhunt.tracker.sync import set_user_field
+
+    set_user_field(c, 1, "status", "OA", day(25), source="user")
+    assert not _view_at(c, day(60))["stale"]
+
+
+def test_follow_up_date_you_set_wins(tmp_path):
+    from jobhunt.tracker.sync import set_user_field
+
+    c = _store(tmp_path)
+    _record(c, "2026-10-01T17:00:00Z")
+    set_user_field(c, 1, "follow_up_on", "2026-10-04", "2026-10-02T00:00:00Z", source="user")
+    assert not _view_at(c, "2026-10-04T06:00:00Z")["followup_due"]  # still Oct 3 in LA
+    assert _view_at(c, "2026-10-04T23:00:00Z")["followup_due"]
+
+
+def test_apps_show_status_update_and_history(cli, persona_home):
+    home = setup(cli, persona_home)
+    code, env, _ = cli("apps")
+    assert code == ExitCode.OK and env["data"]["summary"]["total"] == 0
+    assert "jobhunt applied" in env["hints"]["next_actions"][0]
+    cli("applied", WORKDAY, "--at", "Oct 14 9:30pm")
+    gh = job_id(home, "greenhouse:%")
+    cli("applied", str(gh), "--at", "yesterday 10am")
+    code, env, _ = cli("app", "status", f"job:{gh}", "OA", "--note", "OA invite",
+                       "--at", "today 9am")  # fmt: skip
+    assert code == ExitCode.OK, env
+    d = env["data"]
+    assert d["change"]["from"] == "Applied" and d["change"]["to"] == "OA"
+    assert [(h["from"], h["to"], h["who"]) for h in d["history"]] == [
+        ("New", "Applied", "you"),
+        ("Applied", "OA", "you"),
+    ]
+    assert d["history"][-1]["note"] == "OA invite"
+    code, env, _ = cli("app", "status", f"job:{gh}", "Skipped")
+    assert code == ExitCode.NEEDS_USER  # Skipped needs a reason
+    code, env, _ = cli("app", "update", f"job:{gh}", "--interview", "Oct 30 10am", "--label",
+                       "Phone screen", "--recruiter-name", "Sam Recruiter", "--next-step",
+                       "Prep system design", "--login-email", "candidate@example.com")  # fmt: skip
+    assert code == ExitCode.OK, env
+    v = env["data"]
+    assert v["upcoming_interviews"][0]["label"] == "Phone screen"
+    assert v["next_step"] == "Prep system design" and v["recruiter"] == "Sam Recruiter"
+    code, env, _ = cli("apps", "--status", "OA")
+    assert [a["status"] for a in env["data"]["apps"]] == ["OA"]
+    s = env["data"]["summary"]
+    assert s["total"] == 2 and s["by_status"] == {"OA": 1, "Applied": 1}
+    assert s["upcoming_interviews"] and s["interview_rate"] == 0
+    code, env, _ = cli("app", "show", "99")
+    assert code == ExitCode.NOT_FOUND
+
+
+def test_human_views_are_readable(cli, persona_home, capsys):
+    from jobhunt.cli.main import run
+
+    setup(cli, persona_home)
+    cli("applied", WORKDAY, "--at", "Oct 14 9:30pm")
+    run(["app", "show", "1", "--human"])
+    out = capsys.readouterr().out
+    assert "Wed, Oct 14, 2026 · 9:30 PM PDT" in out and "Timeline:" in out
+    assert "{" not in out and "job_key" not in out
+    run(["apps", "--human"])
+    out = capsys.readouterr().out
+    assert out.splitlines()[0].startswith("1 application(s)") and "Harborlight" in out
+
+
+def test_sheet_edits_win_over_agent_moves(cli, persona_home):
+    from jobhunt.store import open_store
+    from jobhunt.tracker.store import agent_advance
+
+    home = setup(cli, persona_home)
+    cli("sync")
+    jid = job_id(home, "greenhouse:%")
+    _set_sheet_status(home / "tracker.xlsx", jid, "Rejected")
+    cli("sync")
+    with open_store(home / "jobhunt.db") as c:
+        assert not agent_advance(c, jid, "Applied", "2026-10-22T00:00:00Z")  # never backward
+    _, env, _ = cli("app", "show", f"job:{jid}")
+    assert env["data"]["status"] == "Rejected"
+    assert [h["who"] for h in env["data"]["history"]] == ["you, in the sheet"]
+
+
+def test_export_csv_and_xlsx(cli, persona_home):
+    import csv
+
+    home = setup(cli, persona_home)
+    cli("applied", WORKDAY, "--at", "Oct 14 9:30pm")
+    code, env, _ = cli("apps", "export")
+    assert code == ExitCode.OK, env
+    with (home / "applications.csv").open(encoding="utf-8-sig", newline="") as f:
+        rows = list(csv.DictReader(f))
+    assert rows[0]["Company"] == "Harborlight Bank" and rows[0]["Status"] == "Applied"
+    assert rows[0]["Applied"] == "Wed, Oct 14, 2026 · 9:30 PM PDT"
+    assert "job_key" not in rows[0] and "Where to check" in rows[0]
+    out = home / "x" / "apps.xlsx"
+    code, env, _ = cli("apps", "export", "--xlsx", "--to", str(out))
+    assert code == ExitCode.OK and env["data"]["rows"] == 1
+    ws = load_workbook(out)["Applications"]
+    assert ws.freeze_panes == "A2" and ws.auto_filter.ref
+    assert ws.data_validations.dataValidation
+    code, env, _ = cli("apps", "export", "--dry-run", "--to", str(home / "none.csv"))
+    assert not (home / "none.csv").exists()
