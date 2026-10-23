@@ -331,6 +331,12 @@ def register(cli: click.Group) -> None:
                 dry_run=dry_run,
             )
         nxt = ["Run `jobhunt sync` to update the tracker."]
+        if n := rep.tasks.get("no_posting_text"):
+            nxt.insert(
+                0,
+                f"{n} of your top matches have no posting text yet, so they can't be judged: "
+                "`jobhunt run` reads it from the ATS (or `jobhunt inspect <id>`).",
+            )
         if rep.tasks["pending_total"]:
             nxt.insert(
                 0,
@@ -374,7 +380,13 @@ def register(cli: click.Group) -> None:
         Notify pushes fast alerts for high-priority new postings and, when due, the digest to
         your configured channels (ntfy, Discord, email); `jobhunt digest` shows it here.
         """
-        from jobhunt.cli.apply import form_inputs, loader_factory, run_inspect, threshold_jobs
+        from jobhunt.cli.apply import (
+            form_inputs,
+            loader_factory,
+            run_inspect,
+            threshold_jobs,
+            undescribed_jobs,
+        )
 
         paths, cfg = _prepare(dry_run)
         inp = _inputs(paths, cfg, utc_now())
@@ -396,8 +408,12 @@ def register(cli: click.Group) -> None:
                 dry_run=dry_run,
             )
             forms = None
+            ids = []
             if not no_inspect and cfg.forms.max_per_run:
                 ids = threshold_jobs(conn, cfg.fit.priority_threshold, cfg.forms.max_per_run)
+            if not no_inspect:  # jobs with no posting text can't be judged until it's read
+                ids += [i for i in undescribed_jobs(conn, cfg.fit.describe_top_k) if i not in ids]
+            if ids:
                 irep = run_inspect(
                     conn,
                     ids,

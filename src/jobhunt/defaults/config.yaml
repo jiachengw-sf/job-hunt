@@ -33,6 +33,9 @@ schedule:
 fit:
   recall_top_k: 50           # jobs kept after recall (watchlist companies always kept)
   priority_threshold: 0.5    # jobs at or above this get application forms inspected (Milestone 3)
+  describe_top_k: 20         # top recalled jobs with no posting text (e.g. Simplify rows): `run` reads it from the ATS
+  judge_top_k: 10            # top recalled jobs (by relevance) that get a judgment task even below the threshold
+  higher_degree_factor: 0.5  # priority x this when the listing names only degrees above yours (until judged)
   use_embeddings: auto       # auto | off. auto uses sentence-transformers if the [recall] extra is installed
   embedding_model: sentence-transformers/all-MiniLM-L6-v2
   level_mismatch_years: 3    # role wants this many more years than you have -> band at most stretch

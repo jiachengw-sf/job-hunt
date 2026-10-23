@@ -93,6 +93,15 @@ class PreferenceWeights(Strict):
 class FitConfig(Strict):
     recall_top_k: int = Field(50, ge=1)
     priority_threshold: float = Field(0.5, ge=0, le=1)
+    describe_top_k: int = Field(
+        20, ge=0, description="Top recalled jobs with no posting text whose text `run` reads."
+    )
+    judge_top_k: int = Field(
+        10, ge=0, description="Top recalled jobs judged even below priority_threshold."
+    )
+    higher_degree_factor: float = Field(
+        0.5, ge=0, le=1, description="Priority factor when a listing names only higher degrees."
+    )
     use_embeddings: Literal["auto", "off"] = Field(
         "auto", description="auto: use sentence-transformers when the [recall] extra is installed."
     )

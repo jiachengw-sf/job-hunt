@@ -19,6 +19,7 @@ from jobhunt.bank.keys import BUILTIN, AnswerContext
 from jobhunt.cli.discovery import FIXTURES_HELP, _prepare, fixtures_dir, make_client
 from jobhunt.cli.framework import Result, agent_command
 from jobhunt.cli.onboarding import default_resume
+from jobhunt.discovery.resolver import SUPPORTED
 from jobhunt.discovery.text import utc_now
 from jobhunt.drafts.essays import approved_essays
 from jobhunt.envelope import Envelope, render_human_default
@@ -75,6 +76,24 @@ def threshold_jobs(conn: sqlite3.Connection, threshold: float, limit: int) -> li
         "AND coalesce(f.gate_status,'') != 'failed' AND coalesce(f.priority,0) >= ? "
         "ORDER BY f.priority DESC, j.id LIMIT ?",
         (threshold, limit),
+    ).fetchall()
+    return [r["id"] for r in rows]
+
+
+def undescribed_jobs(conn: sqlite3.Connection, top_k: int) -> list[int]:
+    """Recalled jobs in the top ``top_k`` by relevance whose sources carry no posting text (e.g.
+    Simplify rows) and whose form hasn't been read: reading the form stores the ATS's own text,
+    so they can be judged."""
+    marks = ",".join("?" * len(SUPPORTED))
+    rows = conn.execute(
+        "SELECT j.id FROM jobs j JOIN fits f ON f.job_id=j.id "
+        "LEFT JOIN posting_views v ON v.job_id=j.id LEFT JOIN form_specs s ON s.job_id=j.id "
+        "WHERE j.live=1 AND f.recalled=1 AND coalesce(f.gate_status,'') != 'failed' "
+        "AND f.recall_rank <= ? AND coalesce(trim(j.description),'') = '' "
+        "AND coalesce(trim(v.description),'') = '' "
+        f"AND j.ats IN ({marks}) AND (s.job_id IS NULL OR s.status NOT IN ('ok','unsupported')) "
+        "ORDER BY f.recall_rank, j.id",
+        (top_k, *sorted(SUPPORTED)),
     ).fetchall()
     return [r["id"] for r in rows]
 

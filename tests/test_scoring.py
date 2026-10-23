@@ -167,3 +167,14 @@ def test_broken_embedder_falls_back_to_bm25():
     res = recall(sqlite3.connect(":memory:"), [job(jid=1)], "python", ctx.prefs, ctx.cfg,
                  watch_companies=set(), embedder=Broken())  # fmt: skip
     assert res.mode == "bm25" and "BM25 only" in (res.note or "")
+
+
+def test_priority_drops_when_the_listing_names_only_higher_degrees():
+    j = job()
+    plain, _ = priority(j, None, 0.8, CFG, TODAY, referral=False, watchlist=False)
+    lower, flags = priority(
+        j, None, 0.8, CFG, TODAY, referral=False, watchlist=False, degree_above="PhD"
+    )
+    assert abs(lower.score - plain.score * CFG.higher_degree_factor) < 0.002
+    assert lower.components["higher_degree"] == CFG.higher_degree_factor
+    assert any("PhD" in f and "ranked lower" in f for f in flags)

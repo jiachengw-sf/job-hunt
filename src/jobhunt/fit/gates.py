@@ -572,6 +572,29 @@ def _kinds_named(fragment: str) -> set[str]:
     return kinds
 
 
+# a degree named in a title ("PhD Intern", "MBA Summer Associate"); short forms like "MS" or
+# "BA" are left out, since titles use them for other things (Microsoft, Business Analyst)
+_TITLE_DEGREE = re.compile(r"\b(ph\.?\s?d|doctoral|master'?s|mba)\b", re.I)
+
+
+def listed_degrees(job: JobView) -> list[str]:
+    """The degrees a listing names outside its text: the source's own field, else the title."""
+    if job.degrees:
+        return list(job.degrees)
+    return [m.group(0) for m in _TITLE_DEGREE.finditer(job.title)]
+
+
+def degree_above(job: JobView, ctx: Context) -> str | None:
+    """The listed degrees, when every one is above any degree you have or are pursuing."""
+    named = listed_degrees(job)
+    levels = [DEGREE_LEVELS[k] for k in (degree_kind(d) for d in named) if k in DEGREE_LEVELS]
+    if not levels:
+        return None
+    edu = education_facts(ctx.profile, ctx.today)
+    have = max([highest_completed_level(edu)] + [DEGREE_LEVELS.get(e.kind or "", 0) for e in edu])
+    return ", ".join(named) if min(levels) > have else None
+
+
 def gate_degree(job: JobView, ctx: Context) -> GateResult:
     text = _required_text(job)
     edu = education_facts(ctx.profile, ctx.today)
@@ -608,15 +631,16 @@ def gate_degree(job: JobView, ctx: Context) -> GateResult:
         if have >= need:
             return GateResult("degree", "pass", "you have (or will have) that degree", ev)
         return GateResult("degree", "fail", "requires a higher degree than yours", ev)
-    if job.degrees:
+    if named := listed_degrees(job):
         mine = {e.kind for e in edu if e.kind}
-        listed = {k for k in (degree_kind(d) for d in job.degrees) if k}
+        listed = {k for k in (degree_kind(d) for d in named) if k}
         if listed and not (mine & listed):
+            where = "listing says" if job.degrees else "title names"
             return GateResult(
                 "degree",
                 "unclear",
-                f"listing says {', '.join(job.degrees)}",
-                ", ".join(job.degrees),
+                f"{where} {', '.join(named)}",
+                ", ".join(named),
                 route="ai",
             )
     return GateResult("degree", "pass_unverified", "no degree requirement stated")

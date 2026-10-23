@@ -246,7 +246,10 @@ def priority(
     referral: bool,
     watchlist: bool,
     relevance: float = 0.0,
+    degree_above: str | None = None,
 ) -> tuple[Priority, list[str]]:
+    """``degree_above``: the listing names only degrees above yours (an unclear degree gate),
+    so the job ranks lower until a judgment resolves it."""
     flags: list[str] = []
     age = _days_since(job.posted_at, today)
     if age is None:
@@ -271,4 +274,8 @@ def priority(
     w = cfg.priority.model_dump()
     total = sum(w.values())
     score = sum(w[k] * comps[k] for k in comps) / total if total else 0.0
+    if degree_above:
+        score *= cfg.higher_degree_factor
+        comps["higher_degree"] = cfg.higher_degree_factor
+        flags.append(f"listing names {degree_above}, above your degree: ranked lower until judged")
     return Priority(round(score, 3), comps), flags

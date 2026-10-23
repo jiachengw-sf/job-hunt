@@ -19,6 +19,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from jobhunt.discovery.resolver import SUPPORTED
 from jobhunt.fit import gates as gt
 from jobhunt.fit.jobview import JobView, load_jobs
 from jobhunt.fit.profile_lines import (
@@ -367,6 +368,9 @@ def run_match(
             q = qualify(reqs, gate_results[job.id], cfg, required_years=need, your_years=your_years)
             p = preference(job, inp.prefs, cfg)
             rel = max(0.0, 1 - (r.rank - 1) / cfg.recall_top_k) if (r and r.recalled) else 0.0
+            unclear_degree = any(
+                g.gate == "degree" and g.result == "unclear" for g in gate_results[job.id]
+            )
             pr, pflags = priority(
                 job,
                 q.band,
@@ -376,6 +380,7 @@ def run_match(
                 referral=job.id in referrals,
                 watchlist=job.company.lower() in watch,
                 relevance=rel,
+                degree_above=gt.degree_above(job, inp.ctx) if unclear_degree else None,
             )
             flags = p.flags + pflags
             n_apps = applied.get(_norm_company(job.company), 0)
@@ -421,9 +426,17 @@ def run_match(
                 )
 
         task_counts: Counter[str] = Counter()
+        no_text = 0
         for s in scored:
             r = rec.by_job.get(s.job.id)
-            if not (r and r.recalled) or s.prio < cfg.priority_threshold:
+            if not (r and r.recalled):
+                continue
+            has_text = bool(s.job.description.strip())
+            if not has_text and r.rank <= cfg.describe_top_k and s.job.ats in SUPPORTED:
+                no_text += 1  # `run` can read these from the ATS
+            # the top recalled jobs are judged even below the threshold: an unjudged band holds
+            # their priority down, so the threshold alone would never let them be judged
+            if s.prio < cfg.priority_threshold and not (has_text and r.rank <= cfg.judge_top_k):
                 continue
             if drop_stale_judgments(conn, s.job, lines):  # already judged on this posting
                 continue
@@ -484,6 +497,7 @@ def run_match(
             "replaced": task_counts["replaced"],
             "unchanged": task_counts["unchanged"],
             "pending_total": pending,
+            "no_posting_text": no_text,
         },
         top=[
             FitBrief(

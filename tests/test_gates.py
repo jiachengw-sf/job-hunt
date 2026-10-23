@@ -244,3 +244,25 @@ def test_every_failure_has_a_reason():
             persona, job("Senior Staff Intern, Fall 2025", NO_SPONSOR, locations=["Paris, France"])
         ):
             assert r.reason, r
+
+
+@pytest.mark.parametrize(
+    ("title", "degrees", "persona", "above"),
+    [
+        ("PhD Intern, AI Applied Scientist", [], INTERN, "PhD"),  # undergrad: above
+        ("MBA Summer Associate", [], NEWGRAD, "MBA"),
+        ("PhD Intern, Data Science", [], INTL, "PhD"),  # a master's student: still above
+        ("Research Intern", ["Master's", "PhD"], INTL, None),  # the master's is theirs
+        ("Software Intern", ["Bachelor's"], INTERN, None),
+        ("BA Intern (Business Analyst)", [], INTERN, None),  # short forms aren't degrees here
+        ("Software Intern", [], INTERN, None),
+    ],
+)
+def test_listing_with_only_higher_degrees(title, degrees, persona, above):
+    j = job(title)
+    j.degrees = degrees
+    ctx = persona_ctx(persona)
+    assert gt.degree_above(j, ctx) == above
+    if above:  # named only in the title: unclear, for the judge, not a fail
+        g = gate(run(persona, j, ctx), "degree")
+        assert g.result == "unclear" and g.route == "ai" and above in g.reason

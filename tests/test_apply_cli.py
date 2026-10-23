@@ -115,6 +115,35 @@ def test_simplify_job_gets_posting_text_and_a_band(cli, persona_home, fx):
         ).fetchone()
 
 
+def test_run_reads_text_for_top_matches_without_one_and_judges_them(cli, persona_home, fx):
+    """Simplify rows carry no description: their band stayed unknown and their priority under
+    the threshold, so no judgment task was ever written. `run` now reads the ATS posting for the
+    top recalled jobs with no text, and the top recalled jobs get a task below the threshold."""
+    home = persona_home("first-year-intern")
+    (home / "config.yaml").write_text("fit:\n  priority_threshold: 0.99\n", encoding="utf-8")
+    code, env, _ = cli("run", "--fixtures", str(fx), "--no-sync", "--no-inspect")
+    assert code == ExitCode.OK, env
+    with db(home) as c:
+        jid = c.execute("SELECT id FROM jobs WHERE ats_job_id='1099'").fetchone()[0]
+        assert c.execute("SELECT recalled FROM fits WHERE job_id=?", (jid,)).fetchone()[0]
+        assert not c.execute("SELECT 1 FROM tasks WHERE job_id=?", (jid,)).fetchone()
+    assert env["data"]["match"]["tasks"]["no_posting_text"] >= 1
+    _, env, _ = cli("match")
+    assert any("no posting text" in a for a in env["hints"]["next_actions"])
+
+    code, env, _ = cli("run", "--fixtures", str(fx), "--no-sync")
+    assert code == ExitCode.OK, env
+    with db(home) as c:
+        assert c.execute("SELECT 1 FROM posting_views WHERE job_id=?", (jid,)).fetchone()
+        task = c.execute(
+            "SELECT status FROM tasks WHERE job_id=? AND kind='requirement_evidence'", (jid,)
+        ).fetchone()
+        assert task and task["status"] == "pending"
+        prio = c.execute("SELECT priority FROM fits WHERE job_id=?", (jid,)).fetchone()[0]
+    assert prio < 0.99  # judged although under the threshold
+    assert env["data"]["match"]["tasks"]["no_posting_text"] == 0
+
+
 def test_posting_view_never_keeps_a_closed_job_live(cli, persona_home, fx, tmp_path):
     home = persona_home("first-year-intern")
     cli("run", "--fixtures", str(fx), "--no-sync", "--no-inspect")
