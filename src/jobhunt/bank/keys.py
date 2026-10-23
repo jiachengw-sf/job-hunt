@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
+from jobhunt.bank.ranges import pick_date, pick_number
 from jobhunt.fit.normalize import COUNTRY_NAMES
 from jobhunt.forms.education import MONTHS, PARTS, month_name, pick_degree, pick_name, year_of
 from jobhunt.models import Answers, Preferences, Profile
@@ -250,13 +251,13 @@ SPECS: list[KeySpec] = [
     _spec("education.school", "School or university", "choice", _school, pick=pick_name),
     _spec("education.degree", "Degree", "choice", _degree, pick=pick_degree),
     _spec("education.major", "Major or field of study", "choice", _major, pick=pick_name),
-    _spec("education.graduation", "Graduation date", "date", _grad),
+    _spec("education.graduation", "Graduation date", "date", _grad, pick=pick_date),
     _spec("education.start_month", "Education start month", "choice", lambda c: month_name(_start(c)), aliases=_month_aliases),
     _spec("education.start_year", "Education start year", "text", lambda c: year_of(_start(c))),
     _spec("education.end_month", "Education end (graduation) month", "choice", lambda c: month_name(_grad(c)), aliases=_month_aliases),
     _spec("education.end_year", "Education end (graduation) year", "text", lambda c: year_of(_grad(c))),
-    _spec("education.graduation_year", "Graduation year", "choice", lambda c: str(c.answers.education.graduation_year) if c.answers.education.graduation_year else None),
-    _spec("education.gpa", "GPA", "number", _gpa, sensitive=True),
+    _spec("education.graduation_year", "Graduation year", "choice", lambda c: str(c.answers.education.graduation_year) if c.answers.education.graduation_year else None, pick=pick_number),
+    _spec("education.gpa", "GPA", "number", _gpa, sensitive=True, pick=pick_number),
     _spec("education.class_standing", "Current year in school", "choice", lambda c: c.answers.education.class_standing),
     # work authorization (per the job's country)
     _spec("work_auth.authorized", "Are you legally authorized to work in this country?", "yesno", _wa("authorized"), sensitive=True),
@@ -265,18 +266,18 @@ SPECS: list[KeySpec] = [
     _spec("work_auth.sponsorship", "Will you now or in the future require sponsorship?", "yesno", lambda c: _either_yes(_wa("sponsorship_now")(c), _wa("sponsorship_future")(c)), sensitive=True),  # type: ignore[arg-type]
     _spec("work_auth.citizen", "Are you a citizen of this country?", "yesno", _wa("citizen"), sensitive=True),
     # availability
-    _spec("availability.start_date", "Earliest start date", "date", lambda c: _date(c.answers.availability.start_date)),
-    _spec("availability.end_date", "End date", "date", lambda c: _date(c.answers.availability.end_date)),
+    _spec("availability.start_date", "Earliest start date", "date", lambda c: _date(c.answers.availability.start_date), pick=pick_date),
+    _spec("availability.end_date", "End date", "date", lambda c: _date(c.answers.availability.end_date), pick=pick_date),
     _spec("availability.full_term", "Are you available for the full term?", "yesno", lambda c: _yn(c.answers.availability.full_term)),
-    _spec("availability.hours_per_week", "Hours available per week", "number", lambda c: str(c.answers.availability.hours_per_week) if c.answers.availability.hours_per_week else None),
+    _spec("availability.hours_per_week", "Hours available per week", "number", lambda c: str(c.answers.availability.hours_per_week) if c.answers.availability.hours_per_week else None, pick=pick_number),
     _spec("availability.notice_period", "Notice period", "text", lambda c: c.answers.availability.notice_period),
     # location
     _spec("location.relocate", "Are you willing to relocate?", "yesno", lambda c: _yn(c.answers.location.willing_to_relocate)),
     _spec("location.travel", "Are you willing to travel?", "choice", lambda c: c.answers.location.willing_to_travel),
     # compensation
-    _spec("compensation.expected", "Expected compensation", "text", lambda c: "Prefer not to say" if c.answers.compensation.prefer_not_to_say else c.answers.compensation.expected, sensitive=True),
+    _spec("compensation.expected", "Expected compensation", "text", lambda c: "Prefer not to say" if c.answers.compensation.prefer_not_to_say else c.answers.compensation.expected, sensitive=True, pick=pick_number),
     # experience
-    _spec("experience.years", "Years of experience", "number", _years),
+    _spec("experience.years", "Years of experience", "number", _years, pick=pick_number),
     _spec("experience.current_employer", "Current or most recent employer", "text", lambda c: _current(c, "org")),
     _spec("experience.current_title", "Current or most recent job title", "text", lambda c: _current(c, "title")),
     _spec("experience.previously_employed", "Have you worked for this company before?", "yesno", _previously_employed),
