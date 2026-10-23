@@ -150,7 +150,7 @@ def test_applied_dry_run_writes_nothing(cli, persona_home):
 def test_chat_and_portal_override(cli, persona_home):
     home = setup(cli, persona_home)
     gh = job_id(home, "greenhouse:%")
-    code, env, _ = cli("applied", str(gh), "--via", "chat", "--at", "today 2pm", "--portal",
+    code, env, _ = cli("applied", str(gh), "--via", "chat", "--at", "yesterday 2pm", "--portal",
                        "https://careers.example.com/me", "--check-note", "Sign in with Gmail",
                        "--referral", "A. Friend", "--note", "applied from my phone")  # fmt: skip
     assert code == ExitCode.OK, env
@@ -322,7 +322,7 @@ def test_apps_show_status_update_and_history(cli, persona_home):
     gh = job_id(home, "greenhouse:%")
     cli("applied", str(gh), "--at", "yesterday 10am")
     code, env, _ = cli("app", "status", f"job:{gh}", "OA", "--note", "OA invite",
-                       "--at", "today 9am")  # fmt: skip
+                       "--at", "yesterday 11am")  # fmt: skip
     assert code == ExitCode.OK, env
     d = env["data"]
     assert d["change"]["from"] == "Applied" and d["change"]["to"] == "OA"
