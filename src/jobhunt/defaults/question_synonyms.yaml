@@ -18,6 +18,7 @@ identity.city_region: [what city and state do you reside in, city and state, in 
 identity.location: [location, current location, city, where are you located, where are you currently located, location city]
 identity.postal_code: [zip code, postal code, zip]
 identity.country: [country, country of residence, what country do you currently reside in, select the country where you currently reside, which country do you live in]
+identity.school_email: [university email, school email, university email address, school email address, student email, student email address, edu email address, your university email address]
 identity.over_18: [are you at least 18 years of age, are you 18 years of age or older, are you over 18, are you at least 18 years old]
 
 links.linkedin: [linkedin, linkedin profile, linkedin url, linkedin profile url]
@@ -33,6 +34,14 @@ education.major: [major, field of study, discipline, area of study, what is your
 education.graduation: [graduation date, expected graduation date, anticipated graduation date, when do you expect to graduate, graduation month and year]
 education.graduation_year: [graduation year, expected graduation year, class year, what year will you graduate]
 education.gpa: [gpa, cumulative gpa, what is your gpa, overall gpa]
+education.high_school_graduation_year: [high school graduation year, what is your high school graduation year, year of high school graduation, when did you graduate from high school, high school graduation date]
+education.test_type: [standardized test, standardized tests, which standardized test did you take, which standardized tests have you taken, standardized test type, what standardized test did you take]
+education.test_score: [standardized test score, standardized test scores, what was your standardized test score]
+education.sat_score: [sat score, what was your sat score, sat total score, highest sat score]
+education.act_score: [act score, what was your act score, act composite score, highest act score]
+education.gre_score: [gre score, what was your gre score]
+education.gmat_score: [gmat score, what was your gmat score]
+education.further_study: [do you plan to pursue further education after this degree, do you plan to continue your education after graduation, are you planning to attend graduate school, do you plan to pursue a graduate degree, are you planning to continue your studies after this degree, do you plan on returning to school after this degree]
 education.class_standing: [current year in school, year in school, class standing, what is your current year of study, academic year]
 
 work_auth.authorized: [are you legally authorized to work in the united states, are you legally authorized to work in the country in which you are applying, are you authorized to work in the us, are you legally authorized to work in this country, are you legally eligible to work in the united states, are you legally authorized to work in the country for which you are applying, are you currently authorized to work in the united states]
@@ -48,6 +57,8 @@ availability.hours_per_week: [how many hours per week are you available, hours p
 availability.notice_period: [notice period, what is your notice period]
 
 location.relocate: [are you willing to relocate, would you be willing to relocate, are you open to relocation, are you open to relocating]
+location.relocate_to: [are you willing to relocate to place, would you be willing to relocate to place, are you open to relocating to place, are you open to relocating to place for this role, are you willing to relocate to place for this role, this role is based in place are you willing to relocate]
+location.onsite: [are you able to work onsite 5 days a week, are you able to work onsite in place, are you able to work onsite in our place office 5 days a week, are you able to work in the office 5 days a week, are you able to work in person 5 days a week, are you comfortable working onsite 5 days a week, this role is in person in place are you able to work from the office five days per week, are you open to working onsite 5 days a week, are you able to work onsite full time]
 location.travel: [are you willing to travel, willingness to travel]
 
 compensation.expected: [expected salary, desired salary, salary expectations, what are your salary expectations, compensation expectations, desired compensation, expected compensation]
@@ -64,6 +75,7 @@ standard.non_compete: [are you bound by a non compete agreement, are you subject
 standard.clearance: [do you have an active security clearance, do you hold a security clearance, security clearance, what is your current security clearance level]
 standard.background_check: [are you willing to undergo a background check, do you consent to a background check, are you willing to submit to a background check]
 standard.drug_test: [are you willing to undergo a drug test, are you willing to submit to a drug screen]
+standard.other_offers: [do you currently have any other offers, do you have any other offers, do you have any competing offers, are you currently holding any other offers, do you have other offers with deadlines]
 standard.sms_consent: [do you consent to receive text messages, do you consent to receiving text messages, do you opt in to receive text messages, sms consent]
 
 sourcing.how_did_you_hear: [how did you hear about us, how did you hear about this job, how did you hear about this opportunity, please tell us how you heard about this opportunity, how did you hear about this position, how did you find this job, source, how did you learn about this role]

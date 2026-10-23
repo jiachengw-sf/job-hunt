@@ -5,6 +5,13 @@ Order: the ATS's standard field name; a wording the user confirmed; a curated wo
 those are confident. Anything else that is merely *similar* (token and character overlap, or
 embeddings when available) is a ``candidate``: the answer is reused only after the user confirms
 the new wording once. Below the threshold the label is ``unknown``. Nothing is ever guessed.
+
+Location questions name places ("relocate to Austin, TX", "onsite in our Seattle office"); the
+place is replaced by "place" before matching, so one confirmed wording covers every city.
+Similarity runs on a canonical paraphrase ("lawfully" = "legally", "eligible to work" =
+"authorized to work", "visa sponsorship" = "sponsor"), and only between labels that ask about the
+same things: "authorized to work without sponsorship" asks two things, so it never becomes a
+candidate for the authorization question alone.
 """
 
 from __future__ import annotations
@@ -76,6 +83,77 @@ def _plain(s: str) -> str:
     s = html.unescape(re.sub(r"<[^>]+>", " ", s or "")).lower()
     s = re.sub(r"['’]s\b", "", s)
     return re.sub(r"[^a-z0-9]+", " ", s).strip()
+
+
+# a location question: its place names are placeholders, not part of the question
+_LOCATION_CUE = re.compile(
+    r"\b(relocat\w*|on-?site|in-?person|in the office|office|commut\w*|reside|located|live in|"
+    r"work from|hybrid|move to)\b",
+    re.I,
+)
+_PLACE = re.compile(
+    r"\b(?:to|in|at|near|from|around|or|and)\s+(?:the\s+|our\s+)?"
+    r"((?:[A-Z][\w.'-]*(?:\s+(?:[A-Z][\w.'-]*|of\b|de\b|la\b))*)(?:,\s*[A-Z]{2}\b)?)"
+)
+_PLACE_START = re.compile(r"^((?:[A-Z][\w.'-]*\s+){0,2}[A-Z][\w.'-]*),\s*[A-Z]{2}\b")
+
+
+def placeless(label: str) -> str:
+    """A location question with its places as "place": "relocate to Austin, TX?" and "relocate
+    to New York City?" read the same. Other questions are left alone."""
+    if not _LOCATION_CUE.search(label or ""):
+        return label
+    out = _PLACE.sub(lambda m: m.group(0)[: m.start(1) - m.start(0)] + "place", label)
+    return _PLACE_START.sub("place", out)
+
+
+_CANON = [
+    (re.compile(r"\blawfully\b"), "legally"),
+    (re.compile(r"\b(?:eligible|permitted|allowed|able) to (?:work|be employed)\b"),
+     "authorized to work"),
+    (re.compile(r"\b(?:visa |immigration |employer |employment )?sponsor(?:ship|ed|ing)?\b"),
+     "sponsor"),
+    (re.compile(r"\b(?:u s a?|usa|united states(?: of america)?|this country|the country(?: "
+                r"where this job is located| in which you are applying| for which you are "
+                r"applying)?)\b"), "country"),
+    (re.compile(r"\b(?:on site|onsite|in person|in the office|from the office)\b"), "onsite"),
+    (re.compile(r"\b(?:relocation|relocating)\b"), "relocate"),
+    (re.compile(r"\b(?:five|5) days (?:a|per) week\b|\bfull time onsite\b"), "5 days"),
+    (re.compile(r"\b(?:need|require)\b"), "require"),
+]  # fmt: skip
+# what a question asks about; a candidate must ask about the same things
+_CONCEPTS = {
+    "authorized": re.compile(r"\bauthori[sz]ed? to work\b|\bwork authori[sz]ation\b"),
+    "sponsor": re.compile(r"\bsponsor\b"),
+    "citizen": re.compile(r"\bcitizen"),
+    "relocate": re.compile(r"\breloca"),
+    "onsite": re.compile(r"\bonsite\b|\b5 days\b"),
+    "remote": re.compile(r"\bremote\b"),
+    "high_school": re.compile(r"\bhigh school\b|\bsecondary school\b"),
+}
+_TIME = {"now": re.compile(r"\bnow\b|\bcurrently\b|\bat this time\b"),
+         "future": re.compile(r"\bfuture\b")}  # fmt: skip
+
+
+def canonical(norm: str) -> str:
+    """A normalized label in canonical words, for similarity only."""
+    for rx, rep in _CANON:
+        norm = rx.sub(rep, norm)
+    return re.sub(r"\s+", " ", norm).strip()
+
+
+def concepts(canon: str) -> tuple[frozenset[str], frozenset[str]]:
+    """(what it asks about, when: now / future) for a canonical label."""
+    what = frozenset(k for k, rx in _CONCEPTS.items() if rx.search(canon))
+    when = frozenset(k for k, rx in _TIME.items() if rx.search(canon))
+    return what, when
+
+
+def same_question(a: str, b: str) -> bool:
+    """True unless the two canonical labels ask about different things (a time word on one side
+    only is allowed: "do you require sponsorship" may mean now)."""
+    (wa, ta), (wb, tb) = concepts(a), concepts(b)
+    return wa == wb and (not ta or not tb or ta == tb)
 
 
 def company_template(label: str, company: str | None) -> str:
@@ -161,7 +239,7 @@ class Matcher:
     def __post_init__(self) -> None:
         for e in self.answers.bank:
             for w in e.wordings:
-                self._confirmed[normalize(w)] = e.key
+                self._confirmed[normalize(placeless(w))] = e.key
             if e.key not in BUILTIN:
                 self._questions[normalize(e.question)] = e.key
         seeds = seed_wordings()
@@ -180,6 +258,7 @@ class Matcher:
             k = FIELD_NAMES.get(field_name.lower())
             if k:
                 return Match(k, "exact", 1.0, "field_name")
+        label = placeless(label)
         norm = normalize(label, company)
         if not norm:
             return Match(None, "unknown")
@@ -197,15 +276,22 @@ class Matcher:
         return Match(None, "unknown", round(best[0], 3) if best else 0.0)
 
     def _best_similar(self, norm: str) -> tuple[float, str, str] | None:
-        if not self._known:
+        """The most similar known wording that asks about the same things."""
+        known = [(w, k) for w, k in self._known if same_question(canonical(norm), _canon(w))]
+        if not known:
             return None
-        scored = [(similarity(norm, w), w, k) for w, k in self._known]
+        q = canonical(norm)
+        scored = [(max(similarity(norm, w), similarity(q, _canon(w))), w, k) for w, k in known]
         if self.embed is not None:
-            vecs = self.embed([norm, *(w for w, _ in self._known)])
-            q = vecs[0]
+            vecs = self.embed([norm, *(w for w, _ in known)])
             for i, (s, w, k) in enumerate(scored):
-                scored[i] = (max(s, _cos(q, vecs[i + 1])), w, k)
+                scored[i] = (max(s, _cos(vecs[0], vecs[i + 1])), w, k)
         return max(scored)
+
+
+@cache
+def _canon(norm: str) -> str:
+    return canonical(norm)
 
 
 def _cos(a: list[float], b: list[float]) -> float:

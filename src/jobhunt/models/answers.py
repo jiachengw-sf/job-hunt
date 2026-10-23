@@ -26,6 +26,7 @@ class Identity(Strict):
     email: str | None = None
     phone: str | None = None
     phone_country: str | None = Field(None, description="ISO alpha-2, set before the number")
+    school_email: str | None = Field(None, description="University email, apart from your own.")
     address_line1: str | None = None
     address_line2: str | None = None
     city: str | None = None
@@ -50,6 +51,15 @@ class EducationAnswers(Strict):
     gpa_scale: float | None = Field(None, gt=0)
     gpa_disclose_at_or_above: float | None = Field(
         None, description="Only fill GPA when it is at least this value."
+    )
+    high_school_graduation_year: int | None = Field(None, ge=1950, le=2100)
+    sat_score: str | None = None
+    act_score: str | None = None
+    gre_score: str | None = None
+    gmat_score: str | None = None
+    no_test_scores: bool = Field(False, description="You haven't taken a standardized test.")
+    further_study: Literal["yes", "no", "undecided"] | None = Field(
+        None, description="Plans for more school after this degree."
     )
 
 
@@ -77,6 +87,13 @@ class Availability(Strict):
 class LocationAnswers(Strict):
     willing_to_relocate: YesNo | None = None
     willing_to_travel: str | None = None
+    relocate_anywhere_in: list[str] = Field(
+        default_factory=list,
+        description="ISO countries you'd relocate anywhere in: answers city-specific questions.",
+    )
+    onsite_full_time: YesNo | None = Field(
+        None, description="Open to working onsite five days a week, wherever the job is."
+    )
 
 
 class Compensation(Strict):
@@ -101,6 +118,7 @@ class Standard(Strict):
     background_check_consent: YesNoDecline | None = None
     drug_test_consent: YesNoDecline | None = None
     sms_consent: YesNo | None = None
+    other_offers: YesNo | None = Field(None, description="You currently hold other offers.")
 
 
 class Sourcing(Strict):

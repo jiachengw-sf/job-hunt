@@ -40,7 +40,7 @@ def test_new_wording_is_only_a_candidate_until_confirmed():
     m = Matcher(Answers())
     r = m.match(label)
     assert r.status == "candidate" and not r.confident
-    assert r.key == "work_auth.sponsorship"
+    assert r.key == "work_auth.sponsorship_now"  # it asks about now
     confirmed = Answers(
         bank=[BankEntry(key="work_auth.sponsorship_now", question="q", wordings=[label])]
     )
@@ -133,3 +133,110 @@ def test_gpa_respects_disclosure_threshold():
     assert BUILTIN["education.gpa"].resolve(AnswerContext(Profile(), a)) is None
     a2 = Answers.model_validate({"education": {"gpa": 3.6, "gpa_disclose_at_or_above": 3.3}})
     assert BUILTIN["education.gpa"].resolve(AnswerContext(Profile(), a2)) == "3.6"
+
+
+@pytest.mark.parametrize(
+    ("label", "key"),
+    [
+        ("Are you lawfully authorized to work in the U.S.?", "work_auth.authorized"),
+        ("Are you legally eligible to work in the country where this job is located?",
+         "work_auth.authorized"),
+        ("Will you need sponsorship to work in the US now or in the future?",
+         "work_auth.sponsorship"),
+        ("Would you require visa sponsorship to work at our company in the future?",
+         "work_auth.sponsorship_future"),
+        ("Do you require visa sponsorship?", "work_auth.sponsorship_now"),
+    ],
+)  # fmt: skip
+def test_clear_rewordings_are_suggested(label, key):
+    r = Matcher(Answers()).match(label)
+    assert (r.key, r.status) == (key, "candidate")  # suggested; the user still confirms
+
+
+@pytest.mark.parametrize(
+    "label",
+    [
+        "Are you authorized to work in the US without sponsorship?",
+        "Are you legally authorized to work in the US and will you not require sponsorship?",
+        "Are you a US citizen or authorized to work without sponsorship?",
+    ],
+)
+def test_combined_questions_are_their_own(label):
+    """Two questions in one: never a candidate for either half."""
+    r = Matcher(Answers()).match(label)
+    assert r.key is None and r.status == "unknown"
+
+
+@pytest.mark.parametrize(
+    ("a", "b"),
+    [
+        ("Are you willing to relocate to Austin, TX?", "Are you willing to relocate to Seattle?"),
+        ("Are you able to work onsite in our San Francisco office 5 days a week?",
+         "Are you able to work onsite in our New York office 5 days a week?"),
+    ],
+)  # fmt: skip
+def test_one_confirmed_location_wording_covers_every_city(a, b):
+    custom = "Can you relocate to Denver, CO before June?"
+    bank = [BankEntry(key="location.relocate_to", question="q", wordings=[custom])]
+    m = Matcher(Answers(bank=bank))
+    assert m.match("Can you relocate to Boston, MA before June?").status == "confirmed"
+    assert m.match(a).key == m.match(b).key is not None
+
+
+def test_place_names_only_count_in_location_questions():
+    from jobhunt.bank.match import placeless
+
+    assert placeless("Are you willing to relocate to Austin, TX?").endswith("relocate to place?")
+    assert placeless("Do you have experience in Python?") == "Do you have experience in Python?"
+    assert placeless("Can you commute to the Bay Area or Washington, DC?") == (
+        "Can you commute to the place or place?"
+    )
+
+
+def test_relocation_and_onsite_preferences_answer_city_questions():
+    profile, prefs, answers = _load_persona(PERSONAS_DIR / "newgrad-analyst")
+    answers.location.willing_to_relocate = None
+    answers.location.relocate_anywhere_in = ["US"]
+    answers.location.onsite_full_time = "yes"
+    us = AnswerContext(profile, answers, prefs, company="Acme", country="US")
+    ca = AnswerContext(profile, answers, prefs, company="Acme", country="CA")
+    assert BUILTIN["location.relocate_to"].resolve(us) == "yes"
+    assert BUILTIN["location.relocate_to"].resolve(ca) is None  # not where they'd go: ask
+    assert BUILTIN["location.relocate"].resolve(us) == "yes"
+    assert BUILTIN["location.onsite"].resolve(ca) == "yes"
+    m = Matcher(answers)
+    assert m.match("Are you open to relocating to Chicago, IL for this role?").key == (
+        "location.relocate_to"
+    )
+
+
+def test_student_builtins():
+    profile, prefs, answers = _load_persona(PERSONAS_DIR / "first-year-intern")
+    e = answers.education
+    e.high_school_graduation_year, e.act_score, e.further_study = 2026, "33", "undecided"
+    answers.identity.school_email = "student@university.example"
+    answers.standard.other_offers = "no"
+    ctx = AnswerContext(profile, answers, prefs)
+    m = Matcher(answers)
+    cases = {
+        "What is your high school graduation year?": ("education.high_school_graduation_year",
+                                                      "2026"),
+        "University email address": ("identity.school_email", "student@university.example"),
+        "Which standardized tests have you taken?": ("education.test_type", ["ACT"]),
+        "ACT composite score": ("education.act_score", "33"),
+        "Standardized test score": ("education.test_score", "33"),
+        "SAT score": ("education.sat_score", None),  # never another test's score
+        "Do you currently have any other offers?": ("standard.other_offers", "no"),
+        "Do you plan to pursue a graduate degree?": ("education.further_study", "undecided"),
+    }  # fmt: skip
+    for label, (key, value) in cases.items():
+        r = m.match(label)
+        assert (r.key, r.status) == (key, "exact"), label
+        assert BUILTIN[key].resolve(ctx) == value, label
+    for k in ("identity.school_email", "education.act_score", "education.test_score"):
+        assert BUILTIN[k].sensitive
+    e.act_score, e.no_test_scores = None, True
+    assert BUILTIN["education.test_type"].resolve(ctx) == "None"
+    assert "I have not taken a standardized test" in BUILTIN["education.test_type"].option_aliases(
+        "None"
+    )

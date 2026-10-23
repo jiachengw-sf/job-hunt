@@ -137,6 +137,54 @@ def _month_aliases(v: str) -> list[str]:
     return [f"{n:02d}", str(n), v[:3]]
 
 
+TESTS = ("SAT", "ACT", "GRE", "GMAT")
+NONE_ALIASES = [
+    "None", "N/A", "Not applicable", "None of the above", "I have not taken any",
+    "I have not taken a standardized test", "I haven't taken any", "Not taken",
+]  # fmt: skip
+
+
+def _score(test: str) -> Callable[[AnswerContext], Value]:
+    return lambda c: getattr(c.answers.education, f"{test.lower()}_score")
+
+
+def _tests_taken(c: AnswerContext) -> Value:
+    """The tests you have scores for, or "None" when you said you haven't taken any."""
+    taken = [t for t in TESTS if _score(t)(c)]
+    if taken:
+        return taken
+    return "None" if c.answers.education.no_test_scores else None
+
+
+def _one_score(c: AnswerContext) -> str | None:
+    scores = [s for t in TESTS if (s := _score(t)(c))]
+    return str(scores[0]) if len(scores) == 1 else None
+
+
+def _none_aliases(v: str) -> list[str]:
+    return NONE_ALIASES if v == "None" else []
+
+
+def _further_aliases(v: str) -> list[str]:
+    return {"yes": ["Yes"], "no": ["No"], "undecided": ["Undecided", "Not sure", "Maybe"]}.get(
+        v, []
+    )
+
+
+def _relocate_here(c: AnswerContext) -> str | None:
+    """Willing to relocate to the job's place: yes when you'd relocate anywhere in its country."""
+    loc = c.answers.location
+    if c.country and c.country.upper() in {x.upper() for x in loc.relocate_anywhere_in}:
+        return "yes"
+    return "yes" if loc.willing_to_relocate == "yes" else None
+
+
+def _relocate(c: AnswerContext) -> str | None:
+    return _yn(c.answers.location.willing_to_relocate) or (
+        "yes" if _relocate_here(c) == "yes" else None
+    )
+
+
 def _gpa(c: AnswerContext) -> str | None:
     e = c.answers.education
     if e.gpa is None:
@@ -240,6 +288,7 @@ SPECS: list[KeySpec] = [
     _spec("identity.postal_code", "Postal code", "text", lambda c: c.answers.identity.postal_code, sensitive=True),
     _spec("identity.country", "Country of residence", "choice", lambda c: c.answers.identity.country, sensitive=True),
     _spec("identity.over_18", "Are you at least 18 years old?", "yesno", lambda c: _yn(c.answers.identity.over_18), sensitive=True),
+    _spec("identity.school_email", "University email", "text", lambda c: c.answers.identity.school_email, sensitive=True),
     # links
     _spec("links.linkedin", "LinkedIn profile", "text", _links("linkedin")),
     _spec("links.github", "GitHub", "text", _links("github")),
@@ -259,6 +308,11 @@ SPECS: list[KeySpec] = [
     _spec("education.graduation_year", "Graduation year", "choice", lambda c: str(c.answers.education.graduation_year) if c.answers.education.graduation_year else None, pick=pick_number),
     _spec("education.gpa", "GPA", "number", _gpa, sensitive=True, pick=pick_number),
     _spec("education.class_standing", "Current year in school", "choice", lambda c: c.answers.education.class_standing),
+    _spec("education.high_school_graduation_year", "High school graduation year", "choice", lambda c: str(y) if (y := c.answers.education.high_school_graduation_year) else None, pick=pick_number),
+    _spec("education.test_type", "Standardized tests taken (SAT, ACT, GRE, GMAT)", "choice", _tests_taken, aliases=_none_aliases),
+    _spec("education.test_score", "Standardized test score", "number", _one_score, sensitive=True, pick=pick_number),
+    *[_spec(f"education.{t.lower()}_score", f"{t} score", "number", _score(t), sensitive=True, pick=pick_number) for t in TESTS],
+    _spec("education.further_study", "Do you plan to continue your education after this degree?", "choice", lambda c: c.answers.education.further_study, aliases=_further_aliases),
     # work authorization (per the job's country)
     _spec("work_auth.authorized", "Are you legally authorized to work in this country?", "yesno", _wa("authorized"), sensitive=True),
     _spec("work_auth.sponsorship_now", "Do you require visa sponsorship now?", "yesno", _wa("sponsorship_now"), sensitive=True),
@@ -272,7 +326,9 @@ SPECS: list[KeySpec] = [
     _spec("availability.hours_per_week", "Hours available per week", "number", lambda c: str(c.answers.availability.hours_per_week) if c.answers.availability.hours_per_week else None, pick=pick_number),
     _spec("availability.notice_period", "Notice period", "text", lambda c: c.answers.availability.notice_period),
     # location
-    _spec("location.relocate", "Are you willing to relocate?", "yesno", lambda c: _yn(c.answers.location.willing_to_relocate)),
+    _spec("location.relocate", "Are you willing to relocate?", "yesno", _relocate),
+    _spec("location.relocate_to", "Are you willing to relocate to [the job's location]?", "yesno", _relocate_here),
+    _spec("location.onsite", "Are you able to work onsite five days a week?", "yesno", lambda c: _yn(c.answers.location.onsite_full_time)),
     _spec("location.travel", "Are you willing to travel?", "choice", lambda c: c.answers.location.willing_to_travel),
     # compensation
     _spec("compensation.expected", "Expected compensation", "text", lambda c: "Prefer not to say" if c.answers.compensation.prefer_not_to_say else c.answers.compensation.expected, sensitive=True, pick=pick_number),
@@ -290,6 +346,7 @@ SPECS: list[KeySpec] = [
     _spec("standard.background_check", "Do you consent to a background check?", "yesno", lambda c: _yn(c.answers.standard.background_check_consent), sensitive=True),
     _spec("standard.drug_test", "Do you consent to a drug test?", "yesno", lambda c: _yn(c.answers.standard.drug_test_consent), sensitive=True),
     _spec("standard.sms_consent", "Do you consent to text messages?", "yesno", lambda c: _yn(c.answers.standard.sms_consent)),
+    _spec("standard.other_offers", "Do you currently have other offers?", "yesno", lambda c: _yn(c.answers.standard.other_offers)),
     # sourcing
     _spec("sourcing.how_did_you_hear", "How did you hear about us?", "choice", lambda c: c.answers.sourcing.how_did_you_hear),
     _spec("sourcing.referral", "Were you referred by an employee?", "text", lambda c: c.answers.sourcing.referral_default),
