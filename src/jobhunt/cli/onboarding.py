@@ -60,6 +60,7 @@ class FormStatus(BaseModel):
     running: bool
     saved_at: str | None = None
     saves: int = 0
+    reused: bool = Field(False, description="A form was already running: this is its link.")
     files: dict[str, str] = Field(default_factory=dict, description="Onboarding file status.")
 
 
@@ -309,10 +310,18 @@ def _form_result(
         running=running,
         saved_at=st.get("saved_at"),
         saves=int(st.get("saves") or 0),
+        reused=bool(st.get("reused")),
         files=files,
     )
     user, nxt = [], []
-    if running and data.url:
+    if running and data.url and started and data.reused:
+        user.append(
+            f"A form is already running at {data.url} (started {st.get('started_at')}). Use "
+            "that link; a tab from an older session can't save. To start over, run "
+            "`jobhunt setup form --stop` and then `jobhunt setup form`."
+        )
+        nxt.append("Poll `jobhunt setup form --status`; `saved_at` changes when a save lands.")
+    elif running and data.url:
         user.append(
             f"Open {data.url} in your browser and fill in your preferences and screening "
             "answers (every field is optional; sensitive answers stay on your computer). "

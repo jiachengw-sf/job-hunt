@@ -11,6 +11,7 @@ can't write a file the CLI would reject.
 from __future__ import annotations
 
 import html
+import json
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -583,6 +584,7 @@ def render(
     new_questions: list[dict[str, Any]],
     errors: list[str] | None = None,
     saved: list[str] | None = None,
+    last_saved: str | None = None,
 ) -> str:
     countries = [
         c.strip().upper()
@@ -642,17 +644,33 @@ def render(
             + _e(", ".join(saved))
             + ". You can close this tab, or keep editing and save again.</div>"
         )
+    when = (
+        f"Last saved {_e(last_saved.replace('T', ' ').removesuffix('Z'))} UTC."
+        if last_saved
+        else "Not saved yet."
+    )
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>jobhunt setup</title>
 <style>{CSS}</style></head><body>
 <form method="post" action="/save" autocomplete="off">
 <header><div class="in"><div><h1>jobhunt setup</h1><nav>{"".join(nav)}</nav></div>
 <div>{'<span class="saved">Saved ✓</span> ' if saved and not errors else ""}<button type="submit">Save</button></div></div></header>
-<main>{msg}<input type="hidden" name="token" value="{_e(token)}">
-<p class="note">Your preferences and screening answers. Saved to your computer only (~/.jobhunt). Skip anything you like.</p>
+<main><div id="stale" class="err" hidden><b>This form is out of date.</b> A newer one was started, or this one stopped, so nothing you save here would be written. Run <code>jobhunt setup form</code> for the current link.</div>{msg}<input type="hidden" name="token" value="{_e(token)}">
+<p class="note">Your preferences and screening answers. Saved to your computer only (~/.jobhunt). Skip anything you like. <span id="last-saved">{when}</span></p>
 {"".join(parts)}
 <p><button type="submit">Save</button></p></main></form>
-<script>{JS}</script></body></html>"""
+<script>{JS}{_ping_js(token)}</script></body></html>"""
+
+
+def _ping_js(token: str) -> str:
+    """Every 20s, check this page's link still works; if not, say so and disable Save."""
+    t = json.dumps(token)
+    return (
+        "function jhStale(){document.getElementById('stale').hidden=false;"
+        "document.querySelectorAll('button[type=submit]').forEach(b=>b.disabled=true)}"
+        f"setInterval(()=>fetch('/ping?t='+encodeURIComponent({t}),{{cache:'no-store'}})"
+        ".then(r=>{if(!r.ok)jhStale()}).catch(jhStale),20000);"
+    )
 
 
 def posted_values(form: dict[str, list[str]]) -> dict[str, Any]:

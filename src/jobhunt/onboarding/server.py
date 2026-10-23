@@ -5,6 +5,11 @@ URL. The server binds 127.0.0.1 only, requires the one-time token from the URL o
 checks Host and Origin (no other site can post to it), writes preferences.yaml and answers.yaml
 on Save, and exits after ``IDLE_MINUTES`` without requests. Its state is a JSON file that
 ``jobhunt setup form --status`` reads.
+
+A tab can outlive its server or token (the server stopped, or `setup form` started a new one).
+Such a tab never looks saved: "Saved" shows once, for the save that just happened (a one-time
+id in the redirect), a post with an old token gets a page saying nothing was written, and the
+page pings the server so a stale tab disables Save and says why.
 """
 
 from __future__ import annotations
@@ -78,6 +83,7 @@ class FormApp:
         self.lock = threading.Lock()
         self.last_request = time.monotonic()
         self.saves = 0
+        self.fresh_save: str | None = None  # the one-time id of the save just made
 
     def _existing(self) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
         prefs = read_yaml(self.paths.preferences) if self.paths.preferences.exists() else None
@@ -104,7 +110,16 @@ class FormApp:
             new_questions=F.load_new_questions(self.paths.new_questions),
             errors=errors,
             saved=saved,
+            last_saved=(read_state(self.paths) or {}).get("saved_at"),
         )
+
+    def take_fresh_save(self, sid: str | None) -> bool:
+        """True once, for the redirect right after a save; a reload or an old tab gets False."""
+        with self.lock:
+            if sid and self.fresh_save and hmac.compare_digest(sid, self.fresh_save):
+                self.fresh_save = None
+                return True
+            return False
 
     def save(self, body: str) -> tuple[bool, str]:
         form = parse_qs(body, keep_blank_values=True)
@@ -130,7 +145,19 @@ class FormApp:
             st = read_state(self.paths) or {}
             st.update(status="saved", saved_at=now_iso(), saves=self.saves)
             write_state(self.paths, st)
-        return True, ""
+            self.fresh_save = secrets.token_urlsafe(8)
+        return True, self.fresh_save
+
+
+STALE = (
+    '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>jobhunt setup: '
+    'out of date</title></head><body style="font:16px/1.5 system-ui,sans-serif;max-width:40em;'
+    'margin:3em auto;padding:0 1em"><h1>Nothing was saved</h1><p>This tab belongs to an older '
+    "<code>jobhunt setup form</code> session, so jobhunt can't accept it. Your files are "
+    "unchanged.</p><p>Run <code>jobhunt setup form</code> (or <code>jobhunt setup form "
+    "--status</code>) for the current link, open it, and enter your changes there.</p>"
+    "</body></html>"
+)
 
 
 def _handler(app: FormApp) -> type[BaseHTTPRequestHandler]:
@@ -156,7 +183,7 @@ def _handler(app: FormApp) -> type[BaseHTTPRequestHandler]:
             self.send_header(
                 "Content-Security-Policy",
                 "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; "
-                "form-action 'self'",
+                "connect-src 'self'; form-action 'self'",
             )
             self.end_headers()
             self.wfile.write(data)
@@ -165,15 +192,18 @@ def _handler(app: FormApp) -> type[BaseHTTPRequestHandler]:
             app.last_request = time.monotonic()
             if not self._host_ok():
                 return self._send(403, "Forbidden", "text/plain")
-            if urlsplit(self.path).path != "/":
+            route = urlsplit(self.path).path
+            if route not in ("/", "/ping"):
                 return self._send(404, "Not found", "text/plain")
             q = parse_qs(urlsplit(self.path).query)
             if not hmac.compare_digest(q.get("t", [""])[0], app.token):
-                return self._send(
-                    403, "This link has expired. Run `jobhunt setup form` again.", "text/plain"
-                )
-            saved = ["preferences.yaml", "answers.yaml"] if q.get("saved") else None
-            self._send(200, app.page(saved=saved))
+                if route == "/ping":
+                    return self._send(403, '{"ok": false}', "application/json")
+                return self._send(403, STALE)
+            if route == "/ping":  # the open page checks its link still works
+                return self._send(200, '{"ok": true}', "application/json")
+            fresh = app.take_fresh_save(q.get("saved", [None])[0])
+            self._send(200, app.page(saved=["preferences.yaml", "answers.yaml"] if fresh else None))
 
         def do_POST(self) -> None:
             app.last_request = time.monotonic()
@@ -187,11 +217,11 @@ def _handler(app: FormApp) -> type[BaseHTTPRequestHandler]:
                 return self._send(413, "Too large", "text/plain")
             body = self.rfile.read(n).decode("utf-8", "replace")
             ok, page = app.save(body)
-            if page == "bad token":
-                return self._send(403, "Forbidden", "text/plain")
-            if ok:  # post/redirect/get: a reload doesn't post again
+            if page == "bad token":  # a tab from an older session: say so, plainly
+                return self._send(403, STALE)
+            if ok:  # post/redirect/get: a reload doesn't post again, nor say "Saved" again
                 self.send_response(303)
-                self.send_header("Location", f"/?t={app.token}&saved=1")
+                self.send_header("Location", f"/?t={app.token}&saved={page}")
                 self.send_header("Content-Length", "0")
                 self.end_headers()
                 return None

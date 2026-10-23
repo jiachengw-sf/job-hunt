@@ -350,12 +350,17 @@ def test_server_token_host_origin_and_save(running_server):
         {"Origin": "https://evil.example", "Content-Type": "application/x-www-form-urlencoded"},
     )
     assert code == 403
-    code, _, _ = _req(f"{base}/save", urllib.parse.urlencode({"token": "nope"}).encode())
-    assert code == 403
+    code, page, _ = _req(f"{base}/save", urllib.parse.urlencode({"token": "nope"}).encode())
+    assert code == 403 and "Nothing was saved" in page  # a tab from an older session
     code, _, hdrs = _req(
         f"{base}/save", body, {"Origin": base, "Content-Type": "application/x-www-form-urlencoded"}
     )
-    assert code == 303 and "saved=1" in hdrs["Location"]
+    assert code == 303 and "saved=" in hdrs["Location"]
+    code, page, _ = _req(base + hdrs["Location"])
+    assert code == 200 and "<b>Saved.</b>" in page and "Last saved 20" in page
+    code, page, _ = _req(base + hdrs["Location"])  # a reload (or an old tab on that URL)
+    assert code == 200 and "<b>Saved.</b>" not in page and "Last saved 20" in page
+    assert "<b>Saved.</b>" not in _req(f"{base}/?t={token}&saved=1")[1]
     saved = Answers.model_validate(
         yaml.safe_load((home / "answers.yaml").read_text(encoding="utf-8"))
     )
@@ -363,6 +368,10 @@ def test_server_token_host_origin_and_save(running_server):
     assert saved.identity.email == answers["identity"]["email"]
     st = server.read_state(paths)
     assert st["status"] == "saved" and st["saves"] == 1
+    # the open page checks its link: a stale one disables Save
+    assert _req(f"{base}/ping?t={token}")[0] == 200
+    assert _req(f"{base}/ping?t=old-token")[0] == 403
+    assert "connect-src 'self'" in _req(f"{base}/?t={token}")[2]["Content-Security-Policy"]
     # invalid input: not saved, the form comes back with the error
     bad = urllib.parse.urlencode({"token": token, "p:timing.earliest_start": "soon"}).encode()
     code, page, _ = _req(f"{base}/save", bad, {"Origin": base})
@@ -381,7 +390,8 @@ def test_setup_form_launch_status_stop(cli, persona_home):
         assert code == 200
         # a second start reuses the running server
         _, env2, _ = cli("setup", "form")
-        assert env2["data"]["url"] == d["url"]
+        assert env2["data"]["url"] == d["url"] and env2["data"]["reused"]
+        assert "already running at " + d["url"] in env2["hints"]["user_actions"][0]
         _, st, _ = cli("setup", "form", "--status")
         assert st["data"]["status"] == "waiting"
     finally:
