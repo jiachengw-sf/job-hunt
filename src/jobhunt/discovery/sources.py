@@ -37,9 +37,14 @@ class Posting(BaseModel):
     posted_at: str | None = Field(None, description="From the source only. Never inferred.")
     deadline: str | None = None
     extra: dict[str, Any] = Field(default_factory=dict)
+    key: str | None = Field(
+        None, description="A job with no posting URL: its own key (``manual:company:title``)."
+    )
 
     @property
     def dedupe_key(self) -> str:
+        if self.key:
+            return self.key
         return dedupe_key(self.ats, self.board_token, self.ats_job_id, self.canonical_url)
 
 

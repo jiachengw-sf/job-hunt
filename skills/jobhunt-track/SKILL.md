@@ -31,6 +31,9 @@ into the matching command. CLI contract and command details:
 1. Find the job: `jobhunt apps` shows existing records; `jobhunt jobs --all` lists jobs by id.
    Match on company and title. If two could match, ask which. If jobhunt doesn't know the job,
    ask for the posting URL and run `jobhunt add <url>` (with `--company` and `--title` if it asks).
+   No link (e.g. only a confirmation email): `jobhunt applied --company "<company>" --title
+   "<title>" [--req-id <id>]` instead of a job id; a posting added later with that req id in
+   its URL joins the same record.
 2. `jobhunt applied <job id or URL> --via chat --at "<when, in the user's words>"`. `--at`
    takes phrases like "this afternoon", "yesterday 9pm", "Oct 21 9:42pm"; leave it out for
    "just now". Add `--referral "<name>"`, `--portal <url>`, `--login-email <email>` or

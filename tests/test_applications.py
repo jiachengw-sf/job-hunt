@@ -459,3 +459,44 @@ def test_first_application_lands_on_row_two_of_an_empty_tab(cli, persona_home):
     cli("sync")
     ws, _ = _app_tab(home / "tracker.xlsx")
     assert ws.cell(2, 1).value == "Harborlight Bank" and ws.max_row == 2
+
+
+def test_applied_without_a_posting_link_then_the_posting_merges(cli, persona_home):
+    """A confirmation email names company, title and a req id, and no link. Recording it needs
+    no URL; adding the posting later (its URL carries the req id) is the same job."""
+    home = setup(cli, persona_home)
+    args = ["--company", "Juniper Ridge Labs", "--title", "2027 Hardware Engineering Intern",
+            "--req-id", "JR2027047", "--at", "yesterday 9am"]  # fmt: skip
+    code, env, _ = cli("applied", *args)
+    assert code == ExitCode.OK, env
+    d = env["data"]
+    assert d["created"] and d["company"] == "Juniper Ridge Labs" and d["status"] == "Applied"
+    code, again, _ = cli("applied", *args)
+    assert code == ExitCode.OK and not again["data"]["created"]
+    assert again["data"]["job_id"] == d["job_id"] and len(records(home)) == 1
+
+    _, apps, _ = cli("apps")
+    (row,) = apps["data"]["apps"]
+    at = datetime.fromisoformat(row["applied_at"].replace("Z", "+00:00"))  # UTC, ISO 8601
+    assert row["applied_on"] == local_day(row["applied_at"], LA).isoformat() and at.tzinfo
+
+    url = ("https://juniperridge.wd1.myworkdayjobs.com/en-US/External/job/Santa-Clara-CA/"
+           "2027-Hardware-Engineering-Intern_JR2027047")  # fmt: skip
+    code, env, _ = cli("add", url, "--company", "Juniper Ridge Labs", "--title",
+                       "2027 Hardware Engineering Intern")  # fmt: skip
+    assert code == ExitCode.OK, env
+    assert env["data"]["job_id"] == d["job_id"] and not env["data"]["created"]
+    with db(home) as c:
+        key = c.execute("SELECT dedupe_key FROM jobs WHERE id=?", (d["job_id"],)).fetchone()[0]
+    assert key.startswith("url:https://juniperridge.wd1.myworkdayjobs.com/")
+    assert len(records(home)) == 1
+
+    other = url.replace("juniperridge", "otherco")  # same req id, another company
+    code, env, _ = cli("add", other, "--company", "Other Co", "--title", "Intern")
+    assert env["data"]["job_id"] != d["job_id"]
+
+
+def test_applied_needs_a_job_or_company_and_title(cli, persona_home):
+    setup(cli, persona_home)
+    code, env, _ = cli("applied", "--company", "Juniper Ridge Labs")
+    assert code == ExitCode.VALIDATION and "--title" in env["error"]["message"]

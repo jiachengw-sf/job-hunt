@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 
 from jobhunt.cli.discovery import _prepare
 from jobhunt.cli.framework import Result, agent_command
+from jobhunt.discovery.pipeline import add_unlisted
 from jobhunt.discovery.text import utc_now
 from jobhunt.errors import ValidationFailed
 from jobhunt.locking import file_lock
@@ -111,7 +112,12 @@ def _render_recorded(env: Any) -> str:
 
 def register(cli: click.Group) -> None:
     @agent_command(cli, "applied", output=Recorded, writes=True, render=_render_recorded)
-    @click.argument("job")
+    @click.argument("job", required=False)
+    @click.option("--company", default=None, help="With --title, for a job with no posting link.")
+    @click.option("--title", default=None, help="The position, as the company named it.")
+    @click.option(
+        "--req-id", default=None, help="The requisition or job id, if the email gives one."
+    )
     @click.option(
         "--at",
         "at",
@@ -146,7 +152,10 @@ def register(cli: click.Group) -> None:
         help="chat when an AI tool records what you told it.",
     )
     def applied_cmd(
-        job: str,
+        job: str | None,
+        company: str | None,
+        title: str | None,
+        req_id: str | None,
         at: str,
         method: str | None,
         referral: str | None,
@@ -162,8 +171,10 @@ def register(cli: click.Group) -> None:
         """Record that you applied to a job, wherever you applied (Workday, email, anywhere).
 
         JOB is a job id, job key or posting URL; add an unknown URL with `jobhunt add` first.
-        Records once per job (re-running shows the existing record). Sets the status to Applied,
-        snapshots the job description, and fills in where to check the status from the ATS.
+        With no posting link (an application found in email), give --company and --title (and
+        --req-id when there is one) instead. Records once per job (re-running shows the existing
+        record). Sets the status to Applied, snapshots the job description, and fills in where
+        to check the status from the ATS.
         """
         paths, cfg = _prepare(dry_run)
         now = utc_now()
@@ -171,8 +182,19 @@ def register(cli: click.Group) -> None:
         applied_at, approx = parse_when(at, now, tz)
         if portal and not portal.startswith(("https://", "http://")):
             raise ValidationFailed("--portal must be an http(s) URL.")
+        if not job and not (company and title):
+            raise ValidationFailed(
+                "Name the job: a job id, key or posting URL, or --company and --title.",
+                next_actions=['e.g. `jobhunt applied --company "Acme" --title "Data Intern"`'],
+            )
         with _lock(paths, dry_run), open_store(paths.db, dry_run=dry_run) as conn:
-            job_id = resolve_job(conn, job)
+            if job:
+                job_id = resolve_job(conn, job)
+            else:
+                job_id = add_unlisted(
+                    conn, company=company or "", title=title or "", req_id=req_id,
+                    cfg=cfg.discovery, now=now,
+                )  # fmt: skip
             out = record_application(
                 conn,
                 job_id,
@@ -220,7 +242,9 @@ class AppRow(BaseModel):
     position: str
     location: str
     status: str
-    applied: str
+    applied: str = Field(description="Local time, as people read it.")
+    applied_at: str = Field(description="UTC, ISO 8601.")
+    applied_on: str = Field(description="The local date, YYYY-MM-DD.")
     last_update: str
     days_since_applied: int
     where_to_check: str
@@ -238,6 +262,7 @@ class AppsList(BaseModel):
 
 
 def _row(v: dict[str, Any]) -> AppRow:
+    v = {**v, "applied_on": v["applied_day"]}
     return AppRow(**{k: v[k] for k in AppRow.model_fields})
 
 

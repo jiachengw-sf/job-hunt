@@ -13,10 +13,12 @@ Rules (from the build spec):
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Any, Literal
+from urllib.parse import urlsplit
 
 from pydantic import BaseModel, Field
 
@@ -361,10 +363,27 @@ class Ingestor:
                 or rows[0]["board_token"].lower() == p.board_token.lower()
             ):
                 return rows[0]
-        return self.conn.execute(
+        row = self.conn.execute(
             "SELECT j.* FROM job_urls u JOIN jobs j ON j.id=u.job_id WHERE u.url=? LIMIT 1",
             (p.canonical_url,),
         ).fetchone()
+        return row or self._unlisted_match(p)
+
+    def _unlisted_match(self, p: Posting) -> sqlite3.Row | None:
+        """A job recorded without a link (`applied --company --title --req-id`) that this
+        posting is: same company, and its requisition id is the posting's id or in its URL."""
+        if p.key:
+            return None
+        ids = req_ids(p)
+        if not ids:
+            return None
+        prefix = f"manual:{_slug(p.company)}:"
+        rows = self.conn.execute(
+            "SELECT * FROM jobs WHERE dedupe_key LIKE ? AND ats_job_id IS NOT NULL",
+            (prefix.replace("%", r"\%") + "%",),
+        ).fetchall()
+        hits = [r for r in rows if r["ats_job_id"].casefold() in ids]
+        return hits[0] if len(hits) == 1 else None
 
     def upsert(self, p: Posting, sid: str, *, baseline: bool) -> tuple[int, str]:
         """Insert or merge one posting. Returns (job id, new|changed|reopened|same)."""
@@ -394,7 +413,7 @@ class Ingestor:
             return job_id, "new"
 
         job_id = existing["id"]
-        if existing["dedupe_key"].startswith("url:") and not p.dedupe_key.startswith("url:"):
+        if _key_rank(p.dedupe_key) > _key_rank(existing["dedupe_key"]):
             self.conn.execute("UPDATE jobs SET dedupe_key=? WHERE id=?", (p.dedupe_key, job_id))
         prev = self.conn.execute(
             "SELECT posting_json FROM source_jobs WHERE source_id=? AND job_id=?", (sid, job_id)
@@ -430,7 +449,7 @@ class Ingestor:
             )
 
     def _urls(self, job_id: int, p: Posting, sid: str) -> None:
-        for url in dict.fromkeys([p.canonical_url, p.url]):
+        for url in dict.fromkeys(u for u in (p.canonical_url, p.url) if u):
             self.conn.execute(
                 "INSERT OR IGNORE INTO job_urls (job_id, url, source_id, first_seen) "
                 "VALUES (?,?,?,?)",
@@ -678,6 +697,67 @@ def run_fetch(
 class MissingPostingInfo(JobhuntError):
     code = "missing_posting_info"
     exit_code = ExitCode.USAGE
+
+
+def _key_rank(key: str) -> int:
+    """How specific a dedupe key is: an ATS id beats a URL, which beats company + title."""
+    return 0 if key.startswith("manual:") else 1 if key.startswith("url:") else 2
+
+
+def _slug(s: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", s.casefold()).strip("-")
+
+
+# requisition ids as employers write them: JR2027047, R-123456, REQ-1234, 123456 (a bare
+# number needs five digits, so a year in a URL is never one)
+_REQ = re.compile(r"(?<![A-Za-z0-9])((?:JR|R|REQ|JOB)[-_]?\d{3,}|\d{5,})(?![A-Za-z0-9])", re.I)
+
+
+def req_ids(p: Posting) -> set[str]:
+    """Requisition ids a posting carries: its ATS job id, and ids in its URL (Workday ends the
+    path with ``_<req id>``). Lower-cased."""
+    out = {p.ats_job_id.casefold()} if p.ats_job_id else set()
+    for u in (p.url, p.canonical_url):
+        path = urlsplit(u or "").path
+        last = path.rstrip("/").rsplit("/", 1)[-1]
+        if "_" in last:
+            out.add(last.rsplit("_", 1)[-1].casefold())
+        out |= {m.group(1).casefold() for m in _REQ.finditer(path)}
+    return {i for i in out if any(c.isdigit() for c in i)}
+
+
+def add_unlisted(
+    conn: sqlite3.Connection,
+    *,
+    company: str,
+    title: str,
+    req_id: str | None,
+    cfg: DiscoveryConfig,
+    now: str,
+) -> int:
+    """A job you applied to that has no posting link (found in email, a career fair, ...): kept
+    by company, title and requisition id. Adding it again finds the same job."""
+    if not company.strip() or not title.strip():
+        raise MissingPostingInfo("A job without a URL needs its company and title.")
+    key = f"manual:{_slug(company)}:{_slug(title)}" + (f":{_slug(req_id)}" if req_id else "")
+    if row := conn.execute("SELECT id FROM jobs WHERE dedupe_key=?", (key,)).fetchone():
+        return int(row[0])
+    p = Posting(
+        source_id=MANUAL_ID, url="", canonical_url="", ats="unknown", company=company.strip(),
+        title=title.strip(), ats_job_id=req_id.strip() if req_id else None, key=key,
+    )  # fmt: skip
+    run_id = start_run(conn, "add", now)
+    ing = Ingestor(conn, now=now, run_id=run_id, cfg=cfg)
+    ing.ensure_source(ManualSource(MANUAL_ID, {}, []))
+    conn.execute("BEGIN IMMEDIATE")
+    try:
+        job_id, _ = ing.upsert(p, MANUAL_ID, baseline=False)
+        conn.execute("COMMIT")
+    except BaseException:
+        conn.execute("ROLLBACK")
+        raise
+    finish_run(conn, run_id, "ok", {"job_id": job_id, "status": "new", "unlisted": True}, now)
+    return job_id
 
 
 def add_url(
