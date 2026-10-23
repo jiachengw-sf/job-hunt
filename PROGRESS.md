@@ -923,3 +923,41 @@ A full end-to-end run of v0.2.0 as a real user found eight issues. They land her
   choice, so a later prefill and `applied` use it. With several resumes and no default a job is
   skipped with `suggested_resume` (BM25 over the redacted texts) until the user picks. The review
   names the file attached (`resume`). The setup and apply skills say how.
+
+### 5. Answer bank: same question, different words ✅
+
+- **Rewordings:** candidates are found on a canonical paraphrase ("lawfully" = "legally",
+  "eligible to work" = "authorized to work", visa / employer sponsorship = "sponsor", "the
+  country where this job is located" = "country") and only between labels that ask the same
+  things (authorization, sponsorship, citizenship, relocation, onsite, high school; a time word
+  on one side only is allowed). So "Are you lawfully authorized to work in the U.S.?" suggests
+  `work_auth.authorized`, and "authorized to work without sponsorship" stays its own question.
+  Candidates still need the user's confirmation.
+- **Places:** in location questions (relocate, onsite, office, commute...) place names match as
+  "place", so one confirmed wording covers every city. Other questions keep their capitals
+  ("experience in Python" is not a place).
+- **Location preferences:** `location.relocate_anywhere_in` (countries) answers "relocate to
+  <city>?" for jobs in those countries (`location.relocate_to`); `location.onsite_full_time`
+  answers onsite-five-days questions (`location.onsite`).
+- **Student built-ins:** high school graduation year, university email (sensitive, its own
+  identity field), standardized tests taken (with "None" when you have none) and SAT / ACT /
+  GRE / GMAT scores (sensitive; a test's score is never given for another test), other offers,
+  plans for more school. All in the local form.
+- **CLI:** `answers confirm "<label>" "<label>" ... <key>` takes several labels;
+  `answers edit <key> --answer <value>` sets non-sensitive built-ins (typed and validated).
+  Sensitive answers still only through the form; profile facts through `profile set`.
+- **Form filters:** `preferences.forms.skip_if_required` / `deprioritize_if_required` (answer
+  keys or label words, e.g. `SAT`). A form with such a required field you can't answer is
+  flagged in `inspect`, `jobs` and the digest; skip takes it off pre-fill and the digest's lists
+  (its own section) with priority 0, deprioritize multiplies priority by
+  `fit.form_filter_factor: 0.5`.
+
+### 6. Setup form ✅
+
+- **Bug:** after a save the page redirected to `?saved=1`, so any reload, or an old tab left on
+  that URL, said "Saved" with nothing written (`saved_at` unchanged).
+- **Fix:** "Saved" shows once, for the save just made (a one-time id); the page always shows
+  when it was last saved. A post with an old token gets a page that says nothing was saved and
+  how to get the current link. The page pings the server every 20s; a stale tab shows a banner
+  and disables Save. `setup form` says when a form is already running and at which URL
+  (`reused`).
