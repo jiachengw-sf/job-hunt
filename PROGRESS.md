@@ -840,3 +840,36 @@ Verified (2026-10-21, offline fixtures):
 - Lever and Ashby confirmation IDs aren't captured (no known ID on their confirmation pages).
 - Not verified: a live MyGreenhouse or Workday sign-in (no account was used), the Sheets
   formatting against a real spreadsheet (fake client only), and Windows in real use.
+
+## Fixes from the v0.2.0 end-to-end test (2026-10-23)
+
+A full end-to-end run of v0.2.0 as a real user found eight issues. They land here one at a time.
+
+### 1. Greenhouse Education block ✅
+
+- **Bug:** on Greenhouse postings with a required Education section, pre-fill reported every
+  field filled and the job was classed Ready while School, Degree and the dates sat empty. The
+  job API's top-level `education` (`education_required` / `education_optional`, absent when
+  hidden) isn't part of `questions[]`, so the reader never put those fields in the form spec.
+- **Fix:** the reader turns `education` into fields (`school--0`, `degree--0`, `discipline--0`,
+  start/end month and year). Which parts show, and which are required, comes from the public job
+  page's `education_config`; without it every part is assumed shown with the API's flag, so a
+  job is never Ready on a guess. Degree and discipline options are read from the board's public
+  `education/{degrees,disciplines}` lists (once per run); schools are searched on the page.
+- Values come from `profile.education[]`, most recent first: the first entry answers the block
+  and each further entry fills an "Add another" copy (optional). A choice is made only when it is
+  unambiguous: a degree of the same level ("BS" -> "Bachelor's Degree", never "Accelerated
+  Master's"), or a school or discipline with the same name. Otherwise the field is
+  `option_mismatch` when inspected and `no_option` in the review: never filled by guesswork and
+  never left blank in silence. Read-back covers every part.
+- **Safety net, every ATS:** after a fill, any required control on the page that answers.json
+  doesn't cover comes back as `unlisted` in `needs_you` and is outlined on the page.
+- **Audit:** live forms compared with the form spec, matching every required control on the
+  page to a spec field. Greenhouse (robinhood, discord, monzo, figma): only Education was
+  missing; demographic questions carry their question id in the DOM (the adapter now uses it
+  before the label). Lever (palantir, spotify): nothing missing, since the reader parses the
+  rendered page. Ashby (openai, ramp): every section and survey form is read.
+- `FieldResult.options` keeps 50 options for envelopes; values are now picked from the form's
+  full list (it also affected long country lists).
+- Not verified live: filling the live Education block end to end (no live form was filled; the
+  school search, option ids and "Add another" were checked by hand in the browser).
