@@ -13,10 +13,13 @@ from jobhunt.fit.evaluate import _load_persona
 from jobhunt.forms import ashby, greenhouse, lever
 from jobhunt.forms.classify import classify, display_value
 from jobhunt.forms.model import FormError, FormSpec
+from jobhunt.http import FixtureTransport, HttpClient
 from tests.conftest import PERSONAS, PERSONAS_DIR, REPO
 
 OVERLAY = REPO / "tests" / "fixtures" / "forms" / "overlay"
+PAGES = REPO / "tests" / "fixtures" / "forms" / "pages"
 GH = OVERLAY / "boards-api.greenhouse.io" / "v1" / "boards"
+GH_EDU = OVERLAY / "boards.greenhouse.io" / "v1" / "boards"
 LV = OVERLAY / "jobs.lever.co"
 AB = OVERLAY / "jobs.ashbyhq.com"
 
@@ -24,6 +27,26 @@ AB = OVERLAY / "jobs.ashbyhq.com"
 def gh(board: str, jid: str) -> FormSpec:
     return greenhouse.parse(
         json.loads((GH / board / "jobs" / f"{jid}.json").read_text(encoding="utf-8"))
+    )
+
+
+def gh_edu(board: str, jid: str) -> FormSpec:
+    """A Greenhouse form with its Education block: the page's config, the board's options."""
+    page = (PAGES / "job-boards.greenhouse.io" / board / "jobs" / f"{jid}.html").read_text(
+        encoding="utf-8"
+    )
+    m = greenhouse._CONFIG.search(page)
+    assert m, "the fixture page carries an education_config"
+
+    def options(kind: str) -> list[str]:
+        raw = (GH_EDU / board / "education" / f"{kind}.json").read_text(encoding="utf-8")
+        return [i["text"] for i in json.loads(raw)["items"]]
+
+    return greenhouse.parse(
+        json.loads((GH / board / "jobs" / f"{jid}.json").read_text(encoding="utf-8")),
+        education_config=json.loads(m.group(1)),
+        degrees=options("degrees"),
+        disciplines=options("disciplines"),
     )
 
 
@@ -41,6 +64,7 @@ SPECS = {
     "gh_A": lambda: gh("northwind", "1001"),
     "gh_B": lambda: gh("northwind", "1002"),
     "gh_C": lambda: gh("northwind", "1004"),
+    "gh_E": lambda: gh_edu("northwind", "1005"),
     "lv_A": lambda: lv("bluefin", "4d1c2e7a-0b6f-4c1e-9a7d-2f3b5c6d7e01"),
     "lv_B": lambda: lv("driftwood", "7a8b9c0d-1e2f-4a3b-8c4d-5e6f7a8b9c01"),
     "lv_C": lambda: lv("bluefin", "4d1c2e7a-0b6f-4c1e-9a7d-2f3b5c6d7e02"),
@@ -98,6 +122,73 @@ def test_greenhouse_hispanic_question_is_eeo():
     c2 = classify(spec, ctx, matcher, eeo_confirmed=True)
     h2 = next(f for f in c2.fields if f.id == "hispanic_ethnicity")
     assert display_value(h2, ctx, matcher) == "Decline To Self Identify"
+
+
+def test_greenhouse_education_block_follows_the_page_config():
+    """Education sits outside questions[]: the page's education_config says which parts show."""
+    s = gh_edu("northwind", "1005")
+    by = {f.id: f for f in s.fields}
+    assert s.education and s.education.parts == {
+        "school_name": True, "degree": True, "discipline": True, "start_year": False,
+        "end_month": True, "end_year": True,
+    }  # fmt: skip
+    assert "start-month--0" not in by  # hidden on this page
+    assert by["school--0"].required and by["school--0"].options == []  # searched on the page
+    assert by["degree--0"].options[:2] == ["Accelerated Master's", "Advanced Certificate"]
+    assert "Statistics" in by["discipline--0"].options
+    assert by["end-month--0"].options[4] == "May" and by["end-year--0"].type == "number"
+    assert not by["start-year--0"].required
+
+
+def test_greenhouse_education_without_page_config_assumes_every_part():
+    data = json.loads((GH / "northwind" / "jobs" / "1005.json").read_text(encoding="utf-8"))
+    req = greenhouse.parse(data)
+    edu = [f for f in req.fields if f.id.endswith("--0")]
+    assert len(edu) == 7 and all(f.required for f in edu)
+    data["education"] = "education_optional"
+    assert not any(f.required for f in greenhouse.parse(data).fields if f.id.endswith("--0"))
+    del data["education"]  # education_hidden: the API leaves the key out
+    s = greenhouse.parse(data)
+    assert s.education is None and not any(f.id.endswith("--0") for f in s.fields)
+
+
+def test_greenhouse_fetch_reads_the_page_config_and_option_lists():
+    """fetch() GETs the public job page and the board's degree and discipline lists."""
+    roots = [FixtureTransport(OVERLAY), FixtureTransport(PAGES)]
+
+    def transport(url, headers, timeout):
+        for t in roots:
+            r = t(url, headers, timeout)
+            if r.status != 404:
+                return r
+        return r
+
+    client = HttpClient(user_agent="test", min_host_interval=0, transport=transport)
+    s = greenhouse.fetch(client, "northwind", "1005")
+    assert s.model_dump() == gh_edu("northwind", "1005").model_dump() | {"url": s.url}
+    greenhouse.fetch(client, "northwind", "1005")  # option lists are read once per client
+    calls = roots[0].calls + roots[1].calls
+    assert sum("education/degrees" in c for c in calls) == 1
+    plain = HttpClient(user_agent="test", min_host_interval=0, transport=transport)
+    calls_before = len(roots[0].calls) + len(roots[1].calls)
+    greenhouse.fetch(plain, "northwind", "1001")  # no education: no extra requests
+    assert len(roots[0].calls) + len(roots[1].calls) - calls_before == 1
+
+
+@pytest.mark.parametrize("persona", PERSONAS)
+def test_unresolved_education_is_never_ready(persona):
+    """Without the page config every part is required; an entry with no start date can't be
+    Ready, and neither can a degree or discipline the form doesn't list."""
+    data = json.loads((GH / "northwind" / "jobs" / "1005.json").read_text(encoding="utf-8"))
+    spec = greenhouse.parse(data, degrees=["Bachelor's Degree", "Master's Degree"],
+                            disciplines=["Biology"])  # fmt: skip
+    ctx, matcher, eeo = ctx_for(persona, COMPANY["gh"])
+    c = classify(spec, ctx, matcher, eeo_confirmed=eeo)
+    assert c.cls != "ready"
+    needs = {f.id: f.resolution for f in c.needs}
+    assert needs["discipline--0"] == "option_mismatch"
+    if not ctx.profile.education[0].start:
+        assert needs["start-month--0"] == needs["start-year--0"] == "unanswered"
 
 
 def test_lever_parse_reads_cards_and_captcha():

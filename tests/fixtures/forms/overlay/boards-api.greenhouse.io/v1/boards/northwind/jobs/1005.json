@@ -1,0 +1,259 @@
+{
+ "id": 1005,
+ "title": "Robotics Intern",
+ "company_name": "Northwind Robotics",
+ "absolute_url": "https://job-boards.greenhouse.io/northwind/jobs/1005",
+ "location": {
+  "name": "Pittsburgh, PA"
+ },
+ "first_published": "2026-10-10T12:00:00-04:00",
+ "content": "&lt;p&gt;Northwind Robotics is hiring a robotics software intern for summer 2027.&lt;/p&gt;&lt;p&gt;Requirements:&lt;/p&gt;&lt;p&gt;- Currently pursuing a degree in computer science or a related field&lt;/p&gt;&lt;p&gt;- Experience with Python&lt;/p&gt;&lt;p&gt;- Familiarity with C++ or ROS&lt;/p&gt;&lt;p&gt;Nice to have:&lt;/p&gt;&lt;p&gt;- Experience with Docker&lt;/p&gt;",
+ "questions": [
+  {
+   "required": true,
+   "label": "First Name",
+   "fields": [
+    {
+     "name": "first_name",
+     "type": "input_text",
+     "values": []
+    }
+   ]
+  },
+  {
+   "required": true,
+   "label": "Last Name",
+   "fields": [
+    {
+     "name": "last_name",
+     "type": "input_text",
+     "values": []
+    }
+   ]
+  },
+  {
+   "required": true,
+   "label": "Email",
+   "fields": [
+    {
+     "name": "email",
+     "type": "input_text",
+     "values": []
+    }
+   ]
+  },
+  {
+   "required": true,
+   "label": "Phone",
+   "fields": [
+    {
+     "name": "phone",
+     "type": "input_text",
+     "values": []
+    }
+   ]
+  },
+  {
+   "required": true,
+   "label": "Resume/CV",
+   "fields": [
+    {
+     "name": "resume",
+     "type": "input_file",
+     "values": []
+    },
+    {
+     "name": "resume_text",
+     "type": "textarea",
+     "values": []
+    }
+   ]
+  },
+  {
+   "required": false,
+   "label": "Cover Letter",
+   "fields": [
+    {
+     "name": "cover_letter",
+     "type": "input_file",
+     "values": []
+    },
+    {
+     "name": "cover_letter_text",
+     "type": "textarea",
+     "values": []
+    }
+   ]
+  },
+  {
+   "required": false,
+   "label": "LinkedIn Profile",
+   "fields": [
+    {
+     "name": "question_100501",
+     "type": "input_text",
+     "values": []
+    }
+   ]
+  },
+  {
+   "required": true,
+   "label": "Are you legally authorized to work in the United States?",
+   "description": null,
+   "fields": [
+    {
+     "name": "question_100502",
+     "type": "multi_value_single_select",
+     "values": [
+      {
+       "label": "Yes",
+       "value": 1
+      },
+      {
+       "label": "No",
+       "value": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "required": true,
+   "label": "Will you now or in the future require sponsorship for employment visa status (e.g., H-1B visa status)?",
+   "description": null,
+   "fields": [
+    {
+     "name": "question_100503",
+     "type": "multi_value_single_select",
+     "values": [
+      {
+       "label": "Yes",
+       "value": 1
+      },
+      {
+       "label": "No",
+       "value": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "required": true,
+   "label": "How did you hear about this job?",
+   "fields": [
+    {
+     "name": "question_100504",
+     "type": "multi_value_single_select",
+     "values": [
+      {
+       "label": "Job board",
+       "value": 0
+      },
+      {
+       "label": "Company website",
+       "value": 1
+      },
+      {
+       "label": "Referral",
+       "value": 2
+      },
+      {
+       "label": "University career center",
+       "value": 3
+      },
+      {
+       "label": "Other",
+       "value": 4
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "location_questions": [],
+ "compliance": [
+  {
+   "type": "eeoc",
+   "description": "&lt;p&gt;Voluntary self-identification (synthetic fixture).&lt;/p&gt;",
+   "questions": [
+    {
+     "required": false,
+     "label": "Gender",
+     "fields": [
+      {
+       "name": "gender",
+       "type": "multi_value_single_select",
+       "values": [
+        {
+         "label": "Male",
+         "value": 1
+        },
+        {
+         "label": "Female",
+         "value": 2
+        },
+        {
+         "label": "Decline To Self Identify",
+         "value": 3
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "required": false,
+     "label": "Race",
+     "fields": [
+      {
+       "name": "race",
+       "type": "multi_value_single_select",
+       "values": [
+        {
+         "label": "Asian",
+         "value": 1
+        },
+        {
+         "label": "White",
+         "value": 2
+        },
+        {
+         "label": "Decline To Self Identify",
+         "value": 3
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "required": false,
+     "label": "VeteranStatus",
+     "fields": [
+      {
+       "name": "veteran_status",
+       "type": "multi_value_single_select",
+       "values": [
+        {
+         "label": "I am not a protected veteran",
+         "value": 1
+        },
+        {
+         "label": "I don't wish to answer",
+         "value": 3
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "demographic_questions": null,
+ "data_compliance": [
+  {
+   "type": "gdpr",
+   "requires_consent": false
+  }
+ ],
+ "education": "education_required"
+}

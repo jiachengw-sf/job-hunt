@@ -28,13 +28,15 @@ from pydantic import BaseModel, Field
 
 from jobhunt.bank.keys import AnswerContext
 from jobhunt.bank.match import Matcher
+from jobhunt.forms import education
 from jobhunt.forms.classify import Classification, FieldResult, fill_value
-from jobhunt.forms.model import FormField, FormSpec
+from jobhunt.forms.model import EducationBlock, FormField, FormSpec
 from jobhunt.paths import secure_file
 
 Action = Literal["fill", "recommend", "human", "skip"]
 CHOICE = frozenset({"select", "multiselect", "radio", "checkbox", "boolean"})
 # zero-width and bidi control characters never go into a form
+MAX_EDUCATION = 6  # education entries a sheet may fill (the first plus "Add another" copies)
 _INVISIBLE = re.compile("[​-‏‪-‮⁠-⁤﻿]")
 
 
@@ -128,12 +130,13 @@ def build_sheet(
     essays = essays or {}
     for fr in cls.fields:
         action, note = _action(fr, spec.ats)
-        value = fill_value(fr, ctx, matcher) if action in ("fill", "recommend") else None
+        f = by_id.get(fr.id)
+        opts = f.options if f else None
+        value = fill_value(fr, ctx, matcher, opts) if action in ("fill", "recommend") else None
         if fr.resolution == "essay" and fr.id in essays:
             action, value, note = "fill", essays[fr.id], "your approved essay: reread it here"
         if action == "fill" and value is None:
             action, note = ("human" if fr.required else "skip"), "no value to fill"
-        f = by_id.get(fr.id)
         ff = FillField(
             id=fr.id,
             label=fr.label,
@@ -150,6 +153,8 @@ def build_sheet(
         )
         _follow(ff, f, {x.id: x for x in out})
         out.append(ff)
+    if spec.education:
+        out += _more_education(spec.education, ctx)
     return AnswerSheet(
         job_id=job_id,
         ats=spec.ats,
@@ -161,10 +166,45 @@ def build_sheet(
     )
 
 
+def _more_education(block: EducationBlock, ctx: AnswerContext) -> list[FillField]:
+    """Each education entry after the first, for the block's "Add another" copies. They are
+    optional: a part with no confident value is left blank."""
+    out: list[FillField] = []
+    for n, entry in enumerate(ctx.profile.education[1:MAX_EDUCATION], start=1):
+        for f in education.fields(block, n):
+            part = education.BY_DOM[f.id.rsplit("--", 1)[0]]
+            value = education.raw_value(part, entry)
+            if value and f.options:
+                value = education.pick(part, value, f.options)
+            out.append(
+                FillField(
+                    id=f.id,
+                    label=f.label,
+                    type=f.type,
+                    required=False,
+                    section=f.section,
+                    action="fill" if value else "skip",
+                    value=_clean(value),
+                    note=None if value else "no confident value: left blank",
+                    options=f.options,
+                )
+            )
+    return out
+
+
+def form_fields(spec: FormSpec) -> dict[str, FormField]:
+    """Every field the form can take by id, including the education block's added entries."""
+    fields = {f.id: f for f in spec.fields}
+    if spec.education:
+        for n in range(1, MAX_EDUCATION):
+            fields.update({f.id: f for f in education.fields(spec.education, n)})
+    return fields
+
+
 def validate(sheet: AnswerSheet, spec: FormSpec) -> list[Problem]:
     """Check every value against the form itself. An empty list means the sheet may be filled."""
     problems: list[Problem] = []
-    fields = {f.id: f for f in spec.fields}
+    fields = form_fields(spec)
     by_sheet = {f.id: f for f in sheet.fields}
     sheet_ids = set(by_sheet)
 

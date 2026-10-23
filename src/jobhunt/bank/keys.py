@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Literal
 
 from jobhunt.fit.normalize import COUNTRY_NAMES
+from jobhunt.forms.education import MONTHS, PARTS, month_name, pick_degree, pick_name, year_of
 from jobhunt.models import Answers, Preferences, Profile
 from jobhunt.models.answers import DECLINE_EEO, WorkAuthorization
 
@@ -50,6 +51,8 @@ class KeySpec:
     eeo: bool = False
     # extra option texts that mean the same as the value (for selects)
     option_aliases: Callable[[str], list[str]] = field(default=lambda v: [])
+    # the option a value confidently means, for values that rarely equal option text
+    pick: Callable[[str, list[str]], str | None] | None = None
 
 
 def _yn(v: str | None) -> str | None:
@@ -119,6 +122,18 @@ def _grad(c: AnswerContext) -> str | None:
     if c.profile.education and c.profile.education[0].graduation:
         return c.profile.education[0].graduation
     return None
+
+
+def _start(c: AnswerContext) -> str | None:
+    return c.profile.education[0].start if c.profile.education else None
+
+
+def _month_aliases(v: str) -> list[str]:
+    """ "May" -> "05", "5", "May": for forms that list months as numbers or short names."""
+    if v not in MONTHS:
+        return []
+    n = MONTHS.index(v) + 1
+    return [f"{n:02d}", str(n), v[:3]]
 
 
 def _gpa(c: AnswerContext) -> str | None:
@@ -202,10 +217,11 @@ def _spec(
     sensitive: bool = False,
     eeo: bool = False,
     aliases: Callable[[str], list[str]] | None = None,
+    pick: Callable[[str, list[str]], str | None] | None = None,
 ) -> KeySpec:
     if aliases is None:
         aliases = _yes_aliases if kind == "yesno" else (lambda v: [])
-    return KeySpec(key, question, kind, resolve, sensitive, eeo, aliases)
+    return KeySpec(key, question, kind, resolve, sensitive, eeo, aliases, pick)
 
 
 SPECS: list[KeySpec] = [
@@ -231,10 +247,14 @@ SPECS: list[KeySpec] = [
     _spec("files.resume", "Resume/CV", "file", lambda c: str(c.resume) if c.resume else None),
     _spec("files.cover_letter", "Cover letter", "essay", lambda c: None),
     # education
-    _spec("education.school", "School or university", "choice", _school),
-    _spec("education.degree", "Degree", "choice", _degree),
-    _spec("education.major", "Major or field of study", "choice", _major),
+    _spec("education.school", "School or university", "choice", _school, pick=pick_name),
+    _spec("education.degree", "Degree", "choice", _degree, pick=pick_degree),
+    _spec("education.major", "Major or field of study", "choice", _major, pick=pick_name),
     _spec("education.graduation", "Graduation date", "date", _grad),
+    _spec("education.start_month", "Education start month", "choice", lambda c: month_name(_start(c)), aliases=_month_aliases),
+    _spec("education.start_year", "Education start year", "text", lambda c: year_of(_start(c))),
+    _spec("education.end_month", "Education end (graduation) month", "choice", lambda c: month_name(_grad(c)), aliases=_month_aliases),
+    _spec("education.end_year", "Education end (graduation) year", "text", lambda c: year_of(_grad(c))),
     _spec("education.graduation_year", "Graduation year", "choice", lambda c: str(c.answers.education.graduation_year) if c.answers.education.graduation_year else None),
     _spec("education.gpa", "GPA", "number", _gpa, sensitive=True),
     _spec("education.class_standing", "Current year in school", "choice", lambda c: c.answers.education.class_standing),
@@ -306,6 +326,8 @@ FIELD_NAMES: dict[str, str] = {
     "hispanic_ethnicity": "eeo.hispanic",
     "veteran_status": "eeo.veteran",
     "disability_status": "eeo.disability",
+    # the first entry of the Education block (forms/education.py)
+    **{f"{p.dom}--0": p.key for p in PARTS},
     # Lever
     "name": "identity.full_name",
     "org": "experience.current_employer",

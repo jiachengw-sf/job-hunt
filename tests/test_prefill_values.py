@@ -9,7 +9,7 @@ import pytest
 from jobhunt.forms.classify import classify
 from jobhunt.forms.model import FormField, FormSpec, ShownIf
 from jobhunt.models.answers import DECLINE_EEO
-from jobhunt.prefill.values import build_sheet, read_sheet, validate, write_sheet
+from jobhunt.prefill.values import build_sheet, form_fields, read_sheet, validate, write_sheet
 from tests.conftest import PERSONAS
 from tests.test_forms import COMPANY, SPECS, ctx_for
 
@@ -30,11 +30,11 @@ def sheet_for(persona: str, name: str, tmp_path, *, resume: bool = True):
 @pytest.mark.parametrize("name", sorted(SPECS))
 def test_ready_forms_validate_for_every_persona(persona, name, tmp_path):
     spec, cls, sheet = sheet_for(persona, name, tmp_path)
-    assert [f.id for f in sheet.fields] == [f.id for f in spec.fields]
+    assert [f.id for f in sheet.fields][: len(spec.fields)] == [f.id for f in spec.fields]
     if cls.cls != "ready":
         return
     assert validate(sheet, spec) == []
-    by = {f.id: f for f in spec.fields}
+    by = form_fields(spec)
     for ff in sheet.to_fill():
         f = by[ff.id]
         if f.type in ("select", "radio") and f.options:
@@ -187,3 +187,29 @@ def test_sheet_file_is_owner_only(tmp_path):
     assert read_sheet(p) == sheet
     if stat.S_IMODE(p.stat().st_mode) != 0o600:
         pytest.skip("filesystem without POSIX modes")
+
+
+def test_more_education_entries_fill_the_add_another_copies(tmp_path):
+    """The first entry answers the block; each further one is an optional copy."""
+    spec, cls, sheet = sheet_for("intl-sponsorship", "gh_E", tmp_path)
+    assert cls.cls == "ready", cls.reasons
+    by = {f.id: f for f in sheet.fields}
+    assert by["school--0"].value == "Lakeview Institute of Technology"
+    assert by["degree--0"].value == "Master's Degree"  # MS, said the form's way
+    assert by["discipline--0"].value == "Computer Science"
+    assert (by["end-month--0"].value, by["end-year--0"].value) == ("December", "2027")
+    assert by["start-year--0"].value == "2025"
+    second = {k: v for k, v in by.items() if k.endswith("--1")}
+    assert all(not f.required for f in second.values())
+    assert by["degree--1"].value == "Bachelor's Degree"  # BEng
+    assert by["discipline--1"].value == "Software Engineering"
+    assert by["start-year--1"].action == "skip"  # the profile has no start for it
+    assert "school--2" not in by
+    assert validate(sheet, spec) == []
+    by["degree--1"].value = "BEng"  # never a value the form doesn't list
+    assert any(p.id == "degree--1" for p in validate(sheet, spec))
+
+
+def test_one_education_entry_adds_no_copies(tmp_path):
+    spec, _, sheet = sheet_for("first-year-intern", "gh_E", tmp_path)
+    assert [f.id for f in sheet.fields] == [f.id for f in spec.fields]

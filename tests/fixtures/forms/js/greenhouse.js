@@ -2,6 +2,7 @@
 // location autocomplete, phone country, S3 resume upload, JS-driven submit). Test fixture only.
 (function () {
   const LOCATIONS = JSON.parse(document.getElementById('fx-locations').textContent);
+  const SCHOOLS = JSON.parse(document.getElementById('fx-schools').textContent);
 
   function menuFor(container) {
     let m = container.querySelector('.select__menu');
@@ -22,9 +23,10 @@
   }
   function options(container, text) {
     const t = text.trim().toLowerCase();
-    if (container.dataset.kind === 'location') {
-      if (t.length < 2) return [];
-      return LOCATIONS.filter(o => o.toLowerCase().includes(t));
+    if (container.dataset.kind === 'location' || container.dataset.kind === 'school') {
+      if (t.length < 2) return [];  // both load by search as you type
+      const all = container.dataset.kind === 'school' ? SCHOOLS : LOCATIONS;
+      return all.filter(o => o.toLowerCase().includes(t));
     }
     const all = JSON.parse(container.dataset.options);
     return all.filter(o => o.toLowerCase().includes(t));
@@ -86,12 +88,29 @@
     input.addEventListener('click', () => render(c));
     input.addEventListener('focus', () => render(c));
     input.addEventListener('input', () => {
-      if (c.dataset.kind === 'location') setTimeout(() => render(c), 150);
-      else render(c);
+      if (c.dataset.kind === 'location' || c.dataset.kind === 'school') {
+        setTimeout(() => render(c), 150);
+      } else render(c);
     });
     input.addEventListener('keydown', e => { if (e.key === 'Escape') close(c); });
   }
   document.querySelectorAll('.select__container').forEach(bind);
+
+  // Education: "Add another" appends entry N (ids end in --N), "Remove education" drops it.
+  const addEdu = document.querySelector('.add-another-button');
+  if (addEdu) {
+    addEdu.addEventListener('click', () => {
+      const n = document.querySelectorAll('.education--form').length;
+      const tpl = document.getElementById('fx-education').innerHTML
+        .replace(/--1(?=["-])/g, '--' + n);
+      addEdu.insertAdjacentHTML('beforebegin', tpl);
+      const entry = addEdu.previousElementSibling;
+      entry.dataset.entry = String(n);
+      entry.querySelectorAll('.select__container').forEach(bind);
+      entry.querySelector('[aria-label="Remove education"]').addEventListener('click',
+        () => entry.remove());
+    });
+  }
   document.addEventListener('mousedown', e => {
     document.querySelectorAll('.select__container').forEach(c => {
       if (!c.contains(e.target)) close(c);

@@ -46,10 +46,21 @@ class FormField(BaseModel):
     )
 
 
+class EducationBlock(BaseModel):
+    """A repeatable education section ("Add another"). Its first entry is in ``fields``."""
+
+    parts: dict[str, bool] = Field(
+        description="The parts the page shows (school_name, degree, ...), each to required."
+    )
+    degrees: list[str] = Field(default_factory=list, description="The form's degree options.")
+    disciplines: list[str] = Field(default_factory=list)
+
+
 class FormSpec(BaseModel):
     ats: str
     url: str | None = None
     fields: list[FormField] = Field(default_factory=list)
+    education: EducationBlock | None = None
     captcha_at_submit: bool = Field(False, description="A CAPTCHA guards the Submit button.")
     blocked: str | None = Field(
         None, description="Why the form can't be read or used without the human (login, ...)."

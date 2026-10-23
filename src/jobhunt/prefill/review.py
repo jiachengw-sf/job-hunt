@@ -2,10 +2,10 @@
 
 Highlights are outlines plus a short note next to the field (plain ``<div>``s, never form
 controls). They cover empty required fields, read-back mismatches, fields the engine couldn't
-find or set, recommended values left for the user (Lever radios and checkboxes), values the ATS
-autofilled from the resume, and every always-human field (attestations, consents, EEO, Ashby
-knockout questions). A banner says jobhunt never submits. The report carries ids, labels and
-statuses only, never values.
+find or set, required controls the form spec didn't list, recommended values left for the user
+(Lever radios and checkboxes), values the ATS autofilled from the resume, and every always-human
+field (attestations, consents, EEO, Ashby knockout questions). A banner says jobhunt never
+submits. The report carries ids, labels and statuses only, never values.
 """
 
 from __future__ import annotations
@@ -32,6 +32,7 @@ _MESSAGES = {
     "recommend": "tick this yourself",
     "left": "yours to answer",
     "autofilled": "filled by the ATS from your resume: check it",
+    "unlisted": "required on the page but jobhunt didn't read it: fill it yourself",
 }
 
 _BANNER_JS = """(text) => {
@@ -107,10 +108,10 @@ def highlight(page: Any, adapter: Adapter, sheet: AnswerSheet, outcomes: list[Fi
         if not o.needs_you:
             continue
         ff = by_id.get(o.id)
-        if ff is None:
+        if ff is None and o.status != "unlisted":
             continue
         try:
-            el = adapter.anchor(page, ff)
+            el = adapter.anchor(page, ff) if ff else _by_dom(page, o.id)
             if el is None:
                 continue
             urgent = o.required and o.status not in ("filled", "recommend")
@@ -124,6 +125,13 @@ def highlight(page: Any, adapter: Adapter, sheet: AnswerSheet, outcomes: list[Fi
         "Submit yourself. jobhunt never submits.",
     )
     return marked
+
+
+def _by_dom(page: Any, ref: str) -> Any | None:
+    """A control the form spec doesn't list, by its id or name on the page."""
+    q = ref.replace("\\", "\\\\").replace('"', '\\"')
+    loc = page.locator(f'[id="{q}"], [name="{q}"]')
+    return loc.first if loc.count() else None
 
 
 def screenshot(page: Any, screens: Path, job_id: int, stamp: str) -> str | None:

@@ -12,6 +12,8 @@ from __future__ import annotations
 import contextlib
 import logging
 import re
+import time
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any, ClassVar, Literal
 
@@ -35,10 +37,11 @@ Status = Literal[
     "left",  # left for the user on purpose (human-only, essay, unanswered)
     "skipped",  # optional and unanswered
     "autofilled",  # empty in answers.json but the ATS filled it (resume parse): check it
+    "unlisted",  # the page requires it but the form spec doesn't list it: never left silently
 ]
 NEEDS_YOU = frozenset(
     {"mismatch", "not_found", "no_option", "refused", "file_rejected", "error", "recommend",
-     "left", "autofilled"}
+     "left", "autofilled", "unlisted"}
 )  # fmt: skip
 TIMEOUT_MS = 5_000
 
@@ -145,6 +148,17 @@ def value_text(ff: FillField) -> str:
     return v or ""
 
 
+# Every required, visible control on the page: what the form spec must cover.
+_REQUIRED_JS = """() => [...document.querySelectorAll('input, textarea, select')].filter(el =>
+  (el.required || el.getAttribute('aria-required') === 'true') && el.type !== 'hidden'
+  && el.getAttribute('aria-hidden') !== 'true' && !el.closest('[hidden], template')
+).map(el => {
+  const by = el.getAttribute('aria-labelledby');
+  const lab = (el.labels && el.labels[0]) || (by && document.getElementById(by));
+  return {id: el.id || '', name: el.getAttribute('name') || '',
+          label: ((lab && lab.innerText) || el.getAttribute('aria-label') || '').trim()};
+})"""
+
 # Bot-check and CAPTCHA widgets load as they normally would, so the human's own submit later
 # isn't broken by a widget the fill starved. jobhunt never solves or touches them.
 WIDGETS = (
@@ -194,6 +208,10 @@ class Adapter:
     def before_fill(self, page: Any, sheet: AnswerSheet) -> list[FieldOutcome]:
         """Anything that must happen before the fields (e.g. phone country)."""
         return []
+
+    def page_ids(self, ff: FillField) -> set[str]:
+        """The ids or names a field's control can carry on the page (default: its own id)."""
+        return {ff.id}
 
     # --- shared ----------------------------------------------------------------------------
 
@@ -254,9 +272,38 @@ class Adapter:
                     log.warning("%s: read-back mismatch on %s", self.ats, ff.id)
             elif ff.action != "fill" and ff.id not in outcomes:
                 outcomes[ff.id] = self._unfilled(page, ff, before.get(ff.id))
+        for o in self.unlisted(page, sheet):
+            outcomes.setdefault(o.id, o)
         return [outcomes[f.id] for f in sheet.fields if f.id in outcomes] + [
             o for k, o in outcomes.items() if k not in {f.id for f in sheet.fields}
         ]
+
+    def unlisted(self, page: Any, sheet: AnswerSheet) -> list[FieldOutcome]:
+        """Required controls on the page that no sheet field covers. A form section the reader
+        doesn't know about is reported for the user, never left blank in silence."""
+        known: set[str] = set()
+        for ff in sheet.fields:
+            known |= self.page_ids(ff)
+        try:
+            controls = page.evaluate(_REQUIRED_JS)
+        except Exception:
+            return []
+        out: list[FieldOutcome] = []
+        for c in controls:
+            ref = c.get("id") or c.get("name") or ""
+            if not ref or known & {c.get("id"), c.get("name")} or ref in {o.id for o in out}:
+                continue
+            out.append(
+                FieldOutcome(
+                    id=ref,
+                    label=c.get("label") or ref,
+                    type="unknown",
+                    required=True,
+                    status="unlisted",
+                    note="the page requires this field but jobhunt didn't read it from the form",
+                )
+            )
+        return out
 
     def _outcome(self, ff: FillField, status: str, note: str | None) -> FieldOutcome:
         return FieldOutcome(
@@ -315,14 +362,29 @@ class Adapter:
             )
 
     @staticmethod
-    def choose(page: Any, options: Any, wanted: str, *, location: bool = False) -> str:
-        """Click the option matching ``wanted`` among visible ``options``."""
+    def choose(
+        page: Any,
+        options: Any,
+        wanted: str,
+        *,
+        location: bool = False,
+        picker: Callable[[str, list[str]], str | None] | None = None,
+        searched: bool = False,
+    ) -> str:
+        """Click the option matching ``wanted`` among visible ``options``. ``picker`` replaces
+        exact matching; ``searched`` waits for results typed into a search box to arrive."""
         try:
             options.first.wait_for(state="visible", timeout=TIMEOUT_MS)
         except Exception as e:
             raise NoOption("no options appeared") from e
-        texts = [t.strip() for t in options.all_inner_texts()]
-        pick = pick_location(wanted, texts) if location else pick_option(wanted, texts)
+        pick_fn = picker or (pick_location if location else pick_option)
+        deadline = time.monotonic() + (TIMEOUT_MS / 1000 if searched else 0)
+        while True:
+            texts = [t.strip() for t in options.all_inner_texts()]
+            pick = pick_fn(wanted, texts)
+            if pick is not None or time.monotonic() >= deadline:
+                break
+            page.wait_for_timeout(250)
         if pick is None:
             raise NoOption(
                 "no option on the page matches your answer confidently: pick it yourself"

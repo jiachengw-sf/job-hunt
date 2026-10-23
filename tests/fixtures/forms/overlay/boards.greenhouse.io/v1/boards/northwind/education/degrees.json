@@ -1,0 +1,96 @@
+{
+ "items": [
+  {
+   "id": 70000,
+   "text": "Accelerated Master's"
+  },
+  {
+   "id": 70001,
+   "text": "Advanced Certificate"
+  },
+  {
+   "id": 70002,
+   "text": "Associates"
+  },
+  {
+   "id": 70003,
+   "text": "Associate's Degree"
+  },
+  {
+   "id": 70004,
+   "text": "Bachelors"
+  },
+  {
+   "id": 70005,
+   "text": "Bachelor's Degree"
+  },
+  {
+   "id": 70006,
+   "text": "Certificate"
+  },
+  {
+   "id": 70007,
+   "text": "Community / Technical College"
+  },
+  {
+   "id": 70008,
+   "text": "Doctorate"
+  },
+  {
+   "id": 70009,
+   "text": "Doctor of Medicine (M.D.)"
+  },
+  {
+   "id": 70010,
+   "text": "Doctor of Philosophy (Ph.D.)"
+  },
+  {
+   "id": 70011,
+   "text": "Engineer's Degree"
+  },
+  {
+   "id": 70012,
+   "text": "High School"
+  },
+  {
+   "id": 70013,
+   "text": "Juris Doctor (J.D.)"
+  },
+  {
+   "id": 70014,
+   "text": "Master of Business Administration (M.B.A.)"
+  },
+  {
+   "id": 70015,
+   "text": "Masters"
+  },
+  {
+   "id": 70016,
+   "text": "Master's Degree"
+  },
+  {
+   "id": 70017,
+   "text": "Master's of Business Administration"
+  },
+  {
+   "id": 70018,
+   "text": "Non-Degree Seeking"
+  },
+  {
+   "id": 70019,
+   "text": "Other"
+  },
+  {
+   "id": 70020,
+   "text": "Postdoctoral Studies"
+  },
+  {
+   "id": 70021,
+   "text": "Technical Diploma"
+  }
+ ],
+ "meta": {
+  "total_count": 22,
+  "per_page": 100
+ }
+}

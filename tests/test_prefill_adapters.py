@@ -17,11 +17,12 @@ from tests.test_forms import COMPANY, SPECS, ctx_for
 RESUMES = REPO / "tests" / "fixtures" / "resumes"
 URLS = {
     "gh_A": "https://job-boards.greenhouse.io/northwind/jobs/1001",
+    "gh_E": "https://job-boards.greenhouse.io/northwind/jobs/1005",
     "lv_A": "https://jobs.lever.co/bluefin/4d1c2e7a-0b6f-4c1e-9a7d-2f3b5c6d7e01/apply",
     "ab_A": "https://jobs.ashbyhq.com/quillstack/9e8d7c6b-5a49-4382-9170-6f5e4d3c2b01/application",
 }
 ATS = {"gh": "greenhouse", "lv": "lever", "ab": "ashby"}
-SUBMITS = ("/jobs/1001", "/apply", "op=ApiSubmit")
+SUBMITS = ("/jobs/1001", "/jobs/1005", "/apply", "op=ApiSubmit")
 
 
 @pytest.fixture
@@ -78,6 +79,7 @@ def test_fill_reads_back_and_stops_before_submit(browser_context, fx, persona, n
     by = {o.id: o for o in outcomes}
     for ff in sheet.to_fill():
         assert by[ff.id].status == "filled", (ff.id, by[ff.id].status, by[ff.id].note)
+    assert not [o.id for o in outcomes if o.status == "unlisted"]  # the spec covers the page
     assert not submit_posts(router), "a submit request left the page during the fill"
     assert not adapter.confirmed(page)
     for o in outcomes:  # values never serialize
@@ -100,6 +102,45 @@ def test_greenhouse_specifics(browser_context, fx):
     assert any("amazonaws.com" in r["url"] and r["method"] == "POST" for r in router.requests)
     eeo = [o for o in outcomes if o.id in ("gender", "race", "veteran_status")]
     assert all(o.status in ("left", "skipped", "filled") for o in eeo)
+
+
+def test_greenhouse_education_block_and_add_another(browser_context, fx):
+    """The second education entry goes into an "Add another" copy; every part reads back."""
+    sheet = make_sheet("intl-sponsorship", "gh_E", RESUMES / "intl-sponsorship.pdf")
+    page, _, _, router, outcomes = run_fill(browser_context, fx, "gh_E", sheet)
+    by = {o.id: o for o in outcomes}
+    assert by["school--0"].actual == "Lakeview Institute of Technology"  # typed, then picked
+    assert by["degree--0"].actual == "Master's Degree"
+    assert by["school--1"].status == by["degree--1"].status == "filled"
+    assert page.locator(".education--form").count() == 2
+    assert page.locator('[id="end-year--1"]').input_value() == "2025"
+    assert by["start-year--1"].status == "skipped"
+    assert not submit_posts(router)
+
+
+def test_greenhouse_school_without_a_confident_option_needs_you(browser_context, fx):
+    spec = SPECS["gh_E"]()
+    spec.url = URLS["gh_E"]
+    ctx, matcher, eeo = ctx_for("first-year-intern", COMPANY["gh"])
+    ctx.resume = RESUMES / "first-year-intern.pdf"
+    ctx.profile.education[0].school = "Northfield"  # the page lists no school by that name
+    cls = classify(spec, ctx, matcher, eeo_confirmed=eeo)
+    sheet = build_sheet(1, spec, cls, ctx, matcher, "2026-10-18T12:00:00Z")
+    *_, outcomes = run_fill(browser_context, fx, "gh_E", sheet)
+    school = next(o for o in outcomes if o.id == "school--0")
+    assert school.status == "no_option" and school.needs_you and school.required
+
+
+def test_required_controls_missing_from_the_spec_are_reported(browser_context, fx):
+    """A reader that misses a section (as the Education block once was) can't make the page
+    look complete: every required control the sheet doesn't cover comes back as unlisted."""
+    sheet = make_sheet("newgrad-analyst", "gh_E", RESUMES / "newgrad-analyst.pdf")
+    sheet.fields = [f for f in sheet.fields if not f.id.endswith("--0")]
+    *_, outcomes = run_fill(browser_context, fx, "gh_E", sheet)
+    unlisted = {o.id: o for o in outcomes if o.status == "unlisted"}
+    assert set(unlisted) == {"school--0", "degree--0", "discipline--0", "end-month--0",
+                             "end-year--0"}  # fmt: skip
+    assert unlisted["degree--0"].label.startswith("Degree") and unlisted["degree--0"].needs_you
 
 
 def eeo_sheet(hispanic: str):

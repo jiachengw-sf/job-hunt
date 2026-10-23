@@ -1,0 +1,52 @@
+{
+ "items": [
+  {
+   "id": 70000,
+   "text": "Accounting"
+  },
+  {
+   "id": 70001,
+   "text": "Biology"
+  },
+  {
+   "id": 70002,
+   "text": "Computer Engineering"
+  },
+  {
+   "id": 70003,
+   "text": "Computer Science"
+  },
+  {
+   "id": 70004,
+   "text": "Computer Science & Engineering"
+  },
+  {
+   "id": 70005,
+   "text": "Economics"
+  },
+  {
+   "id": 70006,
+   "text": "Electrical Engineering"
+  },
+  {
+   "id": 70007,
+   "text": "Mathematics"
+  },
+  {
+   "id": 70008,
+   "text": "Mechanical Engineering"
+  },
+  {
+   "id": 70009,
+   "text": "Software Engineering"
+  },
+  {
+   "id": 70010,
+   "text": "Statistics"
+  }
+ ],
+ "meta": {
+  "total_count": 11,
+  "per_page": 100
+ }
+}

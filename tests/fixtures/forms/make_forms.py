@@ -11,10 +11,12 @@ templates, the ``jobPosting`` object an Ashby application page loads). ``overlay
 same questions, with small scripts (``js/``) that copy each ATS's widgets and quirks, plus the
 endpoint responses the pages call (``<path>.POST.json``; ``_default.POST.json`` per host).
 
-Three templates:
+Four templates:
   A  standard questions only                       -> Ready for a persona who answered them
   B  A + a required "why us?" essay                -> Essay
   C  A + an unknown question + a new wording       -> Needs answers
+  E  A + Greenhouse's Education block (outside ``questions[]``; parts set by the page's
+     ``education_config``, options from ``boards.greenhouse.io/.../education/*``)
 """
 
 from __future__ import annotations
@@ -31,7 +33,7 @@ JS = HERE / "js"
 BASE = HERE.parent / "sources" / "base"
 
 GH_JOBS = {
-    "northwind": {"1001": "A", "1002": "B", "1003": "A", "1004": "C", "1099": "A"},
+    "northwind": {"1001": "A", "1002": "B", "1003": "A", "1004": "C", "1005": "E", "1099": "A"},
     "ledgerline": {"2001": "A", "2002": "C", "2003": "B"},
     "tessellate": {"3001": "A", "3002": "B", "3003": "C"},
 }
@@ -181,6 +183,39 @@ STATE_ABBR = {
     "Colorado": "CO",
     "Idaho": "ID",
 }
+# Greenhouse's standard degree list (as every board serves it), synthetic disciplines and schools
+DEGREES = [
+    "Accelerated Master's", "Advanced Certificate", "Associates", "Associate's Degree", "Bachelors",
+    "Bachelor's Degree", "Certificate", "Community / Technical College", "Doctorate",
+    "Doctor of Medicine (M.D.)", "Doctor of Philosophy (Ph.D.)", "Engineer's Degree", "High School",
+    "Juris Doctor (J.D.)", "Master of Business Administration (M.B.A.)", "Masters", "Master's Degree",
+    "Master's of Business Administration", "Non-Degree Seeking", "Other", "Postdoctoral Studies",
+    "Technical Diploma",
+]  # fmt: skip
+DISCIPLINES = [
+    "Accounting", "Biology", "Computer Engineering", "Computer Science",
+    "Computer Science & Engineering", "Economics", "Electrical Engineering", "Mathematics",
+    "Mechanical Engineering", "Software Engineering", "Statistics",
+]  # fmt: skip
+SCHOOLS = [
+    "Coastal Plains College", "Coastal Plains University", "Granite Valley University",
+    "Lakeview Institute of Technology", "Northfield State University", "Riverside College",
+    "Riverside University",
+]  # fmt: skip
+# what the page's education_config says for template E
+EDU_CONFIG = {
+    "id": 9001, "school_name": "required", "degree": "required", "discipline": "required",
+    "start_month": "hidden", "start_year": "optional", "end_month": "required",
+    "end_year": "required",
+}  # fmt: skip
+EDU_PARTS = [
+    ("school_name", "school", "School"), ("degree", "degree", "Degree"),
+    ("discipline", "discipline", "Discipline"), ("start_month", "start-month", "Start date month"),
+    ("start_year", "start-year", "Start date year"), ("end_month", "end-month", "End date month"),
+    ("end_year", "end-year", "End date year"),
+]  # fmt: skip
+MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September",
+          "October", "November", "December"]  # fmt: skip
 PHONE_COUNTRIES = ["United States +1", "Canada +1", "India +91", "United Kingdom +44", "China +86"]
 GH_UPLOAD = "https://grnhse-prod-jben-us-west-2.s3.us-west-2.amazonaws.com/"
 ASHBY_UPLOAD = (
@@ -205,6 +240,19 @@ GH_COMPLIANCE = [
         ],
     }
 ]  # fmt: skip
+
+
+def write_education() -> None:
+    """The option lists a board serves (one page each: the fixture transport ignores ?page=)."""
+    for board in GH_JOBS:
+        for kind, items in (("degrees", DEGREES), ("disciplines", DISCIPLINES)):
+            out = OUT / f"boards.greenhouse.io/v1/boards/{board}/education/{kind}.json"
+            out.parent.mkdir(parents=True, exist_ok=True)
+            body = {
+                "items": [{"id": 70000 + i, "text": t} for i, t in enumerate(items)],
+                "meta": {"total_count": len(items), "per_page": 100},
+            }
+            out.write_text(json.dumps(body, indent=1) + "\n", encoding="utf-8")
 
 
 def write_greenhouse() -> None:
@@ -234,6 +282,8 @@ def write_greenhouse() -> None:
             job["compliance"] = GH_COMPLIANCE
             job["demographic_questions"] = None
             job["data_compliance"] = [{"type": "gdpr", "requires_consent": False}]
+            if tpl == "E":
+                job["education"] = "education_required"
             out = OUT / f"boards-api.greenhouse.io/v1/boards/{board}/jobs/{jid}.json"
             out.parent.mkdir(parents=True, exist_ok=True)
             out.write_text(json.dumps(job, indent=1) + "\n", encoding="utf-8")
@@ -513,8 +563,43 @@ def _gh_eeo(q: dict) -> str:
     return f'{hisp}<template id="fx-race">{_gh_field(q)}</template>'
 
 
+def _gh_education_entry(n: int) -> str:
+    out = []
+    for name, dom, label in EDU_PARTS:
+        state = EDU_CONFIG[name]
+        if state == "hidden":
+            continue
+        fid, req = f"{dom}--{n}", state == "required" and n == 0
+        if name.endswith("_year"):
+            out.append(
+                f'<div class="text-input-wrapper">{_gh_label(fid, label, req)}<input id="{fid}" class="input input__single-line" aria-label="{label}" aria-required="{str(req).lower()}" type="number"></div>'
+            )
+            continue
+        opts = {"school_name": [], "degree": DEGREES, "discipline": DISCIPLINES}.get(name, MONTHS)
+        out.append(
+            _gh_select(fid, label, req, opts, kind="school" if name == "school_name" else "select")
+        )
+    remove = (
+        '<button type="button" class="icon-button" aria-label="Remove education"></button>'
+        if n
+        else ""
+    )
+    return f'<div class="education--form" data-entry="{n}"><hr><div class="education--header"><p>Education</p>{remove}</div>{"".join(out)}</div>'  # fmt: skip
+
+
+def _gh_education() -> str:
+    """Like the live block: entry 0 on the page, "Add another" clones it as entry N."""
+    return (
+        f'<div class="education--container">{_gh_education_entry(0)}'
+        f'<template id="fx-education">{_gh_education_entry(1)}</template>'
+        '<button class="add-another-button" type="button">Add another</button></div>'
+    )
+
+
 def gh_page(job: dict) -> str:
     parts = [_gh_field(q) for q in job["questions"]]
+    if job.get("education"):
+        parts.insert(6, _gh_education())  # after the resume and cover letter, as live
     parts += [_gh_field(q) for q in job.get("location_questions") or []]
     eeo = [
         _gh_eeo(q) for block in job.get("compliance") or [] for q in block.get("questions") or []
@@ -526,6 +611,8 @@ def gh_page(job: dict) -> str:
         f'<div class="eeoc__container"><h3>Voluntary Self-Identification</h3>{"".join(eeo)}</div>'
         f'<button type="submit" class="btn btn--pill">Submit application</button><p id="fx-status"></p></form></main>'
         f'<script type="application/json" id="fx-locations">{json.dumps(LOCATIONS)}</script>'
+        f'<script type="application/json" id="fx-schools">{json.dumps(SCHOOLS)}</script>'
+        f'<script>window.__remixContext = {json.dumps({"state": {"loaderData": {"job": {"education_config": EDU_CONFIG if job.get("education") else None}}}})};</script>'
         f"<script>{(JS / 'greenhouse.js').read_text(encoding='utf-8')}</script></body></html>\n"
     )  # fmt: skip
 
@@ -651,6 +738,7 @@ def main() -> None:
         if d.exists():
             shutil.rmtree(d)
     write_greenhouse()
+    write_education()
     write_lever()
     write_ashby()
     write_pages()
