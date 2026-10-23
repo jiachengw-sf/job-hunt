@@ -873,3 +873,16 @@ A full end-to-end run of v0.2.0 as a real user found eight issues. They land her
   full list (it also affected long country lists).
 - Not verified live: filling the live Education block end to end (no live form was filled; the
   school search, option ids and "Add another" were checked by hand in the browser).
+
+### 4. Range options ✅
+
+- **Bug:** a single value never matched a range option: graduation `2028-05` against "January
+  2028 - July 2028", or GPA `4.0` against "3.91 - 4.0", came out `option_mismatch`.
+- **Fix:** `bank/ranges.py` picks the one option whose range contains the value: numbers in
+  "a - b", "a to b", "Below x" (exclusive), "x or less", "Above x", "x+", "x or more", with `$`,
+  commas and `k`; dates by month in "Jan 2028 - Jul 2028", "05/2028", "May 2028", "2027 - 2028",
+  "Before 2026", "2027 or later". An option equal to the value wins. When two options contain
+  the value (a boundary listed twice), or a season or term says no months, nothing is chosen
+  and the field goes to the user. Wired to GPA, graduation date and year, years of experience,
+  expected pay, start and end dates, and hours per week.
+- 840 offline tests (802 after #1, 743 at v0.2.0).
