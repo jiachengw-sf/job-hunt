@@ -4,6 +4,11 @@ Code extracts the text (PDF, DOCX, Markdown or plain text) and splits it into a 
 profile.yaml by section headers. The draft is starting material: the jobhunt-setup skill tidies
 it from the *redacted* text (contact lines removed), and the user confirms it before it becomes
 profile.yaml. Contact details found on the resume go only to the local form's pre-fill.
+
+Some PDFs extract as one word per line. Such text is re-read in pypdf's layout mode and, if it
+is still fragmented, rejoined into lines (at bullets, section headers and date ranges) before
+sectioning. A section that still splits into an absurd number of entries is left out of the
+draft with a warning, to be filled from the redacted text, rather than drafted wrong.
 """
 
 from __future__ import annotations
@@ -60,6 +65,120 @@ _SECTIONS = {
     "objective": "summary",
 }
 _BULLET = re.compile(r"^\s*(?:[-•*▪●◦]|\d+\.)\s+")
+_BULLET_GLYPH = frozenset("-•*▪●◦")
+# inline "Category: items" lines that belong to skills or honors wherever they appear
+_INLINE = {
+    "languages": "skills",
+    "programming languages": "skills",
+    "frameworks": "skills",
+    "libraries": "skills",
+    "tools": "skills",
+    "technologies": "skills",
+    "databases": "skills",
+    "platforms": "skills",
+    "cloud": "skills",
+    "certifications": "honors",
+    "awards and honors": "honors",
+}
+# entries a section may plausibly hold; more means the text was split wrong
+_MAX_ENTRIES = {"education": 8, "experience": 25, "projects": 25}
+
+
+def fragmented(text: str) -> bool:
+    """True when most lines hold a single word: the PDF came out one word per line."""
+    lines = [ln for ln in text.splitlines() if ln.strip()]
+    if len(lines) < 20:
+        return False
+    single = sum(1 for ln in lines if len(ln.split()) == 1)
+    return single / len(lines) > 0.6
+
+
+def _section_key(words: list[str]) -> str | None:
+    key = re.sub(r"[^a-z ]", "", " ".join(words).lower()).strip()
+    return _SECTIONS.get(key) and key
+
+
+def rejoin(text: str) -> str:
+    """Rebuild lines from one-word-per-line text: a bullet or a section header starts a line,
+    and a line ends after a section header or a date range."""
+    words = [ln.strip() for ln in text.splitlines() if ln.strip()]
+    out: list[str] = []
+    cur: list[str] = []
+
+    def flush() -> None:
+        if not cur:
+            return
+        lo = 1 if cur[0] in _BULLET_GLYPH else 0
+        line = " ".join(cur)
+        if (_RANGE.search(line) or _SINGLE.search(line)) and (cut := _header_start(cur, lo)):
+            out.append(" ".join(cur[:cut]))  # what came before the next entry's header
+            del cur[:cut]
+        out.append(" ".join(cur))
+        cur.clear()
+
+    i = 0
+    while i < len(words):
+        w = words[i]
+        header = next(
+            (
+                n
+                for n in (3, 2, 1)
+                if all(x[:1].isupper() for x in words[i : i + n] if x.lower() != "and")
+                and _section_key(words[i : i + n])
+            ),
+            0,
+        )
+        if header:
+            flush()
+            if words[i + header - 1].endswith(":"):  # an inline label: "Coursework: ..."
+                cur.extend(words[i : i + header])
+            else:
+                out.append(" ".join(words[i : i + header]))
+            i += header
+            continue
+        if w in _BULLET_GLYPH or _BULLET.match(w + " "):
+            flush()
+        cur.append(w)
+        if (m := _RANGE.search(" ".join(cur))) and m.end() == len(" ".join(cur)):
+            flush()
+        i += 1
+    flush()
+    return "\n".join(out)
+
+
+def _header_start(words: list[str], lo: int) -> int | None:
+    """Where an entry header ("Org — Title, dates") begins in a line it was glued to (a bullet
+    or a list before it): the run of capitalized words before its separator. None when the
+    line starts with the header."""
+    sep = next((k for k, w in enumerate(words) if w in ("—", "–", "|") and k > lo), None)
+    if sep is None:
+        return None
+    k = sep
+    while (
+        k > lo
+        and not words[k - 1].endswith((",", ";", ":", "."))
+        and (words[k - 1][:1].isupper() or words[k - 1] in ("&", "of", "and", "the"))
+    ):
+        k -= 1
+    return k if lo < k < sep else None
+
+
+def _pdf_text(path: Path) -> str:
+    from pypdf import PdfReader
+
+    try:
+        reader = PdfReader(str(path))
+        text = "\n".join(page.extract_text() or "" for page in reader.pages)
+        if fragmented(text):
+            layout = "\n".join(
+                page.extract_text(extraction_mode="layout") or "" for page in reader.pages
+            )
+            layout = "\n".join(" ".join(ln.split()) for ln in layout.splitlines())
+            if layout.strip() and not fragmented(layout):
+                text = layout
+    except Exception as e:
+        raise ValidationFailed(f"{path.name}: couldn't read this PDF ({e}).") from e
+    return rejoin(text) if fragmented(text) else text
 
 
 def extract_text(path: Path) -> str:
@@ -69,13 +188,7 @@ def extract_text(path: Path) -> str:
             f"{path.name}: unsupported resume format; use PDF, DOCX, Markdown or plain text."
         )
     if suffix == ".pdf":
-        from pypdf import PdfReader
-
-        try:
-            reader = PdfReader(str(path))
-            text = "\n".join(page.extract_text() or "" for page in reader.pages)
-        except Exception as e:
-            raise ValidationFailed(f"{path.name}: couldn't read this PDF ({e}).") from e
+        text = _pdf_text(path)
     elif suffix == ".docx":
         import docx
 
@@ -192,6 +305,8 @@ def _ym(s: str | None) -> str | None:
 
 
 def _split_sections(text: str) -> dict[str, list[str]]:
+    """Lines by section. An inline "Languages: ..." or "Awards: ..." line goes to skills or
+    honors wherever it sits; "Technical Skills:" alone starts that section."""
     sections: dict[str, list[str]] = {"_top": []}
     current = "_top"
     for raw in text.splitlines():
@@ -203,12 +318,37 @@ def _split_sections(text: str) -> dict[str, list[str]]:
             current = _SECTIONS[key]
             sections.setdefault(current, [])
             continue
+        if m := re.match(r"^([A-Za-z][A-Za-z &/]{1,30}):\s*(\S.*)$", _BULLET.sub("", ln)):
+            cat = re.sub(r"[^a-z ]", "", m.group(1).lower()).strip()
+            dest = _INLINE.get(cat) or (_SECTIONS.get(cat) if cat in _SECTIONS else None)
+            if dest in ("skills", "honors") and current != dest:
+                sections.setdefault(dest, []).append(f"{m.group(1)}: {m.group(2)}")
+                continue
         sections.setdefault(current, []).append(raw.rstrip())
     return sections
 
 
+def _header_like(ln: str) -> bool:
+    """An entry header: a date, an "Org — Title" separator, or a short Title Case line."""
+    if _RANGE.search(ln) or _SINGLE.search(ln) or re.search(r" [—–|] | - ", ln):
+        return True
+    words = ln.split()
+    return len(words) <= 6 and sum(w[:1].isupper() for w in words) >= max(1, len(words) - 1)
+
+
+def _continues(bullet: str, raw: str, ln: str) -> bool:
+    """A wrapped bullet's next line: indented, or starting lowercase, or after a bullet that
+    hasn't ended, as long as it doesn't look like the next entry's header."""
+    if not ln:
+        return False
+    if raw[:1].isspace() or ln[:1].islower() or ln[:1] in "(&,":
+        return True
+    return not bullet.rstrip().endswith((".", "!", "?", ":")) and not _header_like(ln)
+
+
 def _entries(lines: list[str]) -> list[tuple[str, list[str]]]:
-    """(header, bullets) blocks: a non-bullet line starts a new entry."""
+    """(header, bullets) blocks: a non-bullet line starts a new entry, unless it carries on a
+    bullet that wrapped."""
     out: list[tuple[str, list[str]]] = []
     for raw in lines:
         if _BULLET.match(raw):
@@ -216,6 +356,9 @@ def _entries(lines: list[str]) -> list[tuple[str, list[str]]]:
                 out[-1][1].append(_BULLET.sub("", raw).strip())
             continue
         ln = _clean(raw)
+        if out and out[-1][1] and _continues(out[-1][1][-1], raw, ln):
+            out[-1][1][-1] = f"{out[-1][1][-1]} {ln}"
+            continue
         if out and not out[-1][1] and not _RANGE.search(out[-1][0]) and _RANGE.search(ln):
             # a date line under its header ("Acme Corp" / "Engineer, Jun 2024 – present")
             out[-1] = (f"{out[-1][0]}, {ln}", [])
@@ -306,11 +449,20 @@ def _education(lines: list[str]) -> tuple[list[dict[str, Any]], list[str]]:
     return out, coursework
 
 
+def _tech(rest: str) -> list[str]:
+    """Tech names from a project header's tail, without its dates ("Streamlit2026" too)."""
+    rest = re.sub(r"(?<=[A-Za-z+#])(?=(?:19|20)\d{2}\b)", " ", rest)
+    rest = _RANGE.sub(" ", rest)
+    rest = re.sub(rf"\b(?:{_MON}\s+)?(?:19|20)\d{{2}}\b|\b(?:present|current)\b", " ", rest,
+                  flags=re.I)  # fmt: skip
+    return [t.strip(" .") for t in re.split(r",|/|\||;", rest) if t.strip(" .–—-")]
+
+
 def _projects(lines: list[str]) -> list[dict[str, Any]]:
     out = []
     for head, bullets in _entries(lines):
         name, rest = _split_head(head)
-        tech = [t.strip() for t in re.split(r",|/", rest) if t.strip()] if rest else []
+        tech = _tech(rest) if rest else []
         out.append(
             {
                 "name": name,
@@ -336,21 +488,38 @@ def _skills(lines: list[str]) -> dict[str, list[str]]:
     return out
 
 
+def _honors(lines: list[str]) -> list[str]:
+    out = []
+    for raw in lines:
+        ln = _BULLET.sub("", _clean(raw))
+        items = ln.split(":", 1)[1] if re.match(r"^[A-Za-z &/]{1,30}:", ln) else ln
+        out += [h.strip() for h in re.split(r";|,(?![^()]*\))", items) if h.strip()]
+    return out
+
+
+def draft_warnings(draft: dict[str, Any]) -> list[str]:
+    """Why parts of a draft were left out (set by :func:`draft_profile`)."""
+    return list(draft.get("_warnings") or [])
+
+
 def draft_profile(text: str, contact: Contact, resume_file: str) -> dict[str, Any]:
     """A profile.yaml draft. Values the code couldn't read are left out or set to CHANGE_ME, so
-    an unreviewed draft can't pass validation."""
+    an unreviewed draft can't pass validation. ``_warnings`` (popped before writing) says which
+    sections were left out because they split into an absurd number of entries."""
     s = _split_sections(text)
     education, _ = _education(s.get("education", []))
     if s.get("coursework") and education:
         education[0]["coursework"] += [
             c.strip() for ln in s["coursework"] for c in _clean(ln).split(",") if c.strip()
         ]
+    if s.get("honors") and education:
+        education[0]["honors"] = _honors(s["honors"])
     summary = " ".join(_clean(x) for x in s.get("summary", [])).strip() or None
     links = [
         {"label": {"linkedin": "LinkedIn", "github": "GitHub"}.get(k, "Website"), "url": v}
         for k, v in contact.links.items()
     ]
-    return {
+    out: dict[str, Any] = {
         "version": 1,
         "headline": summary or "CHANGE_ME",
         "resumes": [{"file": resume_file, "default": True}],
@@ -360,3 +529,14 @@ def draft_profile(text: str, contact: Contact, resume_file: str) -> dict[str, An
         "projects": _projects(s.get("projects", [])),
         "links": links,
     }
+    warnings = []
+    for key, most in _MAX_ENTRIES.items():
+        if len(out[key]) > most:
+            warnings.append(
+                f"{key}: the text split into {len(out[key])} entries, so it was left out of the "
+                "draft; fill it from the redacted text"
+            )
+            out[key] = []
+    if warnings:
+        out["_warnings"] = warnings
+    return out
