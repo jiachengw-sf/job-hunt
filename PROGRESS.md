@@ -886,3 +886,19 @@ A full end-to-end run of v0.2.0 as a real user found eight issues. They land her
   and the field goes to the user. Wired to GPA, graduation date and year, years of experience,
   expected pay, start and end dates, and hours per week.
 - 840 offline tests (802 after #1, 743 at v0.2.0).
+
+### 3. Fit judgment for sources without descriptions ✅
+
+- **Bug:** Simplify rows have no description, so the band stayed `unknown` (0.3 in priority),
+  priority stayed under `fit.priority_threshold` (0.5), `run` never read their forms (it reads
+  only jobs above the threshold), and no `requirement_evidence` task was ever written.
+- **Fix:** `run` also reads the ATS posting for the top recalled jobs with no text
+  (`fit.describe_top_k: 20`, Greenhouse / Lever / Ashby only), then re-scores. Judgment tasks go
+  to the top recalled jobs by relevance even below the threshold (`fit.judge_top_k: 10`), once
+  they have text; reading text alone rarely lifts an unjudged band over the threshold. `match`
+  reports `no_posting_text` and says how to fix it.
+- **Higher degrees:** a listing that names only degrees above yours (Simplify's degree field, or
+  PhD / Master's / MBA in the title; "MS" and "BA" are left out, since titles use them for other
+  things) makes the degree gate `unclear` (for the judge) and multiplies priority by
+  `fit.higher_degree_factor: 0.5`, with a flag saying why.
+- 0 offline tests.
