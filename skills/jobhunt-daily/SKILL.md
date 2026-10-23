@@ -38,9 +38,12 @@ contract: every command prints one JSON envelope; relay `hints.user_actions` ver
    legitimacy flags, follow-ups due and referral questions.
 4. **Batched questions.** `jobhunt answers questions`. Group the non-sensitive ones into one
    short message and ask them all at once. Save each answer the user gives with
-   `jobhunt answers add` (or `jobhunt answers confirm` for a suggested match the user agrees is
-   the same question). For sensitive ones, say: "Answer these in the local form:
-   `jobhunt setup form`."
+   `jobhunt answers add` (or `jobhunt answers confirm "<label>" ["<label>" ...] <key>` for
+   suggested matches the user agrees are the same question; one call can take several). A
+   question that asks two things ("authorized to work without sponsorship") is its own question.
+   To change a non-sensitive built-in (graduation, relocation, start date), use
+   `jobhunt answers edit <key> --answer <value>`. For sensitive ones, say: "Answer these in the
+   local form: `jobhunt setup form`."
 5. **Pre-fill offer.** If Ready jobs exist, say how many and that the user can start pre-fill by
    invoking the apply skill explicitly (Claude Code: `/jobhunt-apply`; Codex: `$jobhunt-apply`).
    Don't start it yourself.

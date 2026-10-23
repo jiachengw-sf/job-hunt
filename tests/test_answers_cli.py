@@ -8,6 +8,7 @@ from pathlib import Path
 import yaml
 
 from jobhunt.errors import ExitCode
+from jobhunt.models import Answers
 from tests.conftest import PERSONAS_DIR
 
 
@@ -53,7 +54,50 @@ def test_answers_add_edit_and_confirm(cli, persona_home):
     code, env, _ = cli("answers", "confirm", "Are you at least eighteen?", "identity.over_18")
     assert code == ExitCode.OK
     assert env["data"]["entry"]["wordings"] == ["Are you at least eighteen?"]
-    code, _, _ = cli("answers", "edit", "identity.over_18", "--answer", "yes")
-    assert code == ExitCode.VALIDATION  # built-in answers live in the form
+    code, env, _ = cli("answers", "edit", "identity.over_18", "--answer", "yes")
+    assert code == ExitCode.NEEDS_USER  # sensitive: only the local form sets it
+    assert "setup form" in env["hints"]["user_actions"][0]
     code, _, _ = cli("answers", "confirm", "Anything", "no.such.key")
     assert code == ExitCode.NOT_FOUND
+
+
+def test_non_sensitive_builtins_can_be_edited_from_the_cli(cli, persona_home):
+    home = persona_home("newgrad-analyst")
+    for key, answer in [
+        ("education.graduation", "2027-12"),
+        ("location.relocate", "no"),
+        ("location.relocate_to", "us, ca"),
+        ("location.onsite", "yes"),
+        ("availability.start_date", "2027-06-01"),
+        ("education.further_study", "undecided"),
+        ("standard.other_offers", "no"),
+    ]:
+        code, env, _ = cli("answers", "edit", key, "--answer", answer)
+        assert code == ExitCode.OK, (key, env)
+    a = Answers.model_validate(yaml.safe_load((home / "answers.yaml").read_text(encoding="utf-8")))
+    assert (a.education.graduation_year, a.education.graduation_month) == (2027, 12)
+    assert a.location.willing_to_relocate == "no"
+    assert a.location.relocate_anywhere_in == ["US", "CA"]
+    assert a.location.onsite_full_time == "yes" and str(a.availability.start_date) == "2027-06-01"
+    assert a.education.further_study == "undecided" and a.standard.other_offers == "no"
+    assert not [e for e in a.bank if e.key == "location.relocate"]  # no empty entry left behind
+    code, _, _ = cli("answers", "edit", "location.relocate", "--answer", "maybe")
+    assert code == ExitCode.VALIDATION
+    code, env, _ = cli("answers", "edit", "education.school", "--answer", "Elsewhere U")
+    assert code == ExitCode.VALIDATION and "profile set" in env["hints"]["next_actions"][0]
+    for sensitive in ("education.gpa", "education.sat_score", "identity.school_email"):
+        code, _, _ = cli("answers", "edit", sensitive, "--answer", "4.0")
+        assert code == ExitCode.NEEDS_USER, sensitive
+
+
+def test_confirm_takes_several_labels(cli, persona_home):
+    persona_home("intl-sponsorship")
+    labels = [
+        "Would you require visa sponsorship to work here in the future?",
+        "Will you need us to sponsor a visa for you at some point in the future?",
+    ]
+    code, env, _ = cli("answers", "confirm", *labels, "work_auth.sponsorship_future")
+    assert code == ExitCode.OK, env
+    assert env["data"]["entry"]["wordings"] == labels
+    code, _, _ = cli("answers", "confirm", "work_auth.sponsorship_future")
+    assert code == ExitCode.VALIDATION  # a label is needed
