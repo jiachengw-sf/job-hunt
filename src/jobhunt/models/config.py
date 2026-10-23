@@ -19,6 +19,9 @@ class TrackerConfig(Strict):
     include_gated_out: bool = Field(
         False, description="Also list jobs that failed a Must gate (their reason is shown)."
     )
+    max_jobs: int = Field(
+        200, ge=0, description="Top matches in the Jobs tab (0: all); applications always are."
+    )
 
 
 class HttpConfig(Strict):

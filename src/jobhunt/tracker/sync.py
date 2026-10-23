@@ -223,17 +223,41 @@ def agent_values(conn: sqlite3.Connection, job_id: int) -> dict[str, str]:
     }
 
 
-def tracked_job_ids(conn: sqlite3.Connection, include_gated_out: bool) -> list[int]:
-    """Jobs that belong in the sheet: matched (not gated out) jobs, plus any job you've acted on."""
+_ACTED_ON = (
+    "a.job_id IS NOT NULL AND (a.status != 'New' OR "
+    + " OR ".join(
+        f"coalesce(trim(a.{c}),'') != ''"
+        for c in ("notes", "referral_contact", "next_step", "follow_up_on", "outcome",
+                  "skip_reason")
+    )
+    + ")"
+)  # fmt: skip
+
+
+def tracked_job_ids(
+    conn: sqlite3.Connection, include_gated_out: bool, max_jobs: int | None = None
+) -> list[int]:
+    """Jobs that belong in the sheet: every job you've acted on (applied, or wrote in one of
+    your columns), plus the top ``max_jobs`` matched (not gated out) jobs by priority; None or 0
+    lists every match. A first sync after a big fetch no longer writes thousands of rows."""
     gate_clause = "" if include_gated_out else "AND coalesce(f.gate_status,'') != 'failed'"
-    rows = conn.execute(
-        "SELECT j.id FROM jobs j LEFT JOIN fits f ON f.job_id=j.id "
-        "LEFT JOIN applications a ON a.job_id=j.id "
-        f"WHERE (j.live=1 AND f.job_id IS NOT NULL {gate_clause}) "
-        "OR (a.job_id IS NOT NULL AND a.status != 'New') "
-        "ORDER BY coalesce(f.priority, 0) DESC, j.id"
-    ).fetchall()
-    return [r[0] for r in rows]
+    acted = [
+        r[0]
+        for r in conn.execute(
+            "SELECT j.id FROM jobs j LEFT JOIN fits f ON f.job_id=j.id "
+            f"LEFT JOIN applications a ON a.job_id=j.id WHERE {_ACTED_ON} "
+            "ORDER BY coalesce(f.priority, 0) DESC, j.id"
+        )
+    ]
+    limit = f" LIMIT {int(max_jobs)}" if max_jobs else ""
+    matched = [
+        r[0]
+        for r in conn.execute(
+            "SELECT j.id FROM jobs j JOIN fits f ON f.job_id=j.id "
+            f"WHERE j.live=1 {gate_clause} ORDER BY coalesce(f.priority, 0) DESC, j.id{limit}"
+        )
+    ]
+    return list(dict.fromkeys(matched + acted))
 
 
 # --- user-owned values ----------------------------------------------------------------------
@@ -331,7 +355,13 @@ def _ensure_header(grid: Grid, rows: list[list[str]]) -> dict[str, int]:
 
 
 def sync_jobs(
-    conn: sqlite3.Connection, grid: Grid, now: str, report: SyncReport, *, include_gated_out: bool
+    conn: sqlite3.Connection,
+    grid: Grid,
+    now: str,
+    report: SyncReport,
+    *,
+    include_gated_out: bool,
+    max_jobs: int | None = None,
 ) -> None:
     rows = grid.values()
     colmap = _ensure_header(grid, rows)
@@ -402,7 +432,7 @@ def sync_jobs(
 
     new_rows = []
     width = max(colmap.values())
-    for job_id in tracked_job_ids(conn, include_gated_out):
+    for job_id in tracked_job_ids(conn, include_gated_out, max_jobs):
         if job_id in in_sheet:
             continue
         app = _ensure_application(conn, job_id, now)
@@ -686,6 +716,7 @@ def sync(
     dry_run: bool,
     cfg: Config | None = None,
     paths: Paths | None = None,
+    max_jobs: int | None = None,
 ) -> SyncReport:
     """With ``cfg``, a job you moved to Applied (or later) in the sheet that has no application
     record gets one, timed at this sync and flagged approximate; ``paths`` lets it write the
@@ -699,7 +730,7 @@ def sync(
     conn.execute("BEGIN IMMEDIATE")
     try:
         jobs = tab("Jobs", user_columns=[c.header for c in USER_COLUMNS])
-        sync_jobs(conn, jobs, now, report, include_gated_out=include_gated_out)
+        sync_jobs(conn, jobs, now, report, include_gated_out=include_gated_out, max_jobs=max_jobs)
         if cfg is not None:
             report.applications_recorded = _records_from_sheet(conn, cfg, paths, now, report)
             apps = tab(APP_TAB, user_columns=[h for h, _ in APP_USER])
@@ -707,7 +738,7 @@ def sync(
                 # an edit in the Applications tab: show it in the Jobs tab too
                 sync_jobs(conn, jobs, now, SyncReport(backend=backend.name,
                           location=backend.location, dry_run=False),
-                          include_gated_out=include_gated_out)  # fmt: skip
+                          include_gated_out=include_gated_out, max_jobs=max_jobs)  # fmt: skip
         tab("Companies").replace_all(companies_rows(conn, today, window_days))
         tab("Runs").replace_all(runs_rows(conn))
         if dry_run:

@@ -9,6 +9,7 @@ tracker:
     spreadsheet_id: null
     service_account_file: null
   include_gated_out: false   # also list jobs that failed a Must gate (with the reason)
+  max_jobs: 200              # top matches in the Jobs tab by priority (0 = every match); jobs you acted on always appear
 
 http:
   # Sent on every request. Add a way to reach you if you like (it stays in your config file).

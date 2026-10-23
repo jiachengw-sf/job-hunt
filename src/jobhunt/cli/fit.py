@@ -92,6 +92,7 @@ def _do_sync(
             today=inp.today,
             window_days=cfg.volume_guard.window_days,
             include_gated_out=cfg.tracker.include_gated_out,
+            max_jobs=cfg.tracker.max_jobs,
             dry_run=dry_run,
             cfg=cfg,
             paths=None if dry_run else paths,

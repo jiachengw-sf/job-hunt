@@ -385,3 +385,21 @@ def test_sheets_applications_tab_is_formatted_once(conn):
     kinds = [next(iter(r)) for r in client.sheet.requests]
     assert "addConditionalFormatRule" not in kinds and rules  # not added twice
     assert kinds == ["updateCells"]  # links refreshed
+
+
+def test_jobs_tab_holds_top_matches_and_everything_you_acted_on(conn):
+    """A first sync after a big fetch wrote every match; tracker.max_jobs caps the matches."""
+    from jobhunt.tracker.sync import _ensure_application, set_user_field
+
+    b = FakeBackend()
+    rep = sync(conn, b, now=NOW, today=TODAY, window_days=90, include_gated_out=False,
+               dry_run=False, max_jobs=1)  # fmt: skip
+    assert rep.rows_added == 1 and row_for(b.tabs["Jobs"], 1)
+    _ensure_application(conn, 2, NOW)
+    set_user_field(conn, 2, "notes", "recruiter said to apply by Friday", NOW, source="you")
+    rep = sync(conn, b, now=NOW, today=TODAY, window_days=90, include_gated_out=False,
+               dry_run=False, max_jobs=1)  # fmt: skip
+    assert rep.rows_added == 1 and cell(b.tabs["Jobs"], 2, "Notes").startswith("recruiter")
+    from jobhunt.models.config import TrackerConfig
+
+    assert TrackerConfig().max_jobs == 200
