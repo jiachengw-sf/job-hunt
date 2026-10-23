@@ -115,3 +115,16 @@ def test_scheduler_failure_is_an_error(cli, home, monkeypatch):
     monkeypatch.setattr(sch, "run", lambda args, stdin=None: sch.Proc(1, "permission denied"))
     code, env, _ = cli("schedule", "install", "--platform", "cron")
     assert code != ExitCode.OK and "permission denied" in env["error"]["message"]
+
+
+@pytest.mark.parametrize(
+    ("platform", "words"),
+    [("launchd", "once when it wakes"), ("cron", "skipped"), ("windows", "skipped")],
+)
+def test_install_and_status_say_it_runs_only_while_awake(cli, home, fake, platform, words):
+    code, env, _ = cli("schedule", "install", "--platform", platform)
+    assert code == ExitCode.OK, env
+    note = env["data"]["runs_when"]
+    assert "awake" in note and words in note and note in env["hints"]["user_actions"][0]
+    _, st, _ = cli("schedule", "status", "--platform", platform)
+    assert st["data"]["runs_when"] == note

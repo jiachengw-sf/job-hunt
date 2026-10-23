@@ -109,7 +109,10 @@ The setup skill walks you through it:
    Google Sheets instead.
 6. **Notifications and schedule (optional).** A digest through ntfy, Discord or email to
    yourself, and `jobhunt schedule install` to run discovery every 4 hours (launchd, cron or
-   Task Scheduler). The schedule runs code only, no AI.
+   Task Scheduler). The schedule runs code only, no AI, and only while your computer is on and
+   awake: launchd makes up one missed run when the Mac wakes, cron and Task Scheduler skip
+   missed runs. Nothing is lost (the next run finds everything posted meanwhile), but alerts
+   can come late.
 
 You can do all of this without the AI too. The files are plain YAML: start from
 `profile.example.yaml`, `preferences.example.yaml`, `answers.example.yaml` and

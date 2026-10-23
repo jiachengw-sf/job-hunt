@@ -56,7 +56,8 @@ can't know. Read [the CLI contract](references/cli-contract.md) once before star
    edit `config.yaml`, run `jobhunt notify test` and relay the result.
 8. **Schedule.** Offer to run discovery automatically every 4 hours:
    `jobhunt schedule install --dry-run` shows the exact entry; after the user says yes, run
-   `jobhunt schedule install` and then `jobhunt schedule status`.
+   `jobhunt schedule install` and then `jobhunt schedule status`. Tell the user `runs_when` in
+   plain words: it runs only while the computer is on and awake.
 9. **Finish.** Run `jobhunt doctor` again and summarize: what's set up, what's left, and how to
    use it daily ("say *run my job hunt*").
 
