@@ -90,6 +90,10 @@ def test_fill_reads_back_and_stops_before_submit(browser_context, fx, persona, n
     guard.release(page)
     human_submit(page, name)
     assert submit_posts(router), "after handoff the human's submit must go through"
+    for _ in range(40):  # the confirmation page can take a while on a slow runner
+        if adapter.confirmed(page):
+            break
+        page.wait_for_timeout(250)
     assert adapter.confirmed(page)
 
 
