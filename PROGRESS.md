@@ -961,3 +961,27 @@ A full end-to-end run of v0.2.0 as a real user found eight issues. They land her
   how to get the current link. The page pings the server every 20s; a stale tab shows a banner
   and disables Save. `setup form` says when a form is already running and at which URL
   (`reused`).
+
+### 7. Tracking ✅ (email ingestion: design proposed, not built)
+
+- **No URL:** `jobhunt applied --company X --title Y [--req-id R]` records an application with
+  no posting link against a job keyed `manual:<company>:<title>[:<req>]`. A posting added or
+  fetched later at the same company whose id, or URL (Workday's `..._<req id>`), carries that
+  req id joins the same job (its key is upgraded); another company's posting with the same id
+  doesn't.
+- **Dates:** `apps` rows carry `applied_at` (UTC, ISO 8601) and `applied_on` (local date) next
+  to the display string.
+- **First sync:** the Jobs tab gets the top `tracker.max_jobs: 200` matches by priority plus
+  every job you applied to or wrote in; rows already there stay; 0 lists every match.
+- **Email ingestion:** a read-only, propose-then-confirm design waits for approval.
+
+### 8. Scheduling ✅ (cloud mode: design proposed, not built)
+
+- `schedule install` and `status` report `runs_when`: the run happens only while the computer
+  is on and awake (launchd makes up one missed run at wake; cron and Task Scheduler skip
+  missed runs). Install relays it to the user; the README and the setup skill say the same.
+- **Cloud mode:** a design (cloud routine without sensitive files; the laptop reconciles on
+  wake) waits for approval.
+- 889 offline tests (743 at v0.2.0).
+- Also fixed on the way: two tracking tests failed when the suite ran before 9am or 2pm local
+  time ("today 2pm" was in the future).
