@@ -214,3 +214,53 @@ def test_detached_driver_end_to_end(cli, persona_home, fx_all):
     for j in st["data"]["jobs"]:
         assert j["status"] == "stopped"
         assert status_of(home, j["job_id"])[0] == "Prefilled"  # closed without submitting
+
+
+def two_resumes_no_default(home: Path, persona: str) -> None:
+    """The persona keeps a data resume and a software resume, and no default."""
+    shutil.copy(RESUMES / "newgrad-analyst.pdf", home / "resume" / "data.pdf")
+    shutil.copy(RESUMES / f"{persona}.pdf", home / "resume" / "software.pdf")
+    onboarding = home / "work" / "onboarding"
+    onboarding.mkdir(parents=True, exist_ok=True)
+    for name, src in (("data", "newgrad-analyst"), ("software", persona)):
+        text = (REPO / "tests" / "personas" / src / "resume.md").read_text(encoding="utf-8")
+        (onboarding / f"{name}.redacted.txt").write_text(text, encoding="utf-8")
+    prof = yaml.safe_load((home / "profile.yaml").read_text(encoding="utf-8"))
+    prof["resumes"] = [{"file": "data.pdf"}, {"file": "software.pdf"}]
+    (home / "profile.yaml").write_text(yaml.safe_dump(prof, sort_keys=False), encoding="utf-8")
+
+
+def test_several_resumes_and_no_default_ask_per_job(cli, persona_home, fx_all):
+    home = setup_persona(cli, persona_home, "intl-sponsorship", fx_all)
+    two_resumes_no_default(home, "intl-sponsorship")
+    assert get_paths().onboarding == home / "work" / "onboarding"
+    code, env, _ = cli("prefill", "--dry-run", "--batch", "20")
+    assert code == ExitCode.OK, env
+    jobs = env["data"]["jobs"]
+    asked = [j for j in jobs if (j["reason"] or "").startswith("several resumes")]
+    assert asked and not [j for j in jobs if j["status"] == "queued"]
+    assert all(j["suggested_resume"] == "software.pdf" for j in asked)  # a software posting
+    assert any("--resume" in a for a in env["hints"]["next_actions"])
+    code, env, _ = cli("prefill", "--dry-run", "--batch", "20", "--resume", "data.pdf")
+    queued = [j for j in env["data"]["jobs"] if j["status"] == "queued"]
+    assert queued and {j["resume"] for j in queued} == {"data.pdf"}
+    code, env, _ = cli("prefill", "--dry-run", "--resume", "missing.pdf")
+    assert code == ExitCode.VALIDATION
+
+
+def test_the_resume_chosen_for_a_job_is_kept(cli, persona_home, fx_all):
+    """answers.json keeps the choice: a later prefill and `applied` use it."""
+    from jobhunt.cli.prefill import choose_resume
+    from jobhunt.cli.track import _resume
+    from jobhunt.prefill.values import AnswerSheet, write_sheet
+
+    home = setup_persona(cli, persona_home, "intl-sponsorship", fx_all)
+    two_resumes_no_default(home, "intl-sponsorship")
+    paths = get_paths()
+    assert choose_resume(paths, 7, None) is None and _resume(paths, None, 7) is None
+    sheet = AnswerSheet(job_id=7, ats="greenhouse", url=None, built_at="2026-10-23T00:00:00Z",
+                        resume=str(home / "resume" / "software.pdf"))  # fmt: skip
+    write_sheet(paths.prefill / "7" / "answers.json", sheet)
+    assert choose_resume(paths, 7, None) == home / "resume" / "software.pdf"
+    assert _resume(paths, None, 7) == home / "resume" / "software.pdf"
+    assert choose_resume(paths, 7, home / "resume" / "data.pdf").name == "data.pdf"

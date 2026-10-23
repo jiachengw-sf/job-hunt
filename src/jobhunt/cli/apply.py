@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 from jobhunt.bank.keys import BUILTIN, AnswerContext
 from jobhunt.cli.discovery import FIXTURES_HELP, _prepare, fixtures_dir, make_client
 from jobhunt.cli.framework import Result, agent_command
-from jobhunt.cli.onboarding import default_resume
+from jobhunt.cli.onboarding import default_resume, listed_resumes
 from jobhunt.discovery.resolver import SUPPORTED
 from jobhunt.discovery.text import utc_now
 from jobhunt.drafts.essays import approved_essays
@@ -56,7 +56,10 @@ def form_inputs(paths: Paths, cfg: Config, now: str) -> Inputs:
         fi.profile,
         fi.answers,
         fi.prefs,
-        default_resume(paths),
+        # with several resumes and no default, any one says a resume can be attached; prefill
+        # picks the job's own
+        default_resume(paths)
+        or next((paths.resume_dir / r["file"] for r in listed_resumes(paths)), None),
         now,
         threshold=cfg.forms.candidate_threshold,
     )

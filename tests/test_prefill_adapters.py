@@ -10,6 +10,7 @@ from jobhunt.forms.classify import classify
 from jobhunt.prefill.adapters import adapter_for
 from jobhunt.prefill.adapters.base import phone_country_option, pick_location
 from jobhunt.prefill.fixtures import FixtureRouter
+from jobhunt.prefill.review import review
 from jobhunt.prefill.values import build_sheet, validate
 from tests.conftest import PERSONAS, REPO
 from tests.test_forms import COMPANY, SPECS, ctx_for
@@ -84,6 +85,7 @@ def test_fill_reads_back_and_stops_before_submit(browser_context, fx, persona, n
     assert not adapter.confirmed(page)
     for o in outcomes:  # values never serialize
         assert "expected" not in o.model_dump() and "actual" not in o.model_dump()
+    assert review(1, sheet, outcomes).resume == f"{persona}.pdf"  # says which file went
 
     guard.release(page)
     human_submit(page, name)

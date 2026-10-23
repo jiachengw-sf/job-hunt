@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from contextlib import nullcontext
 from pathlib import Path
 from typing import Any
@@ -33,20 +34,19 @@ def _lock(paths: Paths, dry_run: bool) -> Any:
     return nullcontext() if dry_run else file_lock(paths.lock)
 
 
-def _resume(paths: Paths, given: str | None) -> Path | None:
-    from jobhunt.cli.onboarding import default_resume
+def _resume(paths: Paths, given: str | None, job_id: int) -> Path | None:
+    """The resume you sent: --resume, else the one pre-fill attached, else the default."""
+    from jobhunt.cli.onboarding import default_resume, resolve_resume
+    from jobhunt.prefill.values import read_sheet
 
-    if not given:
-        return default_resume(paths)
-    p = Path(given).expanduser()
-    if not p.is_absolute() and not p.exists():
-        p = paths.resume_dir / given
-    if not p.exists():
-        raise ValidationFailed(
-            f"No resume file {given!r}.",
-            next_actions=["Pass a file path, or a file name inside ~/.jobhunt/resume/."],
-        )
-    return p
+    if given:
+        return resolve_resume(paths, given)
+    sheet = paths.prefill / str(job_id) / "answers.json"
+    if sheet.exists():
+        with contextlib.suppress(Exception):
+            if (chosen := read_sheet(sheet).resume) and Path(chosen).is_file():
+                return Path(chosen)
+    return default_resume(paths)
 
 
 class Recorded(BaseModel):
@@ -185,7 +185,7 @@ def register(cli: click.Group) -> None:
                 paths=None if dry_run else paths,
                 window_days=cfg.volume_guard.window_days,
                 max_per_company=cfg.volume_guard.max_applications_per_company,
-                resume=_resume(paths, resume),
+                resume=_resume(paths, resume, job_id),
                 submitted=submitted_essays(conn, job_id),
                 portal_url=portal,
                 login_email=login_email,

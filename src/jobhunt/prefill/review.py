@@ -79,6 +79,9 @@ class TabReview(BaseModel):
     status: TabStatus
     filled: int = Field(0, description="Fields set and read back equal.")
     to_fill: int = Field(0, description="Fields answers.json asked the engine to set.")
+    resume: str | None = Field(
+        None, description="The resume file jobhunt attached (its name); None if none was."
+    )
     needs_you: list[ReviewItem] = Field(default_factory=list)
     problems: list[str] = Field(default_factory=list, description="Validation problems.")
     blocked_requests: int = Field(0, description="Requests the submit guard blocked.")
@@ -171,6 +174,17 @@ def review(
         if o.needs_you
     ]
     items.sort(key=lambda i: (not i.required, i.status == "left"))
+    by = {o.id: o for o in outcomes}
+    attached = next(
+        (
+            Path(str(f.value)).name
+            for f in sheet.fields
+            if f.key == "files.resume"
+            and f.value
+            and getattr(by.get(f.id), "status", "") == "filled"
+        ),
+        None,
+    )
     return TabReview(
         job_id=job_id,
         company=company,
@@ -179,6 +193,7 @@ def review(
         status="ready_for_review",
         filled=filled,
         to_fill=to_fill,
+        resume=attached,
         needs_you=items,
         blocked_requests=blocked,
         screenshot=shot,

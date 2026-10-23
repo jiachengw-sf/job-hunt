@@ -23,7 +23,9 @@ application.
 
 1. **Check first.** `jobhunt prefill --dry-run`. It builds and validates each Ready job's
    answers.json without opening a browser. Show the user the queued jobs and any skipped ones
-   with their reason (not Ready, essays not approved, no adapter for this ATS...).
+   with their reason (not Ready, essays not approved, no adapter for this ATS...). A job
+   skipped for "several resumes and no default" shows `suggested_resume`: ask the user which
+   file to send, then add `--resume <file>` (kept for that job).
 2. **Confirm.** Ask the user: "Fill these N applications now? You'll review each tab and click
    Submit yourself." Wait for yes. To fill specific jobs: `jobhunt prefill <id> <id>`.
 3. **Fill.** `jobhunt prefill` (default batch of 5). It returns at once. Poll
@@ -32,7 +34,8 @@ application.
 4. **Explain the review.** For each tab, tell the user what to look at
    ([review guide](references/review.md)): the `needs_you` fields outlined on the page (left
    for them on purpose: attestations, EEO they haven't reviewed, unmatched questions), any
-   read-back mismatch, the resume upload, and a CAPTCHA at Submit. Use labels, never values.
+   read-back mismatch, the resume upload (the review's `resume` names the file attached), and
+   a CAPTCHA at Submit. Use labels, never values.
 5. **Hand over.** Remind them plainly: "Review each tab, then click Submit yourself. jobhunt will
    notice the confirmation page and mark the job Applied." Applications they close stay
    Prefilled.

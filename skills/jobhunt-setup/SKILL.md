@@ -32,7 +32,11 @@ can't know. Read [the CLI contract](references/cli-contract.md) once before star
    (`jobhunt profile show`), and tidy it with `jobhunt profile set <path> <value>` only where the
    resume clearly says so: split merged bullets, fix dates, fill skills the resume lists. Show the
    user the result and ask them to correct anything wrong. When they agree, run
-   `jobhunt profile confirm`. See [profile tips](references/profile.md).
+   `jobhunt profile confirm`. See [profile tips](references/profile.md). More resumes (one per
+   kind of role): `jobhunt resume add <path> --label "<kind>"` for each; the draft or profile
+   is kept and the file joins its list. The first is the default unless the user says
+   `--not-default`; with no default, pre-fill asks which one per job. If `warnings` lists
+   sections left out, fill them from the redacted text.
 3. **Preferences and screening answers.** Run `jobhunt setup form`. It returns a local URL at
    once. Give the user the URL; they fill roles, locations, pay, dealbreakers and the screening
    questions there. Poll `jobhunt setup form --status` every minute or so until it says done (or
