@@ -74,6 +74,8 @@ PREF_FIELDS: list[F] = [
     F("company.avoid_industries", "Industries to avoid", "list", pref=True, section="Company"),
     F("company.blocklist", "Never show these companies", "list", section="Company"),
     F("dealbreakers", "Dealbreakers", "lines", help="One per line. Always a hard rule.", section="Dealbreakers"),
+    F("forms.skip_if_required", "Skip jobs whose form requires", "list", help="Answer keys or words in the question, e.g. SAT, ACT, education.gre_score", section="Application forms"),
+    F("forms.deprioritize_if_required", "Rank lower jobs whose form requires", "list", help="Same as above; these stay on the list, lower", section="Application forms"),
 ]  # fmt: skip
 
 EEO_CHOICES: dict[str, tuple[str, ...]] = {

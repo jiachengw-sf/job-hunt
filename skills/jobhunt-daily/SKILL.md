@@ -43,7 +43,8 @@ contract: every command prints one JSON envelope; relay `hints.user_actions` ver
    question that asks two things ("authorized to work without sponsorship") is its own question.
    To change a non-sensitive built-in (graduation, relocation, start date), use
    `jobhunt answers edit <key> --answer <value>`. For sensitive ones, say: "Answer these in the
-   local form: `jobhunt setup form`."
+   local form: `jobhunt setup form`." A job flagged by the user's form filters (`form_filter`)
+   needs something they said they don't have; mention it, don't push it.
 5. **Pre-fill offer.** If Ready jobs exist, say how many and that the user can start pre-fill by
    invoking the apply skill explicitly (Claude Code: `/jobhunt-apply`; Codex: `$jobhunt-apply`).
    Don't start it yourself.

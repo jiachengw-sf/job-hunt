@@ -79,6 +79,7 @@ def ready_jobs(conn: sqlite3.Connection, limit: int) -> list[int]:
         "WHERE (fs.class = 'ready' OR (fs.class = 'essay' AND EXISTS (SELECT 1 FROM drafts d "
         "WHERE d.job_id = fs.job_id AND d.kind = 'essay' AND d.status = 'approved'))) "
         "AND j.live = 1 AND coalesce(a.status, 'New') = 'New' "
+        "AND coalesce(json_extract(fs.details_json, '$.filter'), '') != 'skip' "
         "ORDER BY coalesce(f.priority, 0) DESC, j.id LIMIT ?",
         (limit,),
     ).fetchall()

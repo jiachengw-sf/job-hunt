@@ -72,6 +72,18 @@ class Location(Strict):
     countries: Pref[list[str]] | None = Field(None, description="ISO 3166 alpha-2 codes")
 
 
+class FormFilters(Strict):
+    """Jobs whose application forms require something you don't have. Each entry is an answer
+    key (``education.sat_score``) or a word in the field's label (``SAT``)."""
+
+    skip_if_required: list[str] = Field(
+        default_factory=list, description="Skip: off the Ready list, pre-fill and the digest."
+    )
+    deprioritize_if_required: list[str] = Field(
+        default_factory=list, description="Rank lower (fit.form_filter_factor)."
+    )
+
+
 class Company(Strict):
     sizes: Pref[list[str]] | None = None
     stages: Pref[list[str]] | None = None
@@ -91,3 +103,4 @@ class Preferences(Strict):
     )
     company: Company = Field(default_factory=Company)
     dealbreakers: list[str] = Field(default_factory=list, description="Always treated as Must.")
+    forms: FormFilters = Field(default_factory=FormFilters)

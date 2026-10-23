@@ -49,6 +49,8 @@ class JobForm(BaseModel):
     human: list[str] = Field(default_factory=list, description="Always-human fields.")
     cached: bool = False
     description_stored: bool = False
+    filter: str | None = Field(None, description="skip | deprioritize: your form filters.")
+    filter_reasons: list[str] = Field(default_factory=list)
 
     model_config = {"populate_by_name": True}
 
@@ -276,6 +278,8 @@ def _summary(
         human=[f.label for f in c.human],
         cached=cached,
         description_stored=stored,
+        filter=c.filter,
+        filter_reasons=c.filter_reasons,
     )
 
 

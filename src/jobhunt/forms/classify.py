@@ -83,6 +83,10 @@ class Classification(BaseModel):
     reasons: list[str] = Field(default_factory=list)
     fields: list[FieldResult] = Field(default_factory=list)
     captcha_at_submit: bool = False
+    filter: Literal["skip", "deprioritize"] | None = Field(
+        None, description="Your form filters: the form requires something you said you lack."
+    )
+    filter_reasons: list[str] = Field(default_factory=list)
 
     model_config = {"populate_by_name": True}
 
@@ -266,7 +270,30 @@ def classify(
         c.reasons.append(f"{len(needs)} required field(s) need an answer from you")
     if c.cls == "ready":
         c.reasons.append("every required field has a confirmed answer")
+    apply_filters(c, ctx)
     return c
+
+
+def _hits(entry: str, f: FieldResult) -> bool:
+    e = entry.strip()
+    if not e:
+        return False
+    if "." in e and " " not in e:
+        return f.key == e
+    return re.search(rf"(?<!\w){re.escape(e)}(?!\w)", f.label, re.I) is not None
+
+
+def apply_filters(c: Classification, ctx: AnswerContext) -> None:
+    """Mark a form that requires, with no answer from you, something your form filters name."""
+    rules = ctx.prefs.forms if ctx.prefs else None
+    if rules is None:
+        return
+    for mode, entries in (("skip", rules.skip_if_required),
+                          ("deprioritize", rules.deprioritize_if_required)):  # fmt: skip
+        hits = [f for f in c.needs if any(_hits(e, f) for e in entries)]
+        if hits:
+            c.filter = c.filter or mode  # type: ignore[assignment]
+            c.filter_reasons += [f"{mode}: the form requires “{f.label}”" for f in hits]
 
 
 def fill_value(

@@ -102,6 +102,9 @@ class FitConfig(Strict):
     higher_degree_factor: float = Field(
         0.5, ge=0, le=1, description="Priority factor when a listing names only higher degrees."
     )
+    form_filter_factor: float = Field(
+        0.5, ge=0, le=1, description="Priority factor for forms your deprioritize filter names."
+    )
     use_embeddings: Literal["auto", "off"] = Field(
         "auto", description="auto: use sentence-transformers when the [recall] extra is installed."
     )

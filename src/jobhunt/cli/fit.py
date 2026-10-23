@@ -169,6 +169,10 @@ class JobRow(BaseModel):
     gate_status: str | None
     gate_reasons: list[str] = Field(default_factory=list)
     live: bool
+    form_filter: str | None = Field(
+        None, description="skip | deprioritize: the form requires what you said you lack."
+    )
+    form_filter_reasons: list[str] = Field(default_factory=list)
 
 
 class JobsList(BaseModel):
@@ -425,7 +429,8 @@ def register(cli: click.Group) -> None:
                     refresh=False,
                     dry_run=dry_run,
                 )
-                if irep.descriptions_stored:  # new posting text: recompute fit for those jobs
+                # new posting text, or forms your filters name: recompute fit for those jobs
+                if irep.descriptions_stored or any(j.filter for j in irep.jobs):
                     rep = run_match(
                         conn,
                         inp,
@@ -518,8 +523,10 @@ def register(cli: click.Group) -> None:
             params.append(band)
         sql = (
             "SELECT j.id, j.company, j.title, j.live, a.status, f.band, f.provisional, f.priority, "
-            "f.gate_status, f.gate_reasons_json FROM jobs j LEFT JOIN fits f ON f.job_id=j.id "
-            "LEFT JOIN applications a ON a.job_id=j.id"
+            "f.gate_status, f.gate_reasons_json, json_extract(fs.details_json, '$.filter') AS "
+            "form_filter, json_extract(fs.details_json, '$.filter_reasons') AS form_why "
+            "FROM jobs j LEFT JOIN fits f ON f.job_id=j.id "
+            "LEFT JOIN applications a ON a.job_id=j.id LEFT JOIN form_specs fs ON fs.job_id=j.id"
             + (" WHERE " + " AND ".join(where) if where else "")
             + " ORDER BY coalesce(f.priority, -1) DESC, j.id"
         )
@@ -538,6 +545,8 @@ def register(cli: click.Group) -> None:
                 gate_status=r["gate_status"],
                 gate_reasons=_reason_texts(r["gate_reasons_json"]),
                 live=bool(r["live"]),
+                form_filter=r["form_filter"],
+                form_filter_reasons=json.loads(r["form_why"] or "[]"),
             )
             for r in chunk
         ]

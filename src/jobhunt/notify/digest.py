@@ -7,6 +7,7 @@ questions, and pending AI tasks. Fast alerts are separate: one push per high-pri
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from datetime import date, datetime, timedelta
 from typing import Any
@@ -50,16 +51,27 @@ def last_digest(conn: sqlite3.Connection) -> str:
 def _job_line(r: sqlite3.Row) -> str:
     band = f", {r['band']}" if r["band"] else ""
     prio = f", priority {r['priority']:.2f}" if r["priority"] is not None else ""
-    return f"{r['company']} — {r['title']}{band}{prio}"
+    cols = r.keys()  # a sqlite3.Row: `in` would test its values
+    note = _form_note(r) if "form_why" in cols else ""
+    return f"{r['company']} — {r['title']}{band}{prio}{note}"
 
 
-_JOBS = (
+_ALL_JOBS = (
     "SELECT j.id, j.company, j.title, j.canonical_url, j.deadline, j.first_seen, f.band, "
-    "f.priority FROM jobs j LEFT JOIN fits f ON f.job_id=j.id "
+    "f.priority, json_extract(fs.details_json, '$.filter') AS form_filter, "
+    "json_extract(fs.details_json, '$.filter_reasons') AS form_why FROM jobs j "
+    "LEFT JOIN fits f ON f.job_id=j.id "
     "LEFT JOIN form_specs fs ON fs.job_id=j.id LEFT JOIN applications a ON a.job_id=j.id "
     "WHERE j.live=1 AND coalesce(f.gate_status,'') != 'failed' "
     "AND coalesce(a.status,'New') IN ('New','Prefilled') "
 )
+# jobs your form filters skip are listed on their own
+_JOBS = _ALL_JOBS + "AND coalesce(json_extract(fs.details_json, '$.filter'), '') != 'skip' "
+
+
+def _form_note(r: sqlite3.Row) -> str:
+    why = json.loads(r["form_why"] or "[]")
+    return f" ({'; '.join(w.split(': ', 1)[-1] for w in why)})" if why else ""
 
 
 def _new_ids(conn: sqlite3.Connection, since: str) -> set[int]:
@@ -117,6 +129,10 @@ def build_digest(
         (since,),
     ).fetchall()
     s["closed"] = [Item(job_id=r["id"], text=_job_line(r)) for r in closed]
+    skipped = conn.execute(
+        _ALL_JOBS + "AND json_extract(fs.details_json, '$.filter') = 'skip' ORDER BY j.id"
+    ).fetchall()
+    s["form_skipped"] = [Item(job_id=r["id"], text=_job_line(r)) for r in skipped]
     flags = conn.execute(
         "SELECT s.job_id, s.kind, j.company, j.title FROM signals s JOIN jobs j ON j.id=s.job_id "
         "WHERE s.at > ? ORDER BY s.job_id",
@@ -155,6 +171,7 @@ TITLES = {
     "essays": "Essay jobs",
     "manual": "Apply by hand",
     "closed": "Closed since last digest",
+    "form_skipped": "Skipped by your form filters",
     "flags": "Legitimacy flags",
     "followups": "Follow-ups due (drafts only; you send them)",
     "referrals": "Referrals",

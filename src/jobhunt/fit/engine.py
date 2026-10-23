@@ -351,6 +351,14 @@ def run_match(
             )
         }
         watch = {c.lower() for c in inp.watch_companies}
+        form_filter = {
+            r["job_id"]: (r["mode"], json.loads(r["why"] or "[]"))
+            for r in conn.execute(
+                "SELECT job_id, json_extract(details_json, '$.filter') AS mode, "
+                "json_extract(details_json, '$.filter_reasons') AS why FROM form_specs "
+                "WHERE json_extract(details_json, '$.filter') IS NOT NULL"
+            )
+        }
         scored: list[_Scored] = []
         reqs_by_job: dict[int, tuple[list[Requirement], bool]] = {}
         for job in eligible:
@@ -383,6 +391,12 @@ def run_match(
                 degree_above=gt.degree_above(job, inp.ctx) if unclear_degree else None,
             )
             flags = p.flags + pflags
+            if job.id in form_filter:  # your form filters: the form needs what you lack
+                mode, why = form_filter[job.id]
+                factor = 0.0 if mode == "skip" else cfg.form_filter_factor
+                pr.score = round(pr.score * factor, 3)
+                pr.components["form_filter"] = factor
+                flags += [str(w) for w in why]
             n_apps = applied.get(_norm_company(job.company), 0)
             if n_apps >= inp.cfg.volume_guard.max_applications_per_company:
                 flags.append(

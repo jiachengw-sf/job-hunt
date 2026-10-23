@@ -225,3 +225,27 @@ def test_unsupported_ats_is_manual_with_reason(cli, persona_home, fx):
     j = env["data"]["jobs"][0]
     assert j["class"] == "manual" and j["status"] == "unsupported"
     assert "packet" in j["reasons"][0]
+
+
+def test_form_filters_show_in_jobs_and_the_digest_and_rank_lower(cli, persona_home, fx):
+    home = persona_home("newgrad-analyst")
+    prefs = yaml.safe_load((home / "preferences.yaml").read_text(encoding="utf-8"))
+    prefs["forms"] = {"skip_if_required": ["driver's license"]}
+    (home / "preferences.yaml").write_text(yaml.safe_dump(prefs), encoding="utf-8")
+    code, env, _ = cli("run", "--fixtures", str(fx), "--no-sync")
+    assert code == ExitCode.OK, env
+    with db(home) as c:
+        ids = [str(r[0]) for r in c.execute("SELECT id FROM jobs WHERE live=1 ORDER BY id")]
+    code, env, _ = cli("inspect", *ids, "--fixtures", str(fx))
+    flagged = [j for j in env["data"]["jobs"] if j["filter"]]
+    assert flagged and all(j["filter"] == "skip" for j in flagged)
+    assert "driver's license" in flagged[0]["filter_reasons"][0]
+    cli("match")
+    _, env, _ = cli("jobs", "--all", "--limit", "200")
+    rows = {r["id"]: r for r in env["data"]["jobs"]}
+    for j in flagged:
+        row = rows[j["job_id"]]
+        assert row["form_filter"] == "skip" and row["priority"] == 0
+    _, env, _ = cli("digest")
+    skipped = {i["job_id"] for i in env["data"]["digest"]["sections"].get("form_skipped", [])}
+    assert {j["job_id"] for j in flagged} <= skipped

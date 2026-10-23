@@ -338,3 +338,26 @@ def test_char_limit_is_checked():
     ctx, matcher, _ = ctx_for("senior-backend", "Acme")
     c = classify(spec, ctx, matcher, eeo_confirmed=False)
     assert c.fields[0].resolution == "too_long" and c.cls == "needs_answers"
+
+
+def test_form_filters_skip_or_deprioritize_forms_needing_what_you_lack():
+    from jobhunt.forms.model import FormField
+
+    spec = FormSpec(
+        ats="greenhouse",
+        fields=[
+            FormField(id="q1", label="SAT score", type="text", required=True),
+            FormField(id="q2", label="GRE score (optional)", type="text"),
+        ],
+    )
+    ctx, matcher, eeo = ctx_for("first-year-intern", "Acme")
+    assert classify(spec, ctx, matcher, eeo_confirmed=eeo).filter is None  # no filters set
+    ctx.prefs.forms.deprioritize_if_required = ["SAT", "education.gre_score"]
+    c = classify(spec, ctx, matcher, eeo_confirmed=eeo)
+    assert c.filter == "deprioritize" and c.filter_reasons == [
+        "deprioritize: the form requires “SAT score”"
+    ]  # the optional GRE field doesn't count
+    ctx.prefs.forms.skip_if_required = ["education.sat_score"]
+    assert classify(spec, ctx, matcher, eeo_confirmed=eeo).filter == "skip"
+    ctx.answers.education.sat_score = "1400"  # answered: nothing is missing
+    assert classify(spec, ctx, matcher, eeo_confirmed=eeo).filter is None
