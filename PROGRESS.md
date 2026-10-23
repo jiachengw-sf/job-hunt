@@ -902,3 +902,24 @@ A full end-to-end run of v0.2.0 as a real user found eight issues. They land her
   things) makes the degree gate `unclear` (for the judge) and multiplies priority by
   `fit.higher_degree_factor: 0.5`, with a flag saying why.
 - 0 offline tests.
+
+### 2. Resume parsing and several resumes ✅
+
+- **Fragmented PDFs:** text that comes out one word per line is re-read in pypdf's layout mode
+  and, if still fragmented, rejoined into lines (bullets, section headers and date ranges mark
+  the breaks; an entry header glued to the bullet before it is split off). A section that still
+  splits into more entries than a resume plausibly holds (25 jobs or projects, 8 schools) is
+  left out of the draft, and `resume add` says so in `warnings`. Rejoining is coarse: a course
+  list's last item can run into the next school's name; the setup skill tidies the draft.
+- **Wrapped bullets** stay one bullet (an indented or lowercase line, or one after an unfinished
+  bullet that doesn't look like a header). Years glued to tech (`Streamlit2026`) and trailing
+  dates are dropped from a project's tech. Inline `Languages:`, `Technical Skills:`,
+  `Certifications:` or `Awards:` lines go to skills or to the first school's honors.
+- **Several resumes:** adding one keeps the draft (or profile) and adds the file to its list;
+  `--redraft` drafts from the new one and keeps the list. `--default` / `--not-default` are
+  honored; unset, the first resume is the default and later ones aren't. No default is fine.
+- **`profile set`** parses JSON objects and arrays (scalars inside stay text).
+- **Resume per job:** `prefill --resume <file>` attaches that file and answers.json keeps the
+  choice, so a later prefill and `applied` use it. With several resumes and no default a job is
+  skipped with `suggested_resume` (BM25 over the redacted texts) until the user picks. The review
+  names the file attached (`resume`). The setup and apply skills say how.
