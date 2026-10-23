@@ -8,6 +8,7 @@ Profile model first.
 from __future__ import annotations
 
 import copy
+import json
 import re
 from typing import Any
 
@@ -36,18 +37,33 @@ def parse_path(path: str) -> list[str | int]:
 
 
 def parse_value(raw: str) -> Any:
-    """Profile values are text or lists of text: ``[a, b]`` is a list, ``null`` clears the
-    value, anything else is the text as written (``2027-05`` stays a string)."""
+    """Profile values are text, lists or objects: JSON (``{"name": ...}``,
+    ``[{"school": ...}]``) or a flow list (``[a, b]``) is parsed, ``null`` clears the value,
+    anything else is the text as written (``2027-05`` stays a string). Scalars inside are
+    kept as text, so the Profile model reads them the same way as YAML."""
     t = raw.strip()
     if t in ("null", "~"):
         return None
-    if t.startswith("[") and t.endswith("]"):
+    if (t.startswith("[") and t.endswith("]")) or (t.startswith("{") and t.endswith("}")):
         try:
-            v = yaml.safe_load(t)
-        except yaml.YAMLError:
-            return raw
-        return [str(x) for x in v]
+            v = json.loads(t)
+        except ValueError:
+            try:
+                v = yaml.safe_load(t)
+            except yaml.YAMLError:
+                return raw
+        return _texts(v)
     return raw
+
+
+def _texts(v: Any) -> Any:
+    if isinstance(v, dict):
+        return {str(k): _texts(x) for k, x in v.items()}
+    if isinstance(v, list):
+        return [_texts(x) for x in v]
+    if v is None or isinstance(v, bool):
+        return v
+    return str(v)
 
 
 def set_value(

@@ -101,13 +101,81 @@ def test_resume_add_profile_confirm_and_set(cli, isolated_home):
     prof = Profile.model_validate(yaml.safe_load(paths.profile.read_text(encoding="utf-8")))
     assert prof.experience[0].title == "Principal Backend Engineer"
     assert "Rust" in prof.skills["skills"] and "tools" not in prof.skills
-    # a second resume joins the confirmed profile instead of redrafting
+    # a second resume joins the confirmed profile instead of redrafting; the default stays
     code, env, _ = cli(
         "resume", "add", str(RESUMES / "senior-backend.docx"), "--label", "docx copy"
     )
     assert code == ExitCode.OK and env["data"]["draft"] is None
+    assert env["data"]["resumes"] == ["senior-backend.pdf", "senior-backend.docx"]
     prof = Profile.model_validate(yaml.safe_load(paths.profile.read_text(encoding="utf-8")))
-    assert [r.file for r in prof.resumes if r.default] == ["senior-backend.docx"]
+    assert [r.file for r in prof.resumes if r.default] == ["senior-backend.pdf"]
+    code, env, _ = cli("resume", "add", str(RESUMES / "senior-backend.docx"), "--default")
+    prof = Profile.model_validate(yaml.safe_load(paths.profile.read_text(encoding="utf-8")))
+    assert [(r.file, r.default, r.label) for r in prof.resumes] == [
+        ("senior-backend.pdf", False, None),
+        ("senior-backend.docx", True, "docx copy"),  # its label is kept
+    ]
+
+
+def test_several_resumes_before_confirming_keep_the_draft_and_its_list(cli, isolated_home):
+    """Each `resume add` used to replace the draft, its resume list and its default."""
+    paths = get_paths()
+    cli("resume", "add", str(RESUMES / "newgrad-analyst.pdf"), "--label", "analytics")
+    code, e2, _ = cli("profile", "set", "--draft", "headline", "Reviewed headline")
+    assert code == ExitCode.OK, e2
+    code, env, _ = cli("resume", "add", str(RESUMES / "intl-sponsorship.pdf"), "--not-default")
+    assert code == ExitCode.OK, env
+    assert env["data"]["draft_kept"] and "--redraft" in env["hints"]["next_actions"][0]
+    code, env, _ = cli("resume", "add", str(RESUMES / "senior-backend.docx"))
+    draft = yaml.safe_load(paths.profile_draft.read_text(encoding="utf-8"))
+    assert draft["headline"] == "Reviewed headline"  # the first draft's content stays
+    assert [(r["file"], r["default"]) for r in draft["resumes"]] == [
+        ("newgrad-analyst.pdf", True),
+        ("intl-sponsorship.pdf", False),
+        ("senior-backend.docx", False),
+    ]
+    assert draft["resumes"][0]["label"] == "analytics"
+    code, env, _ = cli("resume", "add", str(RESUMES / "intl-sponsorship.pdf"), "--redraft")
+    draft = yaml.safe_load(paths.profile_draft.read_text(encoding="utf-8"))
+    assert draft["headline"] != "Reviewed headline"  # drafted from this resume
+    assert len(draft["resumes"]) == 3  # the list survives a redraft
+
+
+def test_no_default_resume_is_allowed(cli, isolated_home):
+    cli("resume", "add", str(RESUMES / "newgrad-analyst.pdf"), "--not-default")
+    cli("resume", "add", str(RESUMES / "intl-sponsorship.pdf"), "--not-default")
+    paths = get_paths()
+    draft = yaml.safe_load(paths.profile_draft.read_text(encoding="utf-8"))
+    assert not any(r["default"] for r in draft["resumes"])
+    code, env, _ = cli("resume", "add", str(RESUMES / "senior-backend.pdf"), "--not-default")
+    assert code == ExitCode.OK
+    assert any("No default resume" in a for a in env["hints"]["next_actions"])
+
+
+def test_profile_set_parses_json_objects_and_arrays():
+    from jobhunt.onboarding.profile import parse_value
+
+    v = parse_value('[{"name": "Bike Demand", "summary": "Forecasts rides", "tech": ["Python"]}]')
+    assert v == [{"name": "Bike Demand", "summary": "Forecasts rides", "tech": ["Python"]}]
+    assert parse_value('{"school": "Riverside University", "majors": ["Math"]}') == {
+        "school": "Riverside University",
+        "majors": ["Math"],
+    }
+    assert parse_value("[a, b]") == ["a", "b"]  # flow lists still work
+    assert parse_value("[2027, 2028]") == ["2027", "2028"]  # scalars stay text
+    assert parse_value("2027-05") == "2027-05" and parse_value("null") is None
+
+
+def test_profile_set_with_an_object_reaches_the_profile(cli, persona_home):
+    home = persona_home("newgrad-analyst")
+    code, env, _ = cli(
+        "profile", "set", "projects",
+        '[{"name": "Bike Demand", "summary": "Forecasts daily rides", "tech": ["Python"]}]',
+    )  # fmt: skip
+    assert code == ExitCode.OK, env
+    raw = (home / "profile.yaml").read_text(encoding="utf-8")
+    prof = Profile.model_validate(yaml.safe_load(raw))
+    assert prof.projects[0].name == "Bike Demand" and prof.projects[0].tech == ["Python"]
 
 
 def test_resume_add_dry_run_writes_nothing(cli, isolated_home):

@@ -37,7 +37,14 @@ class ResumeReport(BaseModel):
     )
     redacted_text: str = Field(description="Resume text without contact lines: read this.")
     draft: str | None = Field(description="Draft profile to tidy, then `profile confirm`.")
+    draft_kept: bool = Field(
+        False, description="An existing draft was kept; only its resume list changed."
+    )
+    resumes: list[str] = Field(default_factory=list, description="Resume files now listed.")
     placeholders: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(
+        default_factory=list, description="Sections left out of the draft, and why."
+    )
 
 
 class ProfileReport(BaseModel):
@@ -65,27 +72,42 @@ def register(cli: click.Group) -> None:
     @click.option(
         "--default/--not-default",
         "make_default",
-        default=True,
-        help="Use it as the default resume.",
+        default=None,
+        help="Make it the default resume, or not. Unset: the first resume is the default and "
+        "later ones aren't. With several resumes and no default, pick one per job "
+        "(`prefill --resume`).",
     )
     @click.option("--label", default=None, help="A short name, e.g. 'data roles'.")
-    @click.option("--redraft", is_flag=True, help="Write a new draft even if profile.yaml exists.")
+    @click.option(
+        "--redraft", is_flag=True, help="Draft the profile from this resume even if one exists."
+    )
     def resume_add(
-        file: Path, make_default: bool, label: str | None, redraft: bool, dry_run: bool
+        file: Path, make_default: bool | None, label: str | None, redraft: bool, dry_run: bool
     ) -> Result:
         """Copy a resume (PDF/DOCX/MD/TXT) into ~/.jobhunt/resume and draft profile.yaml from it.
 
         Contact details go only to the local form's pre-fill. The redacted text and the draft
         are what the AI tool reads and tidies; the user confirms with `jobhunt profile confirm`.
+        Adding another resume keeps the draft (or profile) you have and adds the file to its
+        resume list; `--redraft` drafts from the new one instead.
         """
         paths = get_paths()
         text = rs.extract_text(file)
         contact = rs.find_contact(text)
         draft = rs.draft_profile(text, contact, file.name)
-        if label:
-            draft["resumes"][0]["label"] = label
+        warnings = draft.pop("_warnings", [])
         redacted_path = paths.onboarding / f"{file.stem}.redacted.txt"
-        write_draft = redraft or not paths.profile.exists()
+        has_profile = paths.profile.exists()
+        old_draft = read_yaml(paths.profile_draft) if paths.profile_draft.exists() else None
+        write_draft = redraft or not has_profile
+        draft_kept = write_draft and not redraft and bool(old_draft)
+        base = (read_yaml(paths.profile) or {}) if has_profile else (old_draft or {})
+        resumes = merge_resumes(base.get("resumes") or [], file.name, label, make_default)
+        if draft_kept:
+            draft = {**(old_draft or {}), "resumes": resumes}
+        else:
+            draft["resumes"] = resumes
+        entry = next(r for r in resumes if r["file"] == file.name)
         if not dry_run:
             paths.ensure()
             with file_lock(paths.lock):
@@ -115,22 +137,37 @@ def register(cli: click.Group) -> None:
                         "Draft profile from your resume. Tidy it, then `jobhunt profile confirm`.",
                     )
                 else:
-                    _add_resume_to_profile(paths, file.name, label, make_default)
+                    data = read_yaml(paths.profile) or {}
+                    data["resumes"] = resumes
+                    prof.check(data, str(paths.profile))
+                    write_yaml(paths.profile, data, "Your profile: resume content the AI may see.")
         sections = [k for k in ("education", "experience", "projects", "skills") if draft.get(k)]
         ph = find_placeholders(draft)
         nxt = []
-        if write_draft:
+        if draft_kept:
+            nxt = [
+                f"Kept your draft profile and added {file.name} to its resume list. To draft "
+                f"from this resume instead, run `jobhunt resume add {file.name} --redraft`.",
+            ]
+        elif write_draft:
             nxt = [
                 f"Read {redacted_path} and tidy {paths.profile_draft} (fill CHANGE_ME, fix "
                 "titles/orgs, one-line project summaries). Show it to the user, then run "
                 "`jobhunt profile confirm`.",
                 "Then run `jobhunt setup form` for preferences and screening answers.",
             ]
+            if warnings:
+                nxt.insert(1, "Some sections were left out (see warnings): fill them in.")
+        if len(resumes) > 1 and not any(r.get("default") for r in resumes):
+            nxt.append(
+                "No default resume: pick one per job with `jobhunt prefill <id> --resume <file>` "
+                "(and `jobhunt applied ... --resume <file>`)."
+            )
         return Result(
             data=ResumeReport(
                 dry_run=dry_run,
                 file=file.name,
-                default=make_default,
+                default=bool(entry.get("default")),
                 characters=len(text),
                 sections=sections,
                 contact_found={
@@ -141,7 +178,10 @@ def register(cli: click.Group) -> None:
                 },
                 redacted_text=str(redacted_path),
                 draft=str(paths.profile_draft) if write_draft else None,
+                draft_kept=draft_kept,
+                resumes=[r["file"] for r in resumes],
                 placeholders=ph,
+                warnings=warnings,
             ),
             next_actions=nxt,
         )
@@ -296,28 +336,72 @@ def _peek(data: dict[str, Any], path: str) -> Any:
     return cur
 
 
-def _add_resume_to_profile(paths: Paths, name: str, label: str | None, make_default: bool) -> None:
-    data = read_yaml(paths.profile) or {}
-    resumes = [r for r in data.get("resumes") or [] if r.get("file") != name]
-    if make_default:
-        for r in resumes:
+def merge_resumes(
+    resumes: list[dict[str, Any]], name: str, label: str | None, make_default: bool | None
+) -> list[dict[str, Any]]:
+    """The resume list with ``name`` added or updated. ``make_default`` True makes it the only
+    default, False makes it not one, None keeps its flag (a first resume becomes the default).
+    Other entries keep their labels and flags."""
+    old = next((r for r in resumes if r.get("file") == name), None)
+    others = [dict(r) for r in resumes if r.get("file") != name]
+    if make_default is None:
+        default = bool(old.get("default")) if old else not others
+    else:
+        default = make_default
+    if default:
+        for r in others:
             r["default"] = False
-    entry: dict[str, Any] = {"file": name, "default": make_default}
-    if label:
-        entry["label"] = label
-    data["resumes"] = [*resumes, entry]
-    prof.check(data, str(paths.profile))
-    write_yaml(paths.profile, data, "Your profile: resume content the AI may see.")
+    entry: dict[str, Any] = {"file": name, "default": default}
+    if label or (old and old.get("label")):
+        entry["label"] = label or old["label"]  # type: ignore[index]
+    return [*others, entry]
+
+
+def listed_resumes(paths: Paths) -> list[dict[str, Any]]:
+    """The profile's resume entries whose files exist."""
+    if not paths.profile.exists():
+        return []
+    data = yaml.safe_load(paths.profile.read_text(encoding="utf-8")) or {}
+    return [r for r in data.get("resumes") or [] if (paths.resume_dir / r["file"]).exists()]
+
+
+def resolve_resume(paths: Paths, given: str) -> Path:
+    """A resume named on the command line: a path, or a file name inside ~/.jobhunt/resume."""
+    p = Path(given).expanduser()
+    if not p.is_absolute() and not p.exists():
+        p = paths.resume_dir / given
+    if not p.is_file():
+        names = ", ".join(r["file"] for r in listed_resumes(paths)) or "none yet"
+        raise ValidationFailed(
+            f"No resume file {given!r}.",
+            next_actions=[f"Pass a file path, or a file name inside {paths.resume_dir} ({names})."],
+        )
+    return p
+
+
+def suggest_resume(paths: Paths, posting: str) -> str | None:
+    """The listed resume whose text shares the most with the posting (BM25 over the redacted
+    texts), when one clearly leads. A suggestion for the user, never applied on its own."""
+    from jobhunt.fit.recall import BM25, tokenize
+
+    names, docs = [], []
+    for r in listed_resumes(paths):
+        red = paths.onboarding / f"{Path(r['file']).stem}.redacted.txt"
+        if red.exists():
+            names.append(r["file"])
+            docs.append(tokenize(red.read_text(encoding="utf-8")))
+    if len(names) < 2:
+        return None
+    scores = BM25(docs).scores(tokenize(posting))
+    ranked = sorted(zip(scores, names, strict=True), reverse=True)
+    return ranked[0][1] if ranked[0][0] > 0 and ranked[0][0] > ranked[1][0] else None
 
 
 def default_resume(paths: Paths) -> Path | None:
-    """The default resume file, when the profile names one that exists."""
-    if not paths.profile.exists():
-        return None
-    data = yaml.safe_load(paths.profile.read_text(encoding="utf-8")) or {}
-    resumes = data.get("resumes") or []
-    pick = next((r for r in resumes if r.get("default")), resumes[0] if resumes else None)
-    if not pick:
-        return None
-    f = paths.resume_dir / pick["file"]
-    return f if f.exists() else None
+    """The default resume, or the only one. None when there are several and none is the
+    default: the user picks one per job."""
+    resumes = listed_resumes(paths)
+    pick = next((r for r in resumes if r.get("default")), None)
+    if pick is None and len(resumes) == 1:
+        pick = resumes[0]
+    return paths.resume_dir / pick["file"] if pick else None
