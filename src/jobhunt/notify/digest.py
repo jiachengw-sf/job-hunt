@@ -129,8 +129,12 @@ def build_digest(
         (since,),
     ).fetchall()
     s["closed"] = [Item(job_id=r["id"], text=_job_line(r)) for r in closed]
+    # news only: jobs new since the last digest, or whose form was read since; a skipped job
+    # isn't listed again on every digest
     skipped = conn.execute(
-        _ALL_JOBS + "AND json_extract(fs.details_json, '$.filter') = 'skip' ORDER BY j.id"
+        _ALL_JOBS + "AND json_extract(fs.details_json, '$.filter') = 'skip' "
+        "AND (fs.fetched_at > ? OR j.id IN (SELECT value FROM json_each(?))) ORDER BY j.id",
+        (since, json.dumps(sorted(new))),
     ).fetchall()
     s["form_skipped"] = [Item(job_id=r["id"], text=_job_line(r)) for r in skipped]
     flags = conn.execute(
@@ -171,7 +175,7 @@ TITLES = {
     "essays": "Essay jobs",
     "manual": "Apply by hand",
     "closed": "Closed since last digest",
-    "form_skipped": "Skipped by your form filters",
+    "form_skipped": "Newly skipped by your form filters",
     "flags": "Legitimacy flags",
     "followups": "Follow-ups due (drafts only; you send them)",
     "referrals": "Referrals",

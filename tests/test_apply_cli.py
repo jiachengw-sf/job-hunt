@@ -305,3 +305,7 @@ def test_form_filters_show_in_jobs_and_the_digest_and_rank_lower(cli, persona_ho
     _, env, _ = cli("digest")
     skipped = {i["job_id"] for i in env["data"]["digest"]["sections"].get("form_skipped", [])}
     assert {j["job_id"] for j in flagged} <= skipped
+    # the next digest doesn't list them again: only jobs new since the last one
+    _, env, _ = cli("digest")
+    assert not env["data"]["digest"]["sections"].get("form_skipped")
+    assert "skipped by your form filters" not in env["data"]["digest"]["text"]
