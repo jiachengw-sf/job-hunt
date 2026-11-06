@@ -115,7 +115,7 @@ def test_manual_applied_for_a_workday_job(cli, persona_home):
     assert d["created"] and d["company"] and d["status"] == "Applied"
     assert d["where_to_check"] == "https://harborlight.wd5.myworkdayjobs.com/careers/userHome"
     assert "Workday Candidate Home" in d["how_to_check"]
-    assert d["applied"].endswith("9:30 PM PDT")
+    assert d["applied"].endswith(("9:30 PM PDT", "9:30 PM PST"))  # either side of DST
     (r,) = records(home)
     assert (r["method"], r["recorded_via"], r["status_check_method"]) == ("manual", "cli", "portal")
     assert r["login_email"] == "candidate@example.com" and r["resume_file"] == "resume.md"
@@ -333,7 +333,8 @@ def test_apps_show_status_update_and_history(cli, persona_home):
     assert d["history"][-1]["note"] == "OA invite"
     code, env, _ = cli("app", "status", f"job:{gh}", "Skipped")
     assert code == ExitCode.NEEDS_USER  # Skipped needs a reason
-    code, env, _ = cli("app", "update", f"job:{gh}", "--interview", "Oct 30 10am", "--label",
+    soon = (datetime.now(UTC) + timedelta(days=7)).strftime("%Y-%m-%dT17:00:00Z")
+    code, env, _ = cli("app", "update", f"job:{gh}", "--interview", soon, "--label",
                        "Phone screen", "--recruiter-name", "Sam Recruiter", "--next-step",
                        "Prep system design", "--login-email", "candidate@example.com")  # fmt: skip
     assert code == ExitCode.OK, env
