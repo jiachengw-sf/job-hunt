@@ -360,14 +360,14 @@ def register(cli: click.Group) -> None:
                 _set_builtin(raw, key, answer)
             else:
                 e["answer"] = answer
-            if spec is not None and not (e.get("wordings") or e.get("options")):
-                bank.remove(e)  # nothing of its own to keep: the typed answer is the entry
         if options:
             e["options"] = list(options)
         for w in add_wording:
             if w not in e.setdefault("wordings", []):
                 e["wordings"].append(w)
         e["wordings"] = [w for w in e.get("wordings") or [] if w not in remove_wording]
+        if answer is not None and spec is not None and not (e["wordings"] or e.get("options")):
+            bank.remove(e)  # nothing of its own to keep: the typed answer is the entry
         if not dry_run:
             with file_lock(paths.lock):
                 _save(paths, raw)

@@ -101,3 +101,23 @@ def test_confirm_takes_several_labels(cli, persona_home):
     assert env["data"]["entry"]["wordings"] == labels
     code, _, _ = cli("answers", "confirm", "work_auth.sponsorship_future")
     assert code == ExitCode.VALIDATION  # a label is needed
+
+
+def test_editing_a_builtin_keeps_options_and_wordings_given_with_the_answer(cli, persona_home):
+    home = persona_home("newgrad-analyst")
+    code, env, _ = cli(
+        "answers",
+        "edit",
+        "education.graduation",
+        "--answer",
+        "2028-05",
+        "--option",
+        "May 2028",
+        "--add-wording",
+        "When do you finish your degree?",
+    )
+    assert code == ExitCode.OK, env
+    a = Answers.model_validate(yaml.safe_load((home / "answers.yaml").read_text(encoding="utf-8")))
+    assert (a.education.graduation_year, a.education.graduation_month) == (2028, 5)
+    e = next(e for e in a.bank if e.key == "education.graduation")
+    assert e.options == ["May 2028"] and e.wordings == ["When do you finish your degree?"]
