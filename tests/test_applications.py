@@ -497,6 +497,27 @@ def test_applied_without_a_posting_link_then_the_posting_merges(cli, persona_hom
     assert env["data"]["job_id"] != d["job_id"]
 
 
+@pytest.mark.parametrize(
+    ("typed", "listed"),
+    [("Juniper Ridge Labs, Inc.", "Juniper Ridge Labs"),
+     ("Juniper Ridge Labs", "Juniper Ridge Labs Corporation"),
+     ("Juniper Ridge Labs LLC", "Juniper Ridge Labs Ltd.")],
+)  # fmt: skip
+def test_a_no_link_job_merges_when_only_the_legal_suffix_differs(cli, persona_home, typed, listed):
+    setup(cli, persona_home)
+    code, env, _ = cli("applied", "--company", typed, "--title", "Hardware Intern",
+                       "--req-id", "JR2027047", "--at", "yesterday 9am")  # fmt: skip
+    assert code == ExitCode.OK, env
+    url = ("https://juniperridge.wd1.myworkdayjobs.com/en-US/External/job/Santa-Clara-CA/"
+           "2027-Hardware-Engineering-Intern_JR2027047")  # fmt: skip
+    code, added, _ = cli("add", url, "--company", listed, "--title", "Hardware Intern")
+    assert code == ExitCode.OK, added
+    assert added["data"]["job_id"] == env["data"]["job_id"]
+    other = url.replace("juniperridge", "juniperbank")  # same req id, a different company
+    _, env2, _ = cli("add", other, "--company", "Juniper Ridge Bank", "--title", "Intern")
+    assert env2["data"]["job_id"] != env["data"]["job_id"]
+
+
 def test_applied_needs_a_job_or_company_and_title(cli, persona_home):
     setup(cli, persona_home)
     code, env, _ = cli("applied", "--company", "Juniper Ridge Labs")

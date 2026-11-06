@@ -371,18 +371,23 @@ class Ingestor:
 
     def _unlisted_match(self, p: Posting) -> sqlite3.Row | None:
         """A job recorded without a link (`applied --company --title --req-id`) that this
-        posting is: same company, and its requisition id is the posting's id or in its URL."""
+        posting is: its requisition id is the posting's id or in its URL, and the company is the
+        same once legal suffixes are set aside ("Acme, Inc." is "Acme"). Only a unique hit."""
         if p.key:
             return None
         ids = req_ids(p)
         if not ids:
             return None
-        prefix = f"manual:{_slug(p.company)}:"
         rows = self.conn.execute(
-            "SELECT * FROM jobs WHERE dedupe_key LIKE ? AND ats_job_id IS NOT NULL",
-            (prefix.replace("%", r"\%") + "%",),
+            "SELECT * FROM jobs WHERE substr(dedupe_key, 1, 7) = 'manual:' "
+            "AND ats_job_id IS NOT NULL"
         ).fetchall()
-        hits = [r for r in rows if r["ats_job_id"].casefold() in ids]
+        same = company_key(p.company)
+        hits = [
+            r
+            for r in rows
+            if r["ats_job_id"].casefold() in ids and company_key(r["company"]) == same
+        ]
         return hits[0] if len(hits) == 1 else None
 
     def upsert(self, p: Posting, sid: str, *, baseline: bool) -> tuple[int, str]:
@@ -706,6 +711,18 @@ def _key_rank(key: str) -> int:
 
 def _slug(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", s.casefold()).strip("-")
+
+
+_LEGAL = re.compile(
+    r"(?:-(?:inc|incorporated|corp|corporation|co|company|llc|l-l-c|ltd|limited|plc|gmbh))+$"
+)
+
+
+def company_key(name: str) -> str:
+    """A company name for matching: slugged, with trailing legal suffixes (Inc, Corp,
+    Corporation, LLC, Ltd...) removed, so "Acme, Inc." and "Acme" compare equal."""
+    s = _slug(name)
+    return _LEGAL.sub("", s) or s
 
 
 # requisition ids as employers write them: JR2027047, R-123456, REQ-1234, 123456 (a bare
