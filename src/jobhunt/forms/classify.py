@@ -163,19 +163,24 @@ def _fit_options(f: FormField, key: str, value: str | list[str], matcher: Matche
         return value in ("yes", "no")
     if not f.options:
         return True
+    return bool(_choose(key, value, f.options, matcher))
+
+
+def _choose(key: str, value: str | list[str], opts: list[str], matcher: Matcher) -> list[str]:
+    """The form's option text(s) for ``value``: the key's picker (ranges, degree levels,
+    names), else the user's confirmed option texts and aliases, else the form's one decline
+    option for a decline. Empty when nothing matches confidently; never a guess."""
     spec = BUILTIN.get(key)
+    if spec and spec.pick and isinstance(value, str) and (hit := spec.pick(value, opts)):
+        return [hit]
+    vals = value if isinstance(value, list) else [value]
     yesno = bool(spec and spec.kind == "yesno")
-    if spec and spec.pick and isinstance(value, str):
-        return spec.pick(value, f.options) is not None
-    if isinstance(value, list):
-        hits = [choose_option(_options_for(key, v, matcher), f.options) for v in value]
-        return any(hits)
-    if choose_option(_options_for(key, value, matcher), f.options, yesno=yesno):
-        return True
-    if value == DECLINE_EEO or value in DECLINE_ALIASES:
-        declines = [o for o in f.options if _DECLINE_RE.search(normalize(o))]
-        return len(declines) == 1
-    return False
+    picked = [choose_option(_options_for(key, v, matcher), opts, yesno=yesno) for v in vals]
+    chosen = [p for p in picked if p]
+    if not chosen and (value == DECLINE_EEO or value in DECLINE_ALIASES):
+        declines = [o for o in opts if _DECLINE_RE.search(normalize(o))]
+        chosen = declines if len(declines) == 1 else []
+    return chosen
 
 
 def resolve_field(
@@ -316,14 +321,7 @@ def fill_value(
     if fr.type == "boolean":
         return {"yes": "Yes", "no": "No"}.get(str(value), str(value))
     if opts and fr.type in ("select", "multiselect", "radio", "checkbox"):
-        vals = value if isinstance(value, list) else [value]
-        yesno = bool(spec and spec.kind == "yesno")
-        if spec and spec.pick and isinstance(value, str):
-            return spec.pick(value, opts)
-        picked = [choose_option(_options_for(fr.key, v, matcher), opts, yesno=yesno) for v in vals]
-        chosen = [p for p in picked if p]
-        if not chosen and (value == DECLINE_EEO or value in DECLINE_ALIASES):
-            chosen = [o for o in opts if _DECLINE_RE.search(normalize(o))][:1]
+        chosen = _choose(fr.key, value, opts, matcher)
         if not chosen:
             return None
         return chosen if fr.type in ("multiselect", "checkbox") else chosen[0]

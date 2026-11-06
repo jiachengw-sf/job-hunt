@@ -93,3 +93,30 @@ def test_range_options_resolve_and_fill_with_the_forms_own_text():
     assert by["q1"].resolution == by["q2"].resolution == "answered", c.fields
     assert fill_value(by["q1"], ctx, matcher) == "January 2028 - July 2028"
     assert fill_value(by["q2"], ctx, matcher) == "3.91 - 4.0"
+
+
+def test_a_pickers_miss_falls_back_to_confirmed_options_and_decline_aliases():
+    """A picker that can't map the value doesn't end the search: the user's confirmed option
+    texts and the decline aliases still count (they did before pickers existed)."""
+    from jobhunt.models.answers import BankEntry
+
+    profile, prefs, answers = _load_persona(PERSONAS_DIR / "first-year-intern")
+    assert answers.compensation.prefer_not_to_say
+    odd = "Undergraduate (four-year program)"
+    answers.bank.append(BankEntry(key="education.degree", question="Degree", options=[odd]))
+    ctx = AnswerContext(profile, answers, prefs, company="Acme", country="US", resume=Path("r"))
+    pay = ["Under $50,000", "$50,000 - $100,000", "Prefer not to answer"]
+    spec = FormSpec(
+        ats="greenhouse",
+        fields=[
+            FormField(id="pay", label="Expected salary", type="select", required=True, options=pay),
+            FormField(id="deg", label="Degree", type="select", required=True,
+                      options=["High school", odd, "Graduate program"]),
+        ],
+    )  # fmt: skip
+    matcher = Matcher(answers)
+    c = classify(spec, ctx, matcher, eeo_confirmed=True)
+    by = {f.id: f for f in c.fields}
+    assert by["pay"].resolution == by["deg"].resolution == "answered", c.fields
+    assert fill_value(by["pay"], ctx, matcher) == "Prefer not to answer"
+    assert fill_value(by["deg"], ctx, matcher) == odd
