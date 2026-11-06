@@ -9,7 +9,6 @@ import json
 import re
 import sqlite3
 from contextlib import AbstractContextManager
-from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -21,7 +20,7 @@ from jobhunt.cli.discovery import FIXTURES_HELP, _prepare, fixtures_dir, make_cl
 from jobhunt.cli.framework import Result, agent_command
 from jobhunt.cli.onboarding import default_resume, listed_resumes
 from jobhunt.discovery.resolver import SUPPORTED
-from jobhunt.discovery.text import iso, utc_now
+from jobhunt.discovery.text import utc_now
 from jobhunt.drafts.essays import approved_essays
 from jobhunt.envelope import Envelope, render_human_default
 from jobhunt.errors import NotFound
@@ -29,6 +28,7 @@ from jobhunt.fit.jobview import load_jobs
 from jobhunt.forms import ashby
 from jobhunt.forms.classify import Classification, FieldResult, classify, display_value
 from jobhunt.forms.coverage import CoverageReport, report, sample_jobs
+from jobhunt.forms.due import form_read_due
 from jobhunt.forms.inspect import (
     Inputs,
     InspectReport,
@@ -92,21 +92,18 @@ def undescribed_jobs(
     so they can be judged. A form whose last read failed is tried again only once the posting
     changed or reappeared since, or the failure is ``retry_days`` old."""
     marks = ",".join("?" * len(SUPPORTED))
-    cutoff = iso(datetime.fromisoformat(now.replace("Z", "+00:00")) - timedelta(days=retry_days))
     rows = conn.execute(
         "SELECT j.id FROM jobs j JOIN fits f ON f.job_id=j.id "
-        "LEFT JOIN posting_views v ON v.job_id=j.id LEFT JOIN form_specs s ON s.job_id=j.id "
+        "LEFT JOIN posting_views v ON v.job_id=j.id "
         "WHERE j.live=1 AND f.recalled=1 AND coalesce(f.gate_status,'') != 'failed' "
         "AND f.recall_rank <= ? AND coalesce(trim(j.description),'') = '' "
         "AND coalesce(trim(v.description),'') = '' "
-        f"AND j.ats IN ({marks}) AND (s.job_id IS NULL OR "
-        "(s.status NOT IN ('ok','unsupported') AND (s.fetched_at <= ? OR EXISTS ("
-        "SELECT 1 FROM events e WHERE e.job_id=j.id AND e.kind IN ('changed','reappeared') "
-        "AND e.at > s.fetched_at)))) "
-        "ORDER BY f.recall_rank, j.id",
-        (top_k, *sorted(SUPPORTED), cutoff),
+        f"AND j.ats IN ({marks}) ORDER BY f.recall_rank, j.id",
+        (top_k, *sorted(SUPPORTED)),
     ).fetchall()
-    return [r["id"] for r in rows]
+    ids = [r["id"] for r in rows]
+    due = form_read_due(conn, ids, now=now, retry_days=retry_days)
+    return [i for i in ids if i in due]
 
 
 def run_inspect(

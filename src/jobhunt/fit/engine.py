@@ -32,6 +32,7 @@ from jobhunt.fit.recall import Embedder, recall
 from jobhunt.fit.requirements import Requirement, extract, prematch, required_years
 from jobhunt.fit.scoring import Qualification, preference, priority, qualify
 from jobhunt.fit.tasks import TASK_KIND, basis_hash, write_task
+from jobhunt.forms.due import form_read_due
 from jobhunt.models import Answers, Config, Preferences, Profile, Watchlist
 
 ELIGIBILITY_GATES = {"sponsorship", "citizenship", "clearance", "graduation", "degree", "language"}
@@ -440,14 +441,14 @@ def run_match(
                 )
 
         task_counts: Counter[str] = Counter()
-        no_text = 0
+        untexted = []
         for s in scored:
             r = rec.by_job.get(s.job.id)
             if not (r and r.recalled):
                 continue
             has_text = bool(s.job.description.strip())
             if not has_text and r.rank <= cfg.describe_top_k and s.job.ats in SUPPORTED:
-                no_text += 1  # `run` can read these from the ATS
+                untexted.append(s.job.id)
             # the top recalled jobs are judged even below the threshold: an unjudged band holds
             # their priority down, so the threshold alone would never let them be judged
             if s.prio < cfg.priority_threshold and not (has_text and r.rank <= cfg.judge_top_k):
@@ -499,6 +500,10 @@ def run_match(
     }
     finish_run(conn, run_id, "ok", stats, inp.now)
     update_gated_out(conn)
+    # `run` can read these from the ATS: forms never read, or a failed read now due again
+    no_text = len(
+        form_read_due(conn, untexted, now=inp.now, retry_days=inp.cfg.forms.spec_max_age_days)
+    )
     return MatchReport(
         run_id=None if dry_run else run_id,
         dry_run=dry_run,
@@ -511,7 +516,7 @@ def run_match(
             "replaced": task_counts["replaced"],
             "unchanged": task_counts["unchanged"],
             "pending_total": pending,
-            "no_posting_text": no_text,
+            "no_posting_text": no_text,  # what `run` would read: the same rule
         },
         top=[
             FitBrief(

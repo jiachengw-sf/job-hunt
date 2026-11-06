@@ -181,6 +181,25 @@ def test_a_failed_form_read_is_retried_only_after_the_posting_changes_or_a_while
         assert jid in undescribed_jobs(c, 20, now=now, retry_days=7)  # the posting changed
 
 
+def test_no_posting_text_hint_skips_forms_already_read(cli, persona_home, fx):
+    """A form read OK with no text gives none on the next run either: it isn't counted."""
+    home = persona_home("first-year-intern")
+    (home / "config.yaml").write_text("fit:\n  priority_threshold: 0.99\n", encoding="utf-8")
+    _, env, _ = cli("run", "--fixtures", str(fx), "--no-sync", "--no-inspect")
+    before = env["data"]["match"]["tasks"]["no_posting_text"]
+    assert before >= 1
+    with db(home) as c:
+        jid = c.execute("SELECT id FROM jobs WHERE ats_job_id='1099'").fetchone()[0]
+        now = c.execute("SELECT max(at) FROM events").fetchone()[0]
+        c.execute(
+            "INSERT INTO form_specs (job_id, ats, status, fetched_at) "
+            "VALUES (?, 'greenhouse', 'ok', ?)",
+            (jid, now),
+        )
+    _, env, _ = cli("match")
+    assert env["data"]["tasks"]["no_posting_text"] == before - 1
+
+
 def test_posting_view_never_keeps_a_closed_job_live(cli, persona_home, fx, tmp_path):
     home = persona_home("first-year-intern")
     cli("run", "--fixtures", str(fx), "--no-sync", "--no-inspect")
