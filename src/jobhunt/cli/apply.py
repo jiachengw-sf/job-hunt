@@ -9,6 +9,7 @@ import json
 import re
 import sqlite3
 from contextlib import AbstractContextManager
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -20,7 +21,7 @@ from jobhunt.cli.discovery import FIXTURES_HELP, _prepare, fixtures_dir, make_cl
 from jobhunt.cli.framework import Result, agent_command
 from jobhunt.cli.onboarding import default_resume, listed_resumes
 from jobhunt.discovery.resolver import SUPPORTED
-from jobhunt.discovery.text import utc_now
+from jobhunt.discovery.text import iso, utc_now
 from jobhunt.drafts.essays import approved_essays
 from jobhunt.envelope import Envelope, render_human_default
 from jobhunt.errors import NotFound
@@ -83,20 +84,27 @@ def threshold_jobs(conn: sqlite3.Connection, threshold: float, limit: int) -> li
     return [r["id"] for r in rows]
 
 
-def undescribed_jobs(conn: sqlite3.Connection, top_k: int) -> list[int]:
+def undescribed_jobs(
+    conn: sqlite3.Connection, top_k: int, *, now: str, retry_days: int
+) -> list[int]:
     """Recalled jobs in the top ``top_k`` by relevance whose sources carry no posting text (e.g.
     Simplify rows) and whose form hasn't been read: reading the form stores the ATS's own text,
-    so they can be judged."""
+    so they can be judged. A form whose last read failed is tried again only once the posting
+    changed or reappeared since, or the failure is ``retry_days`` old."""
     marks = ",".join("?" * len(SUPPORTED))
+    cutoff = iso(datetime.fromisoformat(now.replace("Z", "+00:00")) - timedelta(days=retry_days))
     rows = conn.execute(
         "SELECT j.id FROM jobs j JOIN fits f ON f.job_id=j.id "
         "LEFT JOIN posting_views v ON v.job_id=j.id LEFT JOIN form_specs s ON s.job_id=j.id "
         "WHERE j.live=1 AND f.recalled=1 AND coalesce(f.gate_status,'') != 'failed' "
         "AND f.recall_rank <= ? AND coalesce(trim(j.description),'') = '' "
         "AND coalesce(trim(v.description),'') = '' "
-        f"AND j.ats IN ({marks}) AND (s.job_id IS NULL OR s.status NOT IN ('ok','unsupported')) "
+        f"AND j.ats IN ({marks}) AND (s.job_id IS NULL OR "
+        "(s.status NOT IN ('ok','unsupported') AND (s.fetched_at <= ? OR EXISTS ("
+        "SELECT 1 FROM events e WHERE e.job_id=j.id AND e.kind IN ('changed','reappeared') "
+        "AND e.at > s.fetched_at)))) "
         "ORDER BY f.recall_rank, j.id",
-        (top_k, *sorted(SUPPORTED)),
+        (top_k, *sorted(SUPPORTED), cutoff),
     ).fetchall()
     return [r["id"] for r in rows]
 

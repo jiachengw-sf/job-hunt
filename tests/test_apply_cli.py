@@ -144,6 +144,43 @@ def test_run_reads_text_for_top_matches_without_one_and_judges_them(cli, persona
     assert env["data"]["match"]["tasks"]["no_posting_text"] == 0
 
 
+def test_run_reads_no_forms_when_inspection_is_off(cli, persona_home, fx):
+    """`forms.max_per_run: 0` turns form reading off, posting text included."""
+    home = persona_home("first-year-intern")
+    (home / "config.yaml").write_text("forms:\n  max_per_run: 0\n", encoding="utf-8")
+    code, env, _ = cli("run", "--fixtures", str(fx), "--no-sync")
+    assert code == ExitCode.OK, env
+    with db(home) as c:
+        assert not c.execute("SELECT 1 FROM form_specs").fetchone()
+        assert not c.execute("SELECT 1 FROM posting_views").fetchone()
+
+
+def test_a_failed_form_read_is_retried_only_after_the_posting_changes_or_a_while(
+    cli, persona_home, fx
+):
+    from jobhunt.cli.apply import undescribed_jobs
+
+    home = persona_home("first-year-intern")
+    cli("run", "--fixtures", str(fx), "--no-sync", "--no-inspect")
+    now = "2026-11-06T12:00:00Z"
+    with db(home) as c:
+        jid = c.execute("SELECT id FROM jobs WHERE ats_job_id='1099'").fetchone()[0]
+        assert jid in undescribed_jobs(c, 20, now=now, retry_days=7)
+        c.execute(
+            "INSERT INTO form_specs (job_id, ats, status, error, fetched_at) "
+            "VALUES (?, 'greenhouse', 'error', 'HTTP 500', '2026-11-06T11:00:00Z')",
+            (jid,),
+        )
+        assert jid not in undescribed_jobs(c, 20, now=now, retry_days=7)  # just failed
+        assert jid in undescribed_jobs(c, 20, now="2026-11-14T12:00:00Z", retry_days=7)
+        c.execute(
+            "INSERT INTO events (job_id, kind, at, source_id) "
+            "VALUES (?, 'changed', '2026-11-06T11:30:00Z', 'simplify')",
+            (jid,),
+        )
+        assert jid in undescribed_jobs(c, 20, now=now, retry_days=7)  # the posting changed
+
+
 def test_posting_view_never_keeps_a_closed_job_live(cli, persona_home, fx, tmp_path):
     home = persona_home("first-year-intern")
     cli("run", "--fixtures", str(fx), "--no-sync", "--no-inspect")

@@ -416,8 +416,15 @@ def register(cli: click.Group) -> None:
             ids = []
             if not no_inspect and cfg.forms.max_per_run:
                 ids = threshold_jobs(conn, cfg.fit.priority_threshold, cfg.forms.max_per_run)
-            if not no_inspect:  # jobs with no posting text can't be judged until it's read
-                ids += [i for i in undescribed_jobs(conn, cfg.fit.describe_top_k) if i not in ids]
+            if not no_inspect and cfg.forms.max_per_run:  # 0 turns form reading off
+                # jobs with no posting text can't be judged until it's read
+                more = undescribed_jobs(
+                    conn,
+                    cfg.fit.describe_top_k,
+                    now=inp.now,
+                    retry_days=cfg.forms.spec_max_age_days,
+                )
+                ids += [i for i in more if i not in ids]
             if ids:
                 irep = run_inspect(
                     conn,
