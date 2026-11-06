@@ -214,6 +214,22 @@ def test_resume_parse_does_not_overwrite_our_values(browser_context, fx, name):
         assert org.status == "autofilled"
 
 
+def test_a_slow_ashby_parse_still_lands_before_our_values(browser_context, fx):
+    """CI flake: on a slow runner Ashby's parse landed after the fixed wait and overwrote the
+    name we had typed. Here the parse takes 1.5 s; our values must still be what stays."""
+    sheet = make_sheet("intl-sponsorship", "ab_A", RESUMES / "intl-sponsorship.pdf")
+    browser_context.add_init_script(
+        "const _st = window.setTimeout;"
+        "window.setTimeout = (f, ms, ...a) => _st(f, ms === 300 ? 1500 : ms, ...a);"
+    )
+    page, _, _, _, outcomes = run_fill(browser_context, fx, "ab_A", sheet)
+    by = {o.label: o for o in outcomes}
+    assert by["Name"].status == by["Email"].status == "filled", (by["Name"], by["Email"])
+    page.wait_for_timeout(2000)  # long after the parse
+    email = next(f for f in sheet.fields if f.label == "Email")
+    assert page.locator("#_systemfield_email").input_value() == email.value
+
+
 def test_ashby_parse_wins_if_filled_first(browser_context, fx):
     """Control: filling before the upload lets the parse overwrite, and read-back catches it."""
     sheet = make_sheet("intl-sponsorship", "ab_A", RESUMES / "intl-sponsorship.pdf")

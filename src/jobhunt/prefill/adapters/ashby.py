@@ -19,11 +19,19 @@ Verified against live forms (2026-10-18):
 from __future__ import annotations
 
 import re
+import time
 from typing import Any, ClassVar
 
 from jobhunt.prefill.adapters.base import Adapter, FieldMissing, NoOption, norm, pick_option
 from jobhunt.prefill.guard import safe_click
 from jobhunt.prefill.values import AnswerSheet, FillField
+
+# how long the resume parse may take to write the fields after its response (a parse that
+# writes nothing costs this once per upload)
+PARSE_LAND_MS = 5_000
+_TEXT_VALUES_JS = """() => Array.from(document.querySelectorAll(
+  '[data-field-path] input:not([type=file]):not([type=checkbox]):not([type=radio]), '
+  + '[data-field-path] textarea')).map(e => e.value)"""
 
 _OPS = (
     "ApiJobPosting",
@@ -87,15 +95,20 @@ class Ashby(Adapter):
             if inp.count() == 0:
                 raise FieldMissing(f"file input in {ff.id}")
             self.check_accept(inp.first, str(ff.value))
+            before = self._text_values(page)
+            parsed = False
             try:
                 with page.expect_response(
                     lambda r: "op=ApiAutofillApplicationFormWithUploadedResume" in r.url,
                     timeout=self.parse_wait_s * 1000,
                 ):
                     inp.first.set_input_files(str(ff.value))
+                parsed = True
             except Exception:  # no autofill on this form, or it was slow: fill anyway
                 pass
-            page.wait_for_timeout(500)  # let the autofill land before overwriting it
+            if parsed:  # the parse writes the fields a moment after its response: wait for it
+                self._until_changed(page, before, min(PARSE_LAND_MS, int(self.parse_wait_s * 1000)))
+            page.wait_for_timeout(300)  # and for any field it writes last
         elif ff.type == "boolean":
             want = "yes" if norm(str(ff.value)) == "yes" else "no"
             btn = box.locator(f'button[data-option="{want}"]')
@@ -128,6 +141,22 @@ class Ashby(Adapter):
         else:
             loc = box.locator(f'[id="{_q(ff.id)}"], [name="{_q(ff.id)}"], input, textarea')
             self.first(loc, f"input {ff.id}").fill(str(ff.value))
+
+    @staticmethod
+    def _text_values(page: Any) -> list[str]:
+        try:
+            return page.evaluate(_TEXT_VALUES_JS)
+        except Exception:
+            return []
+
+    def _until_changed(self, page: Any, before: list[str], limit_ms: int) -> None:
+        """Wait until the form's text fields differ from ``before`` (the parse landed), at most
+        ``limit_ms``. A parse that fills nothing just costs the wait."""
+        deadline = time.monotonic() + limit_ms / 1000
+        while time.monotonic() < deadline:
+            if self._text_values(page) != before:
+                return
+            page.wait_for_timeout(100)
 
     def read_field(self, page: Any, ff: FillField) -> str | None:
         box = self._box(page, ff)
