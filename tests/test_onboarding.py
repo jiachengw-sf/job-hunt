@@ -416,3 +416,23 @@ def test_form_server_binds_without_reverse_dns(monkeypatch, isolated_home):
         assert httpd.server_name == "127.0.0.1" and httpd.server_port > 0
     finally:
         httpd.server_close()
+
+
+def test_pings_from_an_open_tab_do_not_keep_the_server_alive(persona_home):
+    persona_home("first-year-intern")
+    httpd = server.make_server(get_paths(), "tok")
+    t = threading.Thread(target=httpd.serve_forever, kwargs={"poll_interval": 0.1}, daemon=True)
+    t.start()
+    try:
+        app = httpd.app  # type: ignore[attr-defined]
+        base = f"http://127.0.0.1:{httpd.server_address[1]}"
+        app.last_request = idle = 0.0
+        assert _req(f"{base}/ping?t=tok")[0] == 200
+        assert _req(f"{base}/nowhere?t=tok")[0] == 404
+        assert app.last_request == idle  # the idle shutdown still comes
+        assert _req(f"{base}/?t=tok")[0] == 200
+        assert app.last_request > idle  # opening the page is activity
+    finally:
+        httpd.shutdown()
+        httpd.server_close()
+        t.join(timeout=5)

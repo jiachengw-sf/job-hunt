@@ -3,7 +3,8 @@
 ``jobhunt setup form`` starts this module as a detached process and returns at once with the
 URL. The server binds 127.0.0.1 only, requires the one-time token from the URL on every request,
 checks Host and Origin (no other site can post to it), writes preferences.yaml and answers.yaml
-on Save, and exits after ``IDLE_MINUTES`` without requests. Its state is a JSON file that
+on Save, and exits after ``IDLE_MINUTES`` without a page load or save (an open tab's pings
+don't count). Its state is a JSON file that
 ``jobhunt setup form --status`` reads.
 
 A tab can outlive its server or token (the server stopped, or `setup form` started a new one).
@@ -189,7 +190,6 @@ def _handler(app: FormApp) -> type[BaseHTTPRequestHandler]:
             self.wfile.write(data)
 
         def do_GET(self) -> None:
-            app.last_request = time.monotonic()
             if not self._host_ok():
                 return self._send(403, "Forbidden", "text/plain")
             route = urlsplit(self.path).path
@@ -200,18 +200,20 @@ def _handler(app: FormApp) -> type[BaseHTTPRequestHandler]:
                 if route == "/ping":
                     return self._send(403, '{"ok": false}', "application/json")
                 return self._send(403, STALE)
-            if route == "/ping":  # the open page checks its link still works
+            if route == "/ping":  # the open page checks its link still works; an open tab
+                # alone is not activity, so it never holds off the idle shutdown
                 return self._send(200, '{"ok": true}', "application/json")
+            app.last_request = time.monotonic()
             fresh = app.take_fresh_save(q.get("saved", [None])[0])
             self._send(200, app.page(saved=["preferences.yaml", "answers.yaml"] if fresh else None))
 
         def do_POST(self) -> None:
-            app.last_request = time.monotonic()
             origin = self.headers.get("Origin")
             if not self._host_ok() or (
                 origin and urlsplit(origin).hostname not in ("127.0.0.1", "localhost")
             ):
                 return self._send(403, "Forbidden", "text/plain")
+            app.last_request = time.monotonic()
             n = int(self.headers.get("Content-Length") or 0)
             if n > MAX_BODY:
                 return self._send(413, "Too large", "text/plain")
