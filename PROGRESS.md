@@ -985,3 +985,42 @@ A full end-to-end run of v0.2.0 as a real user found eight issues. They land her
 - 889 offline tests (743 at v0.2.0).
 - Also fixed on the way: two tracking tests failed when the suite ran before 9am or 2pm local
   time ("today 2pm" was in the future).
+
+## Code review fixes (2026-11-06)
+
+A review of `v0.2.0..HEAD` found nine issues; all were confirmed by a failing test first and
+fixed one commit each. Nothing tagged since `v0.2.0`.
+
+1. **`answers edit`** on a built-in kept the typed answer but lost `--option` / wording edits
+   given with it (the entry was dropped before they applied).
+2. **Forms:** a key's picker (degree, dates, numbers...) was final; when it finds nothing, the
+   confirmed option texts, aliases and the single decline option are tried again. Filling now
+   needs exactly one decline option, as classifying already did.
+3. **Setup form:** an open tab's `/ping` no longer counts as activity, so the idle shutdown
+   happens.
+4. **Pre-fill resume:** `prefill --resume` needs the job ids (exit 2 otherwise). answers.json
+   records `resume_chosen`; only a picked resume sticks to a job, so a new default replaces an
+   old one. One lookup, `cli/onboarding.job_resume`, serves pre-fill and `applied` (review #9).
+5. **`run`:** reads no forms when `forms.max_per_run: 0`; a form whose read failed is tried again
+   only after the posting changes or reappears, or after `forms.spec_max_age_days`.
+6. **Fit:** the "no posting text" count uses the same rule (`forms/due.py`), so it clears for
+   forms already read.
+7. **No-link jobs** merge with a later posting on the req id when only a legal suffix differs
+   ("Acme, Inc." and "Acme"); another company with the same id still stays separate.
+8. **Digest:** form-skipped jobs are listed only when new or re-read since the last digest
+   ("Newly skipped..."). A form re-read when its cache expires can list a job again weekly.
+
+CI hardening:
+
+- **Ashby:** the CI read-back "race" was the resume parse landing after the fixed 500 ms wait and
+  overwriting our name/email; a slower parse even left a wrong value marked `filled`. The adapter
+  now waits for the parse to change the fields (at most 5 s) before filling.
+- **CI:** `setup-uv` pins uv 0.12.1, so no GitHub API lookup.
+- Two tracking tests depended on the date (DST, a fixed interview day); fixed.
+- 899 offline tests (889 before).
+
+Still open:
+
+- `threshold_jobs` (forms read for high-priority jobs) also re-reads failed forms every run.
+- Not verified live: the Ashby parse wait on a real form, a full Greenhouse Education block fill,
+  resume parsing on more PDF layouts, Codex CLI.
