@@ -25,7 +25,8 @@ application.
    answers.json without opening a browser. Show the user the queued jobs and any skipped ones
    with their reason (not Ready, essays not approved, no adapter for this ATS...). A job
    skipped for "several resumes and no default" shows `suggested_resume`: ask the user which
-   file to send, then add `--resume <file>` (kept for that job).
+   file to send, then run `jobhunt prefill <id> --resume <file>` with that job's id (kept for
+   that job). `--resume` always needs the job ids it is for.
 2. **Confirm.** Ask the user: "Fill these N applications now? You'll review each tab and click
    Submit yourself." Wait for yes. To fill specific jobs: `jobhunt prefill <id> <id>`.
 3. **Fill.** `jobhunt prefill` (default batch of 5). It returns at once. Poll

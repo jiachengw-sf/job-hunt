@@ -17,14 +17,14 @@ from jobhunt.cli.apply import form_inputs
 from jobhunt.cli.discovery import _prepare
 from jobhunt.cli.framework import Result, agent_command
 from jobhunt.cli.onboarding import (
-    default_resume,
+    job_resume,
     listed_resumes,
     resolve_resume,
     suggest_resume,
 )
 from jobhunt.discovery.text import utc_now
 from jobhunt.drafts.essays import approved_essays
-from jobhunt.errors import LockBusy, NotFound, ValidationFailed
+from jobhunt.errors import BadUsage, LockBusy, NotFound, ValidationFailed
 from jobhunt.fit.jobview import load_jobs
 from jobhunt.forms.classify import classify
 from jobhunt.forms.inspect import Inputs
@@ -34,7 +34,7 @@ from jobhunt.prefill import driver
 from jobhunt.prefill.adapters import ADAPTERS
 from jobhunt.prefill.browser import require_playwright
 from jobhunt.prefill.review import TabReview
-from jobhunt.prefill.values import build_sheet, read_sheet, validate, write_sheet
+from jobhunt.prefill.values import build_sheet, validate, write_sheet
 from jobhunt.store import open_store
 
 DONE_STATES = ("Applied", "OA", "Interviewing", "Offer", "Rejected", "Withdrawn", "Skipped")
@@ -86,22 +86,6 @@ def ready_jobs(conn: sqlite3.Connection, limit: int) -> list[int]:
     return [r["job_id"] for r in rows]
 
 
-def choose_resume(paths: Paths, job_id: int, given: Path | None) -> Path | None:
-    """--resume, else the resume chosen for this job before (its answers.json), else the default
-    or only one. None when there are several and none is the default."""
-    if given:
-        return given
-    old = paths.prefill / str(job_id) / "answers.json"
-    if old.exists():
-        try:
-            chosen = read_sheet(old).resume
-        except Exception:
-            chosen = None
-        if chosen and Path(chosen).is_file():
-            return Path(chosen)
-    return default_resume(paths)
-
-
 def prepare_job(
     conn: sqlite3.Connection,
     job_id: int,
@@ -132,7 +116,7 @@ def prepare_job(
         out.reason = f"no pre-fill adapter for {spec.ats}: use `jobhunt packet {job_id}`"
         return out, None
     ctx = inp.ctx(job)
-    ctx.resume = choose_resume(paths, job_id, resume)
+    ctx.resume, picked = job_resume(paths, job_id, resume, kept_only=True)
     if ctx.resume is None and listed_resumes(paths):
         out.suggested_resume = suggest_resume(paths, job.text)
         hint = f" (closest to this posting: {out.suggested_resume})" if out.suggested_resume else ""
@@ -157,6 +141,7 @@ def prepare_job(
         out.reason = "the application page's URL is unknown"
         return out, None
     sheet = build_sheet(job_id, spec, cls, ctx, inp.matcher, now, essays)
+    sheet.resume_chosen = picked
     problems = validate(sheet, spec)
     if problems:
         out.status = "invalid"
@@ -234,8 +219,9 @@ def register(cli: click.Group) -> None:
         "--resume",
         "resume_name",
         default=None,
-        help="The resume to attach (a file name in ~/.jobhunt/resume or a path). Kept for the "
-        "job; default: the one chosen for it before, else your default resume.",
+        help="The resume to attach to the JOB_IDS named (a file name in ~/.jobhunt/resume or a "
+        "path); kept for those jobs. Default: the one picked for the job before, else your "
+        "default resume.",
     )
     def prefill_cmd(
         job_ids: tuple[int, ...],
@@ -255,6 +241,11 @@ def register(cli: click.Group) -> None:
         marks the job Applied when it sees the confirmation. Returns at once; poll `--status`.
         `--dry-run` builds and validates answers without opening a browser.
         """
+        if resume_name and not job_ids:
+            raise BadUsage(
+                "--resume needs the job ids it is for: `jobhunt prefill <id> --resume <file>`.",
+                next_actions=["Run `jobhunt prefill --dry-run` to see each job's id."],
+            )
         paths, cfg = _prepare(dry_run)
         if status_only:
             return status_result(paths, dry_run=dry_run)
@@ -292,7 +283,7 @@ def register(cli: click.Group) -> None:
         if any(j.reason and j.reason.startswith("several resumes") for j in report_jobs):
             nxt.append(
                 "Ask the user which resume to send for each job (a suggestion is shown), then "
-                "re-run with `--resume <file>`; the choice is kept for that job."
+                "run `jobhunt prefill <id> --resume <file>` for that job; the choice is kept."
             )
         if any(j.status == "invalid" for j in report_jobs):
             nxt.append("Some answers failed validation; fix them with `jobhunt answers edit`.")

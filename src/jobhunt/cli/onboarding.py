@@ -414,3 +414,28 @@ def default_resume(paths: Paths) -> Path | None:
     if pick is None and len(resumes) == 1:
         pick = resumes[0]
     return paths.resume_dir / pick["file"] if pick else None
+
+
+def job_resume(
+    paths: Paths, job_id: int, given: Path | None = None, *, kept_only: bool = False
+) -> tuple[Path | None, bool]:
+    """The resume for one job, and whether the user picked it for that job: ``given``, else
+    the one in the job's answers.json, else the default (or only) one.
+
+    ``kept_only`` (pre-fill choosing what to attach) reuses answers.json's file only when it
+    was picked with ``--resume``, so a default attached earlier gives way to a new default.
+    Without it (recording what was sent) the file pre-fill attached is the answer."""
+    if given:
+        return given, True
+    sheet = paths.prefill / str(job_id) / "answers.json"
+    if sheet.exists():
+        from jobhunt.prefill.values import read_sheet
+
+        try:
+            old = read_sheet(sheet)
+        except Exception:
+            old = None
+        kept = old.resume if old and (old.resume_chosen or not kept_only) else None
+        if old and kept and Path(kept).is_file():
+            return Path(kept), old.resume_chosen
+    return default_resume(paths), False

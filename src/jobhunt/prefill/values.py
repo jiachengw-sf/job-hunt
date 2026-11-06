@@ -62,7 +62,10 @@ class AnswerSheet(BaseModel):
     built_at: str
     captcha_at_submit: bool = False
     phone_country: str | None = Field(None, description="ISO alpha-2, set before the number.")
-    resume: str | None = Field(None, description="The resume chosen for this job (its path).")
+    resume: str | None = Field(None, description="The resume attached for this job (its path).")
+    resume_chosen: bool = Field(
+        False, description="True when you picked it with --resume: only then is it kept."
+    )
     fields: list[FillField] = Field(default_factory=list)
 
     def to_fill(self) -> list[FillField]:

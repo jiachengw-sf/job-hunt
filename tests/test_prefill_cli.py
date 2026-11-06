@@ -241,26 +241,57 @@ def test_several_resumes_and_no_default_ask_per_job(cli, persona_home, fx_all):
     assert asked and not [j for j in jobs if j["status"] == "queued"]
     assert all(j["suggested_resume"] == "software.pdf" for j in asked)  # a software posting
     assert any("--resume" in a for a in env["hints"]["next_actions"])
+    # a resume is for the jobs named, never the whole queue
     code, env, _ = cli("prefill", "--dry-run", "--batch", "20", "--resume", "data.pdf")
-    queued = [j for j in env["data"]["jobs"] if j["status"] == "queued"]
-    assert queued and {j["resume"] for j in queued} == {"data.pdf"}
-    code, env, _ = cli("prefill", "--dry-run", "--resume", "missing.pdf")
+    assert code == ExitCode.USAGE and "job id" in env["error"]["message"]
+    one = asked[0]["job_id"]
+    code, env, _ = cli("prefill", "--dry-run", str(one), "--resume", "data.pdf")
+    assert code == ExitCode.OK, env
+    (j,) = env["data"]["jobs"]
+    assert j["status"] == "queued" and j["resume"] == "data.pdf"
+    code, env, _ = cli("prefill", "--dry-run", str(one), "--resume", "missing.pdf")
     assert code == ExitCode.VALIDATION
 
 
 def test_the_resume_chosen_for_a_job_is_kept(cli, persona_home, fx_all):
     """answers.json keeps the choice: a later prefill and `applied` use it."""
-    from jobhunt.cli.prefill import choose_resume
-    from jobhunt.cli.track import _resume
+    from jobhunt.cli.onboarding import job_resume
     from jobhunt.prefill.values import AnswerSheet, write_sheet
 
     home = setup_persona(cli, persona_home, "intl-sponsorship", fx_all)
     two_resumes_no_default(home, "intl-sponsorship")
     paths = get_paths()
-    assert choose_resume(paths, 7, None) is None and _resume(paths, None, 7) is None
+    software = home / "resume" / "software.pdf"
+    assert job_resume(paths, 7, kept_only=True) == (None, False)
+    assert job_resume(paths, 7) == (None, False)
     sheet = AnswerSheet(job_id=7, ats="greenhouse", url=None, built_at="2026-10-23T00:00:00Z",
-                        resume=str(home / "resume" / "software.pdf"))  # fmt: skip
+                        resume=str(software), resume_chosen=True)  # fmt: skip
     write_sheet(paths.prefill / "7" / "answers.json", sheet)
-    assert choose_resume(paths, 7, None) == home / "resume" / "software.pdf"
-    assert _resume(paths, None, 7) == home / "resume" / "software.pdf"
-    assert choose_resume(paths, 7, home / "resume" / "data.pdf").name == "data.pdf"
+    assert job_resume(paths, 7, kept_only=True) == (software, True)
+    assert job_resume(paths, 7) == (software, True)
+    assert job_resume(paths, 7, home / "resume" / "data.pdf")[0].name == "data.pdf"
+
+
+def test_only_a_resume_you_picked_sticks_to_a_job(cli, persona_home, fx_all):
+    """A default attached at the time isn't a choice: a new default replaces it next time,
+    while `applied` still reports the file that was attached."""
+    from jobhunt.cli.onboarding import job_resume
+    from jobhunt.prefill.values import AnswerSheet, write_sheet
+
+    home = setup_persona(cli, persona_home, "intl-sponsorship", fx_all)
+    two_resumes_no_default(home, "intl-sponsorship")
+    paths = get_paths()
+    data, software = home / "resume" / "data.pdf", home / "resume" / "software.pdf"
+    sheet = AnswerSheet(
+        job_id=7, ats="greenhouse", url=None, built_at="2026-10-23T00:00:00Z", resume=str(data)
+    )  # fmt: skip  (the default then, not picked)
+    write_sheet(paths.prefill / "7" / "answers.json", sheet)
+    prof = yaml.safe_load((home / "profile.yaml").read_text(encoding="utf-8"))
+    prof["resumes"] = [{"file": "data.pdf"}, {"file": "software.pdf", "default": True}]
+    (home / "profile.yaml").write_text(yaml.safe_dump(prof, sort_keys=False), encoding="utf-8")
+    assert job_resume(paths, 7, kept_only=True) == (software, False)
+    assert job_resume(paths, 7) == (data, False)  # what pre-fill attached
+    picked = sheet.model_copy(update={"resume_chosen": True})
+    write_sheet(paths.prefill / "7" / "answers.json", picked)
+    assert job_resume(paths, 7, kept_only=True) == (data, True)
+    assert job_resume(paths, 7, software) == (software, True)

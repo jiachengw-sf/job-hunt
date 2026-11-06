@@ -54,6 +54,13 @@ class JobhuntError(Exception):
         self.user_actions = user_actions or []
 
 
+class BadUsage(JobhuntError):
+    """Flags that don't make sense together (exit 2), found after Click parsed them."""
+
+    code = "usage"
+    exit_code = ExitCode.USAGE
+
+
 class ConfigError(JobhuntError):
     code = "config_error"
     exit_code = ExitCode.CONFIG

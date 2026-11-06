@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 from contextlib import nullcontext
 from pathlib import Path
 from typing import Any
@@ -37,17 +36,9 @@ def _lock(paths: Paths, dry_run: bool) -> Any:
 
 def _resume(paths: Paths, given: str | None, job_id: int) -> Path | None:
     """The resume you sent: --resume, else the one pre-fill attached, else the default."""
-    from jobhunt.cli.onboarding import default_resume, resolve_resume
-    from jobhunt.prefill.values import read_sheet
+    from jobhunt.cli.onboarding import job_resume, resolve_resume
 
-    if given:
-        return resolve_resume(paths, given)
-    sheet = paths.prefill / str(job_id) / "answers.json"
-    if sheet.exists():
-        with contextlib.suppress(Exception):
-            if (chosen := read_sheet(sheet).resume) and Path(chosen).is_file():
-                return Path(chosen)
-    return default_resume(paths)
+    return job_resume(paths, job_id, resolve_resume(paths, given) if given else None)[0]
 
 
 class Recorded(BaseModel):
