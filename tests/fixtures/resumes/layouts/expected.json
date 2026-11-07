@@ -1,0 +1,114 @@
+{
+ "files": {
+  "avery-pdf_plain.pdf": {
+   "person": "avery",
+   "layout": "pdf_plain"
+  },
+  "avery-pdf_latex.pdf": {
+   "person": "avery",
+   "layout": "pdf_latex"
+  },
+  "avery-pdf_twocol.pdf": {
+   "person": "avery",
+   "layout": "pdf_twocol"
+  },
+  "avery-pdf_scanned.pdf": {
+   "person": "avery",
+   "layout": "pdf_scanned"
+  },
+  "jordan-pdf_plain.pdf": {
+   "person": "jordan",
+   "layout": "pdf_plain"
+  },
+  "jordan-pdf_latex.pdf": {
+   "person": "jordan",
+   "layout": "pdf_latex"
+  },
+  "jordan-pdf_twocol.pdf": {
+   "person": "jordan",
+   "layout": "pdf_twocol"
+  },
+  "jordan-pdf_scanned.pdf": {
+   "person": "jordan",
+   "layout": "pdf_scanned"
+  },
+  "avery-docx_plain.docx": {
+   "person": "avery",
+   "layout": "docx_plain"
+  },
+  "avery-docx_table.docx": {
+   "person": "avery",
+   "layout": "docx_table"
+  },
+  "avery-docx_header.docx": {
+   "person": "avery",
+   "layout": "docx_header"
+  },
+  "avery-md.md": {
+   "person": "avery",
+   "layout": "md"
+  },
+  "jordan-docx_plain.docx": {
+   "person": "jordan",
+   "layout": "docx_plain"
+  },
+  "jordan-docx_table.docx": {
+   "person": "jordan",
+   "layout": "docx_table"
+  },
+  "jordan-docx_header.docx": {
+   "person": "jordan",
+   "layout": "docx_header"
+  },
+  "jordan-md.md": {
+   "person": "jordan",
+   "layout": "md"
+  }
+ },
+ "people": {
+  "avery": {
+   "name": "Avery Testwell",
+   "email": "avery.testwell@example.com",
+   "phone": "3125550142",
+   "linkedin": "linkedin.com/in/avery-testwell-example",
+   "github": "github.com/avery-testwell-example",
+   "city": "Evanston",
+   "region": "IL",
+   "school_email": "avery@northfield.edu.example",
+   "gpa": 3.82,
+   "gpa_scale": 4.0,
+   "school": "Northfield State University",
+   "graduation": "2028-05",
+   "employers": [
+    "Lakeshore Logistics",
+    "Northfield State University"
+   ],
+   "spoken_languages": [
+    "English",
+    "Spanish",
+    "Mandarin"
+   ]
+  },
+  "jordan": {
+   "name": "Jordan Mockley",
+   "email": "jordan.mockley@example.org",
+   "phone": "2065550177",
+   "linkedin": "linkedin.com/in/jordan-mockley-example",
+   "github": null,
+   "city": "Seattle",
+   "region": "WA",
+   "school_email": null,
+   "gpa": 3.9,
+   "gpa_scale": null,
+   "school": "Cascade Institute of Technology",
+   "graduation": "2026-12",
+   "employers": [
+    "Harborview Analytics"
+   ],
+   "spoken_languages": [
+    "English",
+    "Hindi"
+   ]
+  }
+ }
+}

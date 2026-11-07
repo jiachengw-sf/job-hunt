@@ -22,8 +22,11 @@ The model **proposes** (writes JSON to `~/.jobhunt/work/results/`); code **valid
 1. No code path submits an application or sends a message. There is no `submit` or `send`
    command; the human clicks Submit and sends their own outreach.
 2. No logins, account creation, CAPTCHA solving, stealth plugins or proxies.
-3. Never guess an answer. Values come from the profile, a user-confirmed answer-bank entry, or
-   user-approved text; anything else goes back to the user.
+3. Never guess an answer. Values come from the profile, the user's answer bank, or
+   user-approved text; a question with no answer there goes back to the user. A question that
+   is clearly one the user already answered in other words (wording similarity, or the agent's
+   `jobhunt answers map`, both checked by code) is filled from that answer and flagged for the
+   user's review before Submit; submitting confirms the wording. Never for EEO answers.
 4. Sensitive fields (work authorization, sponsorship, salary, EEO, disability, veteran, background
    checks, attestations) come only from the user's own answers and are never shown to the model.
 5. Public, documented job sources only. No LinkedIn or Indeed scraping or automation.
@@ -83,7 +86,8 @@ src/jobhunt/
                   application records (applications.py), status portals, local-time
                   formatting, views (dashboard, APPLICATIONS.md, per-application folders)
   prefill/        answers.json + validator, submit guard (click wrapper, route guard), browser,
-                  Greenhouse / Lever / Ashby adapters, review (highlights, screenshots), driver
+                  Greenhouse / Lever / Ashby / Workday adapters, review (highlights,
+                  screenshots), driver, workday_flow (step-by-step Workday after sign-in)
   ingest/         `jobhunt ingest`: validates work/results/ against each task kind (quotes,
                   citations, budgets, limits), then applies; verify.py holds the normalization
   drafts/         grounding checks, essays (draft → one review → user approval), outreach
@@ -112,7 +116,15 @@ evals/daily/      daily-flow end-to-end results (`python -m jobhunt.devtools.dai
 - Values come only from answers.json, which code builds from the profile and bank and validates
   against the form (required present, options exact, limits, files exist) before a tab opens.
 - Adapters click only through `prefill/guard.py:safe_click`; a test fails on any other click,
-  key press or submit call in `prefill/`. Never press Enter in a field.
+  key press or submit call in `prefill/`. Never press Enter in a field. The one exception is
+  `guard.py:search_enter`, for Workday's own prompt search box (`data-automation-id=searchBox`,
+  outside any form), which searches only; the route guard still blocks every submit endpoint.
+- Workday (`prefill/workday_flow.py`): the human signs in on the employer's page (never jobhunt);
+  each step is then read into a FormSpec and goes through classify → build_sheet → validate like
+  any other form, and repeatable sections (work, education, languages, websites) fill from the
+  profile. Save and Continue is clicked only when the step has no empty required field, no
+  Workday error and no mismatched or unmatched field; otherwise the human finishes the step.
+  Review is never acted on.
 - During the fill, the route guard blocks every non-GET request except the adapter's allowlist,
   and always blocks its submit endpoints. It is released only at handoff.
 - A field that can't be found, matched or read back is highlighted and logged, never guessed.

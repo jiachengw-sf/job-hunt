@@ -3,8 +3,10 @@
 Order: the ATS's standard field name; a wording the user confirmed; a curated wording from
 ``defaults/question_synonyms.yaml``; the question text of the user's own bank entries. All of
 those are confident. Anything else that is merely *similar* (token and character overlap, or
-embeddings when available) is a ``candidate``: the answer is reused only after the user confirms
-the new wording once. Below the threshold the label is ``unknown``. Nothing is ever guessed.
+embeddings when available) is a ``candidate``. With ``fill_similar`` (config
+``forms.fill_similar``) a clear candidate is filled from its key's answer and flagged for the
+user's review before Submit, and submitting teaches the bank that wording; otherwise the user
+confirms it once first. Below the threshold the label is ``unknown`` and goes to the user.
 
 Location questions name places ("relocate to Austin, TX", "onsite in our Seattle office"); the
 place is replaced by "place" before matching, so one confirmed wording covers every city.
@@ -219,6 +221,8 @@ class Match:
     score: float = 0.0
     via: str = ""  # field_name | confirmed | synonyms | bank_question | similarity
     wording: str | None = None  # the known wording it matched
+    alt_key: str | None = None  # similarity only: the best *other* key, if any
+    alt_score: float = 0.0
 
     @property
     def confident(self) -> bool:
@@ -232,7 +236,11 @@ class Matcher:
     answers: Answers
     embed: Callable[[list[str]], list[list[float]]] | None = None
     threshold: float = CANDIDATE_THRESHOLD
+    # Fill a similar wording from its key's answer (flagged for the user's review) instead of
+    # asking first; see ``forms/classify.py``. Config ``forms.fill_similar``.
+    fill_similar: bool = False
     _confirmed: dict[str, str] = field(default_factory=dict)  # normalized wording -> key
+    _proposed: dict[str, str] = field(default_factory=dict)  # agent-mapped wording -> key
     _questions: dict[str, str] = field(default_factory=dict)  # normalized custom question -> key
     _known: list[tuple[str, str]] = field(default_factory=list)  # (normalized wording, key)
 
@@ -240,6 +248,8 @@ class Matcher:
         for e in self.answers.bank:
             for w in e.wordings:
                 self._confirmed[normalize(placeless(w))] = e.key
+            for w in e.proposed:
+                self._proposed[normalize(placeless(w))] = e.key
             if e.key not in BUILTIN:
                 self._questions[normalize(e.question)] = e.key
         seeds = seed_wordings()
@@ -270,23 +280,36 @@ class Matcher:
                 return Match(k, "exact", 1.0, "synonyms", norm)
         if norm in self._questions:
             return Match(self._questions[norm], "confirmed", 1.0, "bank_question", norm)
-        best = self._best_similar(norm)
+        for n in (norm, normalize(label)):  # mapped by the agent: filled for the user's review
+            if n in self._proposed:
+                return Match(self._proposed[n], "candidate", 1.0, "agent", n)
+        ranked = self._ranked_similar(norm)
+        best = ranked[0] if ranked else None
         if best and best[0] >= self.threshold:
-            return Match(best[2], "candidate", round(best[0], 3), "similarity", best[1])
+            alt = next((r for r in ranked if r[2] != best[2]), None)
+            return Match(
+                best[2], "candidate", round(best[0], 3), "similarity", best[1],
+                alt_key=alt[2] if alt else None, alt_score=round(alt[0], 3) if alt else 0.0,
+            )  # fmt: skip
         return Match(None, "unknown", round(best[0], 3) if best else 0.0)
 
     def _best_similar(self, norm: str) -> tuple[float, str, str] | None:
         """The most similar known wording that asks about the same things."""
+        ranked = self._ranked_similar(norm)
+        return ranked[0] if ranked else None
+
+    def _ranked_similar(self, norm: str) -> list[tuple[float, str, str]]:
+        """Known wordings that ask about the same things, most similar first."""
         known = [(w, k) for w, k in self._known if same_question(canonical(norm), _canon(w))]
         if not known:
-            return None
+            return []
         q = canonical(norm)
         scored = [(max(similarity(norm, w), similarity(q, _canon(w))), w, k) for w, k in known]
         if self.embed is not None:
             vecs = self.embed([norm, *(w for w, _ in known)])
             for i, (s, w, k) in enumerate(scored):
                 scored[i] = (max(s, _cos(vecs[0], vecs[i + 1])), w, k)
-        return max(scored)
+        return sorted(scored, reverse=True)
 
 
 @cache

@@ -223,7 +223,10 @@ def resolve_field(
             return out("human_only")
         if spec and spec.kind == "essay":  # looks like an essay prompt: it is one either way
             return out("essay" if f.required else "skipped", "free text you write")
-        return out("candidate", f"looks like “{m.wording}” ({m.key}); confirm it once")
+        if not (matcher.fill_similar and similar_is_clear(m, ctx, matcher, sensitive)):
+            return out("candidate", f"looks like “{m.wording}” ({m.key}); confirm it once")
+        # clear enough to fill from that question's answer; the user checks it before Submit
+        human.append(f"similar question: filled from your answer to “{m.wording}”; check it")
     if m.status == "unknown" or m.key is None:
         if is_human_only:
             return out("human_only")
@@ -252,6 +255,32 @@ def resolve_field(
     if f.max_length and isinstance(value, str) and len(value) > f.max_length:
         return out("too_long", f"{len(value)} characters; the field allows {f.max_length}")
     return out("answered")
+
+
+SIMILAR_MARGIN = 0.08  # the best key must beat any other key by this much...
+SIMILAR_SENSITIVE = 0.75  # ...and a sensitive key needs at least this similarity
+
+
+def similar_is_clear(m: Match, ctx: AnswerContext, matcher: Matcher, sensitive: bool) -> bool:
+    """Whether a similar wording may be filled from its key's answer (and reviewed by the user)
+    instead of asked first. Never for EEO answers; a sensitive key needs a close match; and the
+    runner-up key must be clearly worse, unless it would give the same answer anyway."""
+    key = m.key or ""
+    spec = BUILTIN.get(key)
+    if not key or (spec and spec.eeo):
+        return False
+    if sensitive and m.score < SIMILAR_SENSITIVE:
+        return False
+    if m.alt_key is None or m.alt_key == key or m.score - m.alt_score >= SIMILAR_MARGIN:
+        return True
+    return _value(key, ctx, matcher) == _value(m.alt_key, ctx, matcher) is not None
+
+
+def _value(key: str, ctx: AnswerContext, matcher: Matcher) -> object:
+    spec = BUILTIN.get(key)
+    entry = next((e for e in matcher.answers.bank if e.key == key), None)
+    v = spec.resolve(ctx) if spec else (entry.answer if entry else None)
+    return None if v in ("", []) else v
 
 
 def classify(

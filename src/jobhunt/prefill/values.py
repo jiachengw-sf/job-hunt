@@ -53,6 +53,11 @@ class FillField(BaseModel):
     note: str | None = None
     options: list[str] = Field(default_factory=list)
     max_length: int | None = None
+    similar: bool = Field(
+        False,
+        description="Filled from a similar known question: the user checks it; submitting "
+        "teaches the bank this wording.",
+    )
 
 
 class AnswerSheet(BaseModel):
@@ -154,6 +159,7 @@ def build_sheet(
             note=note,
             options=f.options if f else fr.options,
             max_length=fr.max_length,
+            similar=fr.match == "candidate" and fr.resolution == "answered",
         )
         _follow(ff, f, {x.id: x for x in out})
         out.append(ff)
