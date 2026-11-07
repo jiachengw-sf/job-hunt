@@ -13,7 +13,7 @@ import click
 import yaml
 from pydantic import BaseModel, Field, ValidationError
 
-from jobhunt.bank.keys import BUILTIN, AnswerContext, is_sensitive_label
+from jobhunt.bank.keys import AGE_CHECK, BUILTIN, AnswerContext, is_sensitive_label
 from jobhunt.bank.match import (
     Matcher,
     canonical,
@@ -239,7 +239,7 @@ def _status(paths: Paths, ans: Answers) -> tuple[list[KeyStatus], list[KeyStatus
     builtin = [
         _builtin_status(ctx, k, entries.get(k))
         for k, spec in BUILTIN.items()
-        if spec.kind != "essay" and not k.startswith("files.")
+        if spec.kind != "essay" and not k.startswith("files.") and k != AGE_CHECK
     ]
     custom = [
         KeyStatus(

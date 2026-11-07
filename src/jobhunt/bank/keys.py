@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import date
 from pathlib import Path
 from typing import Literal
 
@@ -22,9 +23,13 @@ Kind = Literal["text", "yesno", "date", "number", "file", "choice", "essay"]
 Value = str | list[str] | None
 
 
+AGE_CHECK = "identity.age_check"  # per-label: "at least 21?", "under 18?" (see age_question)
+
+
 @dataclass
 class AnswerContext:
-    """What a value can come from, for one job."""
+    """What a value can come from, for one job (and, for per-label keys like the age check, one
+    field: ``label``)."""
 
     profile: Profile
     answers: Answers
@@ -32,6 +37,8 @@ class AnswerContext:
     company: str = ""
     country: str | None = None  # ISO alpha-2 of the job, when known
     resume: Path | None = None
+    label: str = ""  # the form field being answered, for keys whose answer depends on it
+    today: date | None = None  # tests pin it; else the computer's date
 
     def work_auth(self) -> WorkAuthorization | None:
         wa = self.answers.work_authorization
@@ -74,12 +81,106 @@ def _norm_company(s: str) -> str:
     return re.sub(r"\s+", " ", s).strip()
 
 
+# words too common in employer names to tie two names together
+_GENERIC_ORG = frozenset(
+    {"the", "of", "and", "for", "at", "group", "holdings", "global", "international", "systems",
+     "solutions", "services", "service", "technology", "tech", "bank", "university", "college",
+     "state", "institute", "school", "center", "centre", "health", "national", "american",
+     "united", "new", "north", "south", "east", "west", "partners", "capital", "foundation",
+     "department", "research", "lab", "digital", "software", "consulting", "media", "us"}
+)  # fmt: skip
+
+
+def _org_tokens(s: str) -> set[str]:
+    return {t for t in _norm_company(s).split() if len(t) > 2 and t not in _GENERIC_ORG}
+
+
 def _previously_employed(c: AnswerContext) -> str | None:
-    known = list(c.answers.experience.prior_employers) + [e.org for e in c.profile.experience]
+    """Yes on the same employer name; no only when no listed employer shares a distinctive word
+    with the company ("Amazon Web Services" vs "Amazon", "Meta" vs "Meta Platforms" go to the
+    user)."""
+    known = [
+        k
+        for k in (*c.answers.experience.prior_employers, *(e.org for e in c.profile.experience))
+        if k
+    ]
     if not known or not c.company:
         return None  # the user hasn't listed employers: don't assume "no"
     target = _norm_company(c.company)
-    return "yes" if any(_norm_company(k) == target for k in known if k) else "no"
+    if any(_norm_company(k) == target for k in known):
+        return "yes"
+    words = _org_tokens(c.company)
+    if any(words & _org_tokens(k) for k in known):
+        return None  # a related name: only the user knows whether it's the same employer
+    return "no"
+
+
+# --- age -----------------------------------------------------------------------------------------
+
+_AGE_CUE = re.compile(r"\b(?:age|years? old|yrs? old|older|younger)\b|\b\d{2}\s*\+", re.I)
+_AGE_BELOW = re.compile(r"\b(?:under|below|less than|younger than|not yet)\b", re.I)
+_AGE_ABOVE = re.compile(
+    r"\b(?:at least|or older|or over|or above|older than|over|minimum|of legal age)\b|\d{2}\s*\+",
+    re.I,
+)
+_AGE_NUM = re.compile(r"\b(1[3-9]|[2-9]\d)\b")
+_AGE_NEG = re.compile(r"\bnot\b(?! yet)|n['’]t\b|\bnever\b", re.I)
+
+
+def age_question(label: str) -> tuple[str, int] | None:
+    """("above", 21) for "Are you at least 21 years old?", ("below", 18) for "Are you under the
+    age of 18?". None unless the label clearly asks one age threshold one way (a negated or
+    two-way question is the user's)."""
+    if not _AGE_CUE.search(label or "") or _AGE_NEG.search(label):
+        return None
+    nums = set(_AGE_NUM.findall(label))
+    if len(nums) != 1:
+        return None
+    below, above = bool(_AGE_BELOW.search(label)), bool(_AGE_ABOVE.search(label))
+    if below == above:
+        return None
+    return ("below" if below else "above"), int(nums.pop())
+
+
+def age_range(c: AnswerContext) -> tuple[int, int] | None:
+    """The user's possible age today: the age they entered, plus whole years since they entered
+    it, and maybe one more (a birthday may have passed)."""
+    i = c.answers.identity
+    if i.age is None:
+        return None
+    today = c.today or date.today()
+    since = i.age_as_of or today
+    years = max(0, (today - since).days) // 366
+    lo = i.age + years
+    return lo, lo + (0 if since == today else 1)
+
+
+def _age_check(c: AnswerContext) -> str | None:
+    """Yes or no to the age question in ``c.label``, from the user's age; None when the age is
+    too close to the threshold to know, or unknown."""
+    q = age_question(c.label)
+    if q is None:
+        return None
+    way, n = q
+    rng = age_range(c)
+    if rng is None:  # fall back on the "18 or older" answer for an 18 threshold
+        o18 = _yn(c.answers.identity.over_18)
+        if n != 18 or o18 is None:
+            return None
+        return o18 if way == "above" else {"yes": "no", "no": "yes"}[o18]
+    lo, hi = rng
+    if way == "above":
+        return "yes" if lo >= n else "no" if hi < n else None
+    return "yes" if hi < n else "no" if lo >= n else None
+
+
+def _over_18(c: AnswerContext) -> str | None:
+    if (v := _yn(c.answers.identity.over_18)) is not None:
+        return v
+    rng = age_range(c)
+    if rng is None:
+        return None
+    return "yes" if rng[0] >= 18 else "no" if rng[1] < 18 else None
 
 
 def _full_name(c: AnswerContext) -> str | None:
@@ -299,7 +400,9 @@ SPECS: list[KeySpec] = [
     _spec("identity.address_city", "City (address)", "text", lambda c: c.answers.identity.city, sensitive=True),
     _spec("identity.address_region", "State or province (address)", "choice", lambda c: c.answers.identity.region, sensitive=True, aliases=_state_aliases),
     _spec("identity.country", "Country of residence", "choice", lambda c: c.answers.identity.country, sensitive=True),
-    _spec("identity.over_18", "Are you at least 18 years old?", "yesno", lambda c: _yn(c.answers.identity.over_18), sensitive=True),
+    _spec("identity.over_18", "Are you at least 18 years old?", "yesno", _over_18, sensitive=True),
+    _spec("identity.age", "Your age", "number", lambda c: str(c.answers.identity.age) if c.answers.identity.age is not None else None, sensitive=True, pick=pick_number),
+    _spec(AGE_CHECK, "Age questions (“Are you at least 21?”), answered from your age", "yesno", _age_check, sensitive=True),
     _spec("identity.school_email", "University email", "text", lambda c: c.answers.identity.school_email, sensitive=True),
     # links
     _spec("links.linkedin", "LinkedIn profile", "text", _links("linkedin")),
