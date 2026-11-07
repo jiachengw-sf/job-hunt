@@ -132,6 +132,17 @@ _CONCEPTS = {
     "onsite": re.compile(r"\bonsite\b|\b5 days\b"),
     "remote": re.compile(r"\bremote\b"),
     "high_school": re.compile(r"\bhigh school\b|\bsecondary school\b"),
+    # applied before vs. worked there before vs. relatives there: three different answers
+    "applied_before": re.compile(
+        r"\b(?:previously|ever|before|already|prior) (?:been )?appl|\bappl\w* (?:before|"
+        r"previously|in the past)\b|\bprior application"
+    ),
+    "worked_before": re.compile(
+        r"\b(?:previously|ever|before|formerly|prior) (?:been )?(?:employ|work)|\bworked (?:at|"
+        r"for)\b|\bformer (?:employee|intern|worker)\b|\bprevious worker\b"
+    ),
+    "relatives": re.compile(r"\brelative|\bfamily member"),
+    "age": re.compile(r"\bage\b|\byears old\b|\bolder\b|\byounger\b"),
 }
 _TIME = {"now": re.compile(r"\bnow\b|\bcurrently\b|\bat this time\b"),
          "future": re.compile(r"\bfuture\b")}  # fmt: skip
@@ -151,11 +162,82 @@ def concepts(canon: str) -> tuple[frozenset[str], frozenset[str]]:
     return what, when
 
 
+# Words that turn a question around. "Are you NOT authorized", "unable to", "without
+# sponsorship": similar characters, opposite answer.
+_NEG_WORDS = frozenset({"not", "never", "cannot", "without", "nor", "neither"})
+_NEG_CONTRACTIONS = frozenset(
+    {"can", "don", "doesn", "didn", "won", "wouldn", "isn", "aren", "wasn", "weren", "haven",
+     "hasn", "hadn", "shouldn", "couldn", "mustn"}
+)  # fmt: skip
+_NEG_PREFIXES = ("un", "in", "non", "dis", "im", "il", "ir")
+# positive words whose prefixed form ("unwilling", "ineligible") reverses the question
+_POSITIVE = frozenset(
+    {"able", "willing", "authorized", "authorised", "eligible", "lawful", "lawfully", "legal",
+     "legally", "available", "capable", "employed", "permitted", "allowed", "qualified",
+     "interested", "comfortable", "possible", "certified", "licensed", "registered", "regular",
+     "active", "valid"}
+)  # fmt: skip
+# comparisons that a number in the question hangs on: "under 18" and "at least 18" differ
+_BELOW = re.compile(
+    r"\b(?:under|below|less than|fewer than|younger than|at most|no more than|maximum of|"
+    r"not yet|up to)\b"
+)
+_ABOVE = re.compile(
+    r"\b(?:at least|over|above|more than|older than|or older|or above|or more|or over|"
+    r"minimum|plus)\b"
+)
+_NUMBER_WORDS = {
+    "thirteen": "13", "fourteen": "14", "fifteen": "15", "sixteen": "16", "seventeen": "17",
+    "eighteen": "18", "nineteen": "19", "twenty one": "21", "twenty five": "25",
+}  # fmt: skip
+
+
+def negations(norm: str) -> int:
+    """How many times a normalized label turns itself around."""
+    toks = norm.split()
+
+    def turned(i: int, t: str) -> bool:
+        prev = toks[i - 1] if i else ""
+        return (
+            t in _NEG_WORDS
+            or (t == "t" and prev in _NEG_CONTRACTIONS)  # "can't" -> "can t"
+            or (t == "longer" and prev == "no")
+            or any(t.startswith(p) and t[len(p) :] in _POSITIVE for p in _NEG_PREFIXES)
+        )
+
+    n = sum(turned(i, t) for i, t in enumerate(toks))
+    return n
+
+
+def numbers(norm: str) -> frozenset[str]:
+    for w, d in _NUMBER_WORDS.items():
+        norm = re.sub(rf"\b{w}\b", d, norm)
+    return frozenset(str(int(x)) for x in re.findall(r"\b\d+\b", norm))
+
+
+def comparisons(norm: str) -> frozenset[str]:
+    """Which way a number in the question points: below, above (only when it has a number)."""
+    if not numbers(norm):
+        return frozenset()
+    return frozenset(k for k, rx in (("below", _BELOW), ("above", _ABOVE)) if rx.search(norm))
+
+
 def same_question(a: str, b: str) -> bool:
-    """True unless the two canonical labels ask about different things (a time word on one side
-    only is allowed: "do you require sponsorship" may mean now)."""
+    """True unless the two canonical labels ask different things: different topics, a different
+    time (a time word on one side only is allowed: "do you require sponsorship" may mean now),
+    opposite polarity ("not", "unable", "without"), or different numbers or comparisons
+    ("under 18" vs "at least 18" vs "at least 21"; a limit on one side only)."""
     (wa, ta), (wb, tb) = concepts(a), concepts(b)
-    return wa == wb and (not ta or not tb or ta == tb)
+    if wa != wb or (ta and tb and ta != tb):
+        return False
+    if negations(a) % 2 != negations(b) % 2:
+        return False
+    na, nb = numbers(a), numbers(b)
+    if na and nb:
+        return na == nb and comparisons(a) == comparisons(b)
+    # a number on one side only ("the full 10-12 week summer" vs "all summer") is detail, unless
+    # it's a limit ("at least 3 years", "under 18"): then it's a different question
+    return not comparisons(a) and not comparisons(b)
 
 
 def company_template(label: str, company: str | None) -> str:
@@ -268,6 +350,10 @@ class Matcher:
             k = FIELD_NAMES.get(field_name.lower())
             if k:
                 return Match(k, "exact", 1.0, "field_name")
+        from jobhunt.bank.keys import AGE_CHECK, age_question
+
+        if age_question(label):  # "at least 21?", "under 18?": answered from the user's age
+            return Match(AGE_CHECK, "exact", 1.0, "age")
         label = placeless(label)
         norm = normalize(label, company)
         if not norm:

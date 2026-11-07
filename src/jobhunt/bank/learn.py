@@ -1,6 +1,8 @@
 """Wordings learned from what the user reviewed: a question filled from a *similar* known
 question (``forms.fill_similar``), or mapped by the AI agent (``jobhunt answers map``), becomes a
-confirmed wording of that key once the user submits the application with it. The next form that
+confirmed wording of that key once the user submits the application with it *unchanged*: the
+pre-fill driver re-reads those fields while the tab is open (``driver.observe_similar``), and a
+field the user changed, cleared, or that was never read back is not learned. The next form that
 words it the same way is then an exact match, and nobody asks again.
 
 Only the label goes into answers.yaml (with the company's name as "[Company]"), never a value.
@@ -47,19 +49,36 @@ def add_wordings(raw: dict[str, Any], pairs: list[tuple[str, str]]) -> list[tupl
     return added
 
 
-def reviewed_pairs(sheets: list[Any], company: str) -> list[tuple[str, str]]:
-    """(label, key) for every field filled from a similar or agent-mapped question."""
+def seen_key(label: str, key: str) -> str:
+    """How the driver records one similar field's last read-back."""
+    return f"{key}\x1f{label}"
+
+
+def reviewed_pairs(
+    sheets: list[Any], company: str, kept: dict[str, bool] | None = None
+) -> list[tuple[str, str]]:
+    """(label, key) for every field filled from a similar or agent-mapped question whose last
+    read-back still held the filled value (``kept``). Sensitive keys never fill this way."""
     out: list[tuple[str, str]] = []
     for sheet in sheets:
         for f in sheet.fields:
-            if f.similar and f.key and f.action == "fill":
-                out.append((company_template(f.label, company), f.key))
+            if not (f.similar and f.key and f.action == "fill"):
+                continue
+            spec = BUILTIN.get(f.key)
+            if spec and (spec.sensitive or spec.eeo):
+                continue
+            if not (kept or {}).get(seen_key(f.label, f.key)):
+                continue  # changed, cleared or never read back: the user didn't keep it
+            out.append((company_template(f.label, company), f.key))
     return out
 
 
-def learn_from_submission(paths: Paths, sheet_files: list[Path], company: str) -> list[str]:
-    """The user submitted with these answers: learn the similar wordings they reviewed. Best
-    effort: never fails the caller. Returns the keys that gained a wording."""
+def learn_from_submission(
+    paths: Paths, sheet_files: list[Path], company: str, kept: dict[str, bool] | None = None
+) -> list[str]:
+    """The user submitted: learn the similar wordings they kept as filled (``kept``: the
+    driver's last read-back per field). Best effort: never fails the caller. Returns the keys
+    that gained a wording."""
     from jobhunt.prefill.values import read_sheet
 
     sheets = []
@@ -68,7 +87,7 @@ def learn_from_submission(paths: Paths, sheet_files: list[Path], company: str) -
             sheets.append(read_sheet(p))
         except Exception:
             continue
-    pairs = reviewed_pairs(sheets, company)
+    pairs = reviewed_pairs(sheets, company, kept)
     if not pairs or not paths.answers.exists():
         return []
     try:

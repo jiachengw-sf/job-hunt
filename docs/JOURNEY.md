@@ -54,8 +54,14 @@ parts that need judgment. Everything stays in `~/.jobhunt/` on your computer.
   Ready, Needs answers, Essay or Manual.
 - **An answer bank** stores each answer once. A question you already answered in other words
   is recognized by wording similarity or by your AI tool's `jobhunt answers map`, both checked by
-  code. It's filled from that answer and flagged for your review. EEO answers are never filled
-  this way, and sensitive questions need a much closer match.
+  code. It's filled from that answer and flagged for your review. Sensitive questions (work
+  authorization, sponsorship, age, clearance, EEO and similar) are never filled this way, only
+  from a wording you confirmed. A look-alike that asks the opposite ("NOT authorized", "unable",
+  "without sponsorship") or a different number ("under 18", "at least 21") counts as a different
+  question. A wording is learned only when you submit with the filled value unchanged.
+- **Age questions** ("Are you at least 21?", "under 18?") are answered from the age you enter in
+  the setup form, which counts up on its own. When you could be on either side of a birthday,
+  the question comes to you.
 - Questions only you can answer are asked once, in one batch.
 - `jobhunt coverage` shows how many required fields your answers already cover.
 
