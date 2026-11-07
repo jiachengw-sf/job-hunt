@@ -225,8 +225,35 @@ def test_posting_view_never_keeps_a_closed_job_live(cli, persona_home, fx, tmp_p
         assert c.execute("SELECT 1 FROM posting_views WHERE job_id=?", (jid,)).fetchone()
 
 
+def ask_first(home) -> None:
+    """``forms.fill_similar: false``: a similar wording waits for the user's confirmation."""
+    cfg_path = home / "config.yaml"
+    cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) if cfg_path.exists() else {}
+    cfg = cfg or {}
+    cfg.setdefault("forms", {})["fill_similar"] = False
+    cfg_path.write_text(yaml.safe_dump(cfg), encoding="utf-8")
+
+
+def test_similar_wording_fills_for_review_without_asking(cli, persona_home, fx):
+    home = persona_home("intl-sponsorship")
+    cli("run", "--fixtures", str(fx), "--no-sync", "--no-inspect")
+    with db(home) as c:
+        jid = c.execute("SELECT id FROM jobs WHERE ats_job_id='1004'").fetchone()[0]
+    cli("inspect", str(jid), "--fixtures", str(fx))
+    _, qs, _ = cli("answers", "questions")
+    assert not [q for q in qs["data"]["questions"] if "sponsor" in q["question"]]
+    code, env, _ = cli(
+        "answers", "add", "--question", "Do you have a valid driver's license?",
+        "--answer", "Yes", "--option", "Yes",
+    )  # fmt: skip
+    assert code == ExitCode.OK, env
+    _, env, _ = cli("inspect", str(jid), "--fixtures", str(fx))
+    assert env["data"]["jobs"][0]["class"] == "ready", env["data"]["jobs"][0]
+
+
 def test_confirming_a_wording_moves_a_job_to_ready(cli, persona_home, fx):
     home = persona_home("intl-sponsorship")
+    ask_first(home)
     cli("run", "--fixtures", str(fx), "--no-sync", "--no-inspect")
     with db(home) as c:
         jid = c.execute("SELECT id FROM jobs WHERE ats_job_id='1004'").fetchone()[0]

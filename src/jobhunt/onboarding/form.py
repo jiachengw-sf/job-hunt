@@ -215,10 +215,11 @@ def _to_text(f: F, v: Any) -> str | list[str]:
 
 def prefill(
     prefs: dict[str, Any] | None, answers: dict[str, Any] | None, *, profile: Profile | None,
-    contact: dict[str, Any] | None,
+    contact: dict[str, Any] | None, resume_text: str | None = None, today: date | None = None,
 ) -> dict[str, Any]:  # fmt: skip
-    """Form values keyed by input name. Existing files win; otherwise the resume fills what it
-    can (contact details, education, languages, experience)."""
+    """Form values keyed by input name. Existing files win. Empty answers that the resume,
+    profile or preferences state are filled in and marked (``vals["__suggested"]``: input name
+    -> where it came from), for the user to check and confirm by saving."""
     vals: dict[str, Any] = {}
     prefs = prefs or {}
     for f in PREF_FIELDS:
@@ -235,27 +236,6 @@ def prefill(
             raw = raw["value"]
         vals[f"p:{f.path}"] = _to_text(f, raw)
     a = answers or {}
-    if not answers:
-        c = contact or {}
-        name = (c.get("name") or "").split()
-        a = {
-            "identity": {
-                "legal_first_name": name[0] if name else None,
-                "legal_last_name": " ".join(name[1:]) or None,
-                "email": c.get("email"),
-                "phone": c.get("phone"),
-            },
-            "links": c.get("links") or {},
-        }
-        if profile and profile.education:
-            grad = profile.education[0].graduation or ""
-            if m := re.match(r"(\d{4})-(\d{2})", grad):
-                a["education"] = {
-                    "graduation_year": int(m.group(1)),
-                    "graduation_month": int(m.group(2)),
-                }
-        if profile:
-            a["experience"] = {"prior_employers": sorted({e.org for e in profile.experience})}
     for f in ANSWER_FIELDS:
         v = _get(a, f.path)
         if v is None and f.path.startswith("eeo.") and f.widget == "select":
@@ -264,6 +244,20 @@ def prefill(
     for cc, wa in (a.get("work_authorization") or {}).items():
         for k, _, _ in WA_KEYS:
             vals[f"a:work_authorization.{cc}.{k}"] = wa.get(k) or ""
+    from jobhunt.onboarding.suggest import suggest
+
+    by_path = {f.path: f for f in ANSWER_FIELDS}
+    marked: dict[str, str] = {}
+    for sg in suggest(
+        answers, prefs, profile=profile, contact=contact, resume_text=resume_text,
+        today=today or date.today(),
+    ):  # fmt: skip
+        f = by_path.get(sg.path)
+        if f is None:
+            continue
+        vals[f"a:{f.path}"] = _to_text(f, sg.value)
+        marked[f"a:{f.path}"] = sg.source
+    vals["__suggested"] = marked
     return vals
 
 
@@ -475,6 +469,7 @@ def _input(name: str, f: F, val: Any) -> str:
 
 def _row(prefix: str, f: F, vals: dict[str, Any]) -> str:
     name = f"{prefix}:{f.path}"
+    source = (vals.get("__suggested") or {}).get(name)
     must = ""
     if f.pref:
         checked = " checked" if vals.get(f"{name}.__must") == "on" else ""
@@ -485,11 +480,14 @@ def _row(prefix: str, f: F, vals: dict[str, Any]) -> str:
             f"</label>"
         )
     hint = f'<div class="hint">{_e(f.help)}</div>' if f.help else ""
+    if source:
+        hint += f'<div class="sugnote">From {_e(source)}: check it, then Save to confirm.</div>'
     # a chip group isn't a single control: its name comes from its aria-label instead
+    cls = "field sug" if source else "field"
     if f.widget == "multi":
-        head = f'<div class="field"><div class="lbl">{_e(f.label)}</div>'
+        head = f'<div class="{cls}"><div class="lbl">{_e(f.label)}</div>'
     else:
-        head = f'<div class="field"><label class="lbl" for="{_fid(name)}">{_e(f.label)}</label>'
+        head = f'<div class="{cls}"><label class="lbl" for="{_fid(name)}">{_e(f.label)}</label>'
     return f'{head}<div class="ctl">{_input(name, f, vals.get(name))}{must}{hint}</div></div>'
 
 
@@ -566,6 +564,8 @@ textarea{width:100%;flex-basis:100%}.chips{display:flex;flex-wrap:wrap;gap:6px}.
 legend{font-weight:600;font-size:13px}button{font:inherit;font-weight:600;padding:7px 18px;border-radius:8px;border:0;background:var(--accent);color:#fff;cursor:pointer}
 .err{background:#fde8e1;color:#7a2a07;border-radius:8px;padding:10px 14px}.okmsg{background:#e5f3e7;color:#1f4d27;border-radius:8px;padding:10px 14px}
 @media (prefers-color-scheme:dark){.err{background:#3b1d12;color:#f7c5ab}.okmsg{background:#173020;color:#bfe6c5}}
+.sug .ctl input,.sug .ctl select,.sug .ctl textarea{outline:2px solid #d4a017;outline-offset:1px}.sugnote{flex-basis:100%;font-size:12px;color:#8a6400}
+.sugbanner{background:#fff6d6;color:#5c4300;border-radius:8px;padding:10px 14px}@media (prefers-color-scheme:dark){.sugbanner{background:#3a300f;color:#f3dc8c}.sugnote{color:#e3c25d}}
 .same{flex-basis:100%;font-size:13px}.saved{color:var(--ok);font-weight:600;margin-right:10px}@media (max-width:640px){.field{grid-template-columns:1fr}}
 """
 
@@ -643,6 +643,13 @@ def render(
             '<div class="okmsg"><b>Saved.</b> '
             + _e(", ".join(saved))
             + ". You can close this tab, or keep editing and save again.</div>"
+        )
+    n_sug = len(vals.get("__suggested") or {})
+    if n_sug and not errors:
+        msg += (
+            f'<div class="sugbanner"><b>{n_sug} answer{"s" if n_sug != 1 else ""} filled in from '
+            "your resume, profile and preferences</b>, outlined in yellow below. Check each one; "
+            "saving confirms them. Nothing sensitive (work authorization, EEO) is filled in.</div>"
         )
     when = (
         f"Last saved {_e(last_saved.replace('T', ' ').removesuffix('Z'))} UTC."

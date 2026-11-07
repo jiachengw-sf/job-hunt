@@ -1024,3 +1024,111 @@ Still open:
 - `threshold_jobs` (forms read for high-priority jobs) also re-reads failed forms every run.
 - Not verified live: the Ashby parse wait on a real form, a full Greenhouse Education block fill,
   resume parsing on more PDF layouts, Codex CLI.
+
+## Workday pre-fill (2026-11-06, branch `feat/workday-prefill`)
+
+Workday is about half of the top matches. Its form sits behind each employer's own sign-in, so it
+can't be read ahead like Greenhouse / Lever / Ashby. A live prototype first reached Review on two
+real employers (wd1, 6 and 7 steps) with a synthetic persona; this ports what it learned.
+
+- `jobhunt prefill <id>` on a Workday job opens `<posting>/apply/applyManually`. The human signs
+  in ("Sign in with email"; Google sign-in is refused in an automated browser and jobhunt uses no
+  workaround). `prefill/workday_flow.py` then handles each step as it appears: read it into a
+  FormSpec (`adapters/workday.py:read_step`), classify, build and validate that step's answers
+  like any other form, fill, read back, and fill My Experience's repeatable sections (work,
+  education, languages, websites) from the profile. Save and Continue only when the step is
+  complete and clean; else the human finishes it and jobhunt picks up the next step. Reaching
+  Review marks the job Prefilled; the human submits and the confirmation marks it Applied.
+- Guard: Workday saves each field (`/wday/calypso/cxs/...`), loads questions with a read-only
+  `questionnaire/.../definition` POST (blocking it resets the application to step 1) and saves
+  each step (`/wday/cxs/<tenant>/jobapplication/<id>/<section>`). Those are allowed; anything
+  naming `submit` is always blocked. `guard.search_enter` allows Enter only in Workday's own
+  search box (school searches need it); everything else still refuses Enter.
+- Workday's stable field names map to canonical questions (`address--city` is the city only;
+  `candidateIsPreviousWorker` is `experience.previously_employed`, from the profile and
+  `prior_employers`). New bank keys `identity.address_city` and `identity.address_region`
+  (state code <-> name).
+- Widgets handled: late-loading dropdowns, search prompts with categories ("Campus" ->
+  "Campus: Career Fair"; a category is never selected as the answer), lists that open only via
+  "All" (scrolled), MM / YYYY dates that ignore clicks (focus and type), Add / Add Another,
+  file upload, Workday re-rendering under the fill, the sticky footer covering targets.
+- Tests: a synthetic Workday-style site (`tests/fixtures/forms/pages/northwind.wd1...`) with all
+  of the above; sign-in left to the human, every step to Review for one persona, the first step
+  for all four personas, the guard allowlist, the Enter rule. 24 new tests.
+
+Still open:
+
+- Not yet re-run live on KLA / CVS through `jobhunt prefill` (only the prototype was).
+- Language proficiency scales differ per employer and are left for the user; phone country code
+  and Phone Device Type are left as the page has them.
+- Questions naming subsidiaries ("CVS Health, Aetna, ...") match only the employer's own name in
+  `experience.previously_employed`; listing each brand is not built.
+- `jobhunt prefill` with no ids doesn't pick Workday jobs (they're never `ready`: no form is read
+  ahead); name them: `jobhunt prefill <id> ...`.
+- Older Workday UI (automation ids only, no `--` ids), "Autofill with Resume" and "Use My Last
+  Application" paths, cookie banners: untested.
+
+## Fewer repeat questions (2026-11-06, branch `feat/workday-prefill`)
+
+Using pre-fill, the user kept answering the same question again because a form worded it
+differently. A similar wording used to wait for "confirm once" per wording. Now:
+
+- `forms.fill_similar` (default on): a clearly similar question is filled from the user's answer
+  to the known one and flagged "similar question: check it" for review before Submit. "Clearly":
+  never EEO; a sensitive key needs similarity >= 0.75; and the best key must beat any other key
+  by 0.08 unless that key gives the same answer (`classify.similar_is_clear`). The concept guard
+  (authorization vs. sponsorship, now vs. future, relocation, on-site) still applies first.
+  `fill_similar: false` restores ask-first.
+- `jobhunt answers map "<label>" <key> ...`: the agent maps a known question in new words; code
+  refuses unknown keys, EEO, essays, a sensitive-looking label on a non-sensitive key, and pairs
+  that ask different things. Mapped labels are stored as `proposed` (answers.yaml) and fill for
+  review. The agent sees labels and keys only, never answers. The daily skill maps first and asks
+  the user only what's left.
+- Submitting teaches the bank (`bank/learn.py`): when the driver records an application, every
+  field filled from a similar or proposed wording becomes a confirmed wording (company as
+  "[Company]"), so that wording is an exact match next time. Labels only; never values.
+- Workday's submitted record now includes each step's answers.
+- AGENTS.md non-negotiable 3 updated to say this.
+
+## Resumes in any layout + setup form filled from them (2026-11-06, branch `feat/workday-prefill`)
+
+- Setup form (`onboarding/suggest.py`): every empty answer that the resume, profile or
+  preferences state is filled in and outlined in yellow ("From your resume: check it, then Save
+  to confirm"), with a banner counting them, on every visit (not only the first). Contact
+  details, city/state/country, a university email, GPA and scale, spoken languages, graduation
+  month/year, class standing (from the graduation date and today), prior employers (added to the
+  list), years of experience (from job dates), and availability/relocation from preferences.
+  Existing answers always win; work authorization, citizenship and EEO are never filled.
+- Resume parsing, scored on a new corpus (`tests/fixtures/resumes/layouts`: two synthetic people
+  x eight layouts, `expected.json`): 134/224 fields right before, 224/224 after.
+  - text: ligatures (NFKC), letter-spaced and LaTeX small-caps headings, LinkedIn/GitHub URLs
+    found anywhere and joined when wrapped, all-caps names title-cased;
+  - DOCX: the page header (name/contact) and footer are read; a two-column table layout is read
+    column by column;
+  - entries: bullets whose glyph was lost are recognized as sentences; two-line headers ("Title
+    dates" over "Org City, ST") are joined once; the title is told from the employer by its role
+    word in any order; a "City, ST" is dropped; graduation is the end of "Sep 2024 – May 2028";
+    "School" over "Degree" over "dates" lines merge; majors lose "in", "( )", GPA tails.
+  - OCR fallback (`onboarding/ocr.py`, optional extra `ocr` = pypdfium2, plus the `tesseract`
+    program): a PDF whose text layer is empty or reads worse than its image is rendered at
+    300 dpi and read locally; common degree misreads ("N.5." -> "M.S.") are fixed. Without OCR
+    a scan says how to install it.
+- Live job fetching checked against real public boards (Greenhouse, Lever, Ashby, Simplify):
+  7,029 postings, 0 errors, a second run adds nothing.
+
+## Combined system check (2026-11-06)
+
+Offline suite 978 tests (977 pass, 1 skipped, 0 fail), lint, format and the personal-data scan
+clean; the whole pipeline for all four personas; live boards (7,029 postings, 0 errors, no
+duplicates on re-fetch) and live forms.
+
+- Fixed: `inspect` / `run` read forms only for priority >= 0.5, which code-only priorities on live
+  data never reach (best ~0.45), so nothing became Ready. Now the threshold jobs come first and
+  the next-highest priorities on readable ATSs fill up to the limit (`cli/apply.py:threshold_jobs`).
+  Live: 15 of 15 forms read (Greenhouse, Lever, Ashby).
+- Open, not changed: recall favours title-only rows (88 of the top 100 ranks were Simplify rows
+  with no description), and watchlist jobs get no recall rank, so their relevance is 0 and
+  freshness orders them (a sales role above an internship for the intern persona; every Ramp job
+  tied at 0.428). Fix: score recall on the title plus a bounded slice of the description and rank
+  watchlist jobs too; re-check with `jobhunt eval-fit`.
+- Open: `coverage` takes 49-82 s (reads ~30 forms live).

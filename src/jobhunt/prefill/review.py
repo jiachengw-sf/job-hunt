@@ -103,8 +103,15 @@ def note_text(o: FieldOutcome, *, values: bool = True) -> str:
     return text[:400]
 
 
-def highlight(page: Any, adapter: Adapter, sheet: AnswerSheet, outcomes: list[FieldOutcome]) -> int:
-    """Outline and annotate every field that needs the human. Returns how many were marked."""
+def highlight(
+    page: Any,
+    adapter: Adapter,
+    sheet: AnswerSheet,
+    outcomes: list[FieldOutcome],
+    banner: str | None = None,
+) -> int:
+    """Outline and annotate every field that needs the human. Returns how many were marked.
+    ``banner`` replaces the default top-of-page note (Workday's steps before Review)."""
     by_id: dict[str, FillField] = {f.id: f for f in sheet.fields}
     marked = 0
     for o in outcomes:
@@ -124,7 +131,8 @@ def highlight(page: Any, adapter: Adapter, sheet: AnswerSheet, outcomes: list[Fi
             continue
     page.evaluate(
         _BANNER_JS,
-        "jobhunt filled this form and stopped. Review the highlighted fields, then click "
+        banner
+        or "jobhunt filled this form and stopped. Review the highlighted fields, then click "
         "Submit yourself. jobhunt never submits.",
     )
     return marked

@@ -27,7 +27,7 @@ import subprocess
 import sys
 import threading
 import time
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
@@ -50,6 +50,21 @@ def state_path(paths: Paths) -> Path:
 def contact_path(paths: Paths) -> Path:
     """Contact details read from the resume: pre-fill only, never shown to the model."""
     return paths.onboarding / "contact.json"
+
+
+def resume_text(paths: Paths, profile: Profile | None) -> str | None:
+    """The default resume's text (read locally, for the form's suggestions only)."""
+    from jobhunt.onboarding.resume import extract_text
+
+    files = list(profile.resumes) if profile else []
+    pick = next((r.file for r in files if r.default), None) or (files[0].file if files else None)
+    path = paths.resume_dir / pick if pick else None
+    if path is None or not path.is_file():
+        return None
+    try:
+        return extract_text(path)
+    except Exception:
+        return None
 
 
 def now_iso() -> str:
@@ -101,7 +116,15 @@ class FormApp:
         cp = contact_path(self.paths)
         if cp.exists():
             contact = json.loads(cp.read_text(encoding="utf-8"))
-        return F.prefill(prefs, answers, profile=profile, contact=contact)
+        text = resume_text(self.paths, profile)
+        if contact is None and text:
+            from jobhunt.onboarding.resume import find_contact
+
+            ct = find_contact(text)
+            contact = {"name": ct.name, "email": ct.email, "phone": ct.phone, "links": ct.links}
+        return F.prefill(
+            prefs, answers, profile=profile, contact=contact, resume_text=text, today=date.today()
+        )
 
     def page(self, *, errors: list[str] | None = None, saved: list[str] | None = None,
              vals: dict[str, Any] | None = None) -> str:  # fmt: skip

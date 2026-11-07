@@ -13,12 +13,17 @@ draft with a warning, to be filled from the redacted text, rather than drafted w
 
 from __future__ import annotations
 
+import contextlib
+import logging
 import re
+import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from jobhunt.errors import ValidationFailed
+
+log = logging.getLogger(__name__)
 
 SUPPORTED_SUFFIXES = (".pdf", ".docx", ".md", ".txt")
 
@@ -178,7 +183,35 @@ def _pdf_text(path: Path) -> str:
                 text = layout
     except Exception as e:
         raise ValidationFailed(f"{path.name}: couldn't read this PDF ({e}).") from e
-    return rejoin(text) if fragmented(text) else text
+    text = rejoin(text) if fragmented(text) else text
+    if readability(text) < GOOD_ENOUGH:  # a scan, or a text layer that reads as noise
+        from jobhunt.onboarding.ocr import ocr_pdf, unavailable
+
+        if unavailable() is None:
+            try:
+                seen = ocr_pdf(path)
+            except Exception as e:  # OCR is a fallback; the text layer stands
+                log.warning("%s: OCR failed: %s", path.name, e)
+            else:
+                if readability(normalize_text(seen)) > readability(text):
+                    return seen
+    return text
+
+
+GOOD_ENOUGH = 5
+
+
+def readability(text: str) -> int:
+    """How much of a resume a text shows: section headings found (3 each), an email (2), and
+    up to 3 for length. A scan's empty text layer scores 0."""
+    t = normalize_text(text or "")
+    keys = {
+        _SECTIONS[k]
+        for ln in t.splitlines()
+        if (k := re.sub(r"[^a-z ]", "", _clean(ln).lower()).strip()) in _SECTIONS and len(ln) < 40
+    }
+    words = len(t.split())
+    return 3 * len(keys) + (2 if _EMAIL.search(t) else 0) + min(3, words // 100)
 
 
 def extract_text(path: Path) -> str:
@@ -196,22 +229,69 @@ def extract_text(path: Path) -> str:
             d = docx.Document(str(path))
         except Exception as e:
             raise ValidationFailed(f"{path.name}: couldn't read this DOCX ({e}).") from e
-        lines = [
-            f"- {p.text}" if "list" in (p.style.name if p.style else "").lower() else p.text
-            for p in d.paragraphs
-        ]
-        for table in d.tables:
-            for row in table.rows:
-                lines.append(" | ".join(c.text for c in row.cells))
-        text = "\n".join(lines)
+        text = "\n".join(_docx_lines(d))
     else:
         text = path.read_text(encoding="utf-8", errors="replace")
-    text = text.replace("\r", "").replace(" ", " ")
+    text = normalize_text(text)
     if not text.strip():
+        from jobhunt.onboarding.ocr import unavailable
+
+        why = unavailable() if suffix == ".pdf" else None
+        hint = f" To read scans, install OCR: {why}." if why else ""
         raise ValidationFailed(
-            f"{path.name}: no text found (a scanned image?). Export a text PDF or DOCX instead."
+            f"{path.name}: no text found (a scanned image?). Export a text PDF or DOCX "
+            f"instead.{hint}"
         )
     return text
+
+
+def _docx_lines(d: Any) -> list[str]:
+    """A DOCX's text: the page header first (resumes often put the name and contact details
+    there), then the body, tables, then the footer. A table cell holding several lines is a
+    column of the layout, so each cell is its own block; a one-line row stays one line."""
+
+    def para(p: Any) -> str:
+        style = (p.style.name if p.style else "").lower()
+        return f"- {p.text}" if "list" in style and p.text.strip() else p.text
+
+    lines: list[str] = []
+    for sec in d.sections[:1]:
+        with contextlib.suppress(Exception):
+            lines += [para(p) for p in sec.header.paragraphs]
+    lines += [para(p) for p in d.paragraphs]
+    for table in d.tables:
+        for row in table.rows:
+            cells = list(dict.fromkeys(row.cells))  # merged cells repeat
+            if any(len([p for p in c.paragraphs if p.text.strip()]) > 2 for c in cells):
+                for c in cells:
+                    lines += [para(p) for p in c.paragraphs] + [""]
+            else:
+                lines.append(" | ".join(c.text for c in cells))
+    for sec in d.sections[:1]:
+        with contextlib.suppress(Exception):
+            lines += [para(p) for p in sec.footer.paragraphs]
+    return lines
+
+
+_SPACED = re.compile(r"^(?:[A-Z&] ){2,}[A-Z&](?:\s{2,}(?:[A-Z&] ){1,}[A-Z&])*$")
+_SMALLCAP = re.compile(r"\b([A-Z]) (?=[A-Z]{2,}\b)")
+
+
+def normalize_text(text: str) -> str:
+    """Ligatures to letters (ﬁ -> fi), odd spaces to spaces, and headings typeset letter by
+    letter ("E D U C A T I O N", LaTeX small caps "A VERY  T ESTWELL") back to words. A
+    LinkedIn or GitHub URL the layout wrapped onto the next line is joined."""
+    text = unicodedata.normalize("NFKC", text.replace("\r", ""))
+    out = []
+    for ln in text.splitlines():
+        st = ln.strip()
+        if _SPACED.match(st):  # letter-spaced: words are separated by 2+ spaces
+            ln = " ".join(w.replace(" ", "") for w in re.split(r"\s{2,}", st))
+        elif st and st == st.upper() and _SMALLCAP.search(st):
+            ln = re.sub(r"\s{2,}", " ", _SMALLCAP.sub(r"\1", st))
+        out.append(ln)
+    text = "\n".join(out)
+    return re.sub(r"((?:linkedin|github)\.com/[\w/-]*-)\n(\w[\w-]*)", r"\1\2", text)
 
 
 @dataclass
@@ -251,7 +331,7 @@ def find_contact(text: str) -> Contact:
     lines = [_clean(ln) for ln in text.splitlines() if ln.strip()]
     for ln in lines[:3]:
         if _looks_like_name(ln):
-            c.name = ln
+            c.name = ln.title() if ln.isupper() else ln  # "AVERY TESTWELL" (small caps)
             break
     head = "\n".join(lines[:8])
     if m := _EMAIL.search(head) or _EMAIL.search(text):
@@ -265,11 +345,22 @@ def find_contact(text: str) -> Contact:
     ]
     for m in _URL.finditer("\n".join(contact_lines)):
         u = m.group(0)
-        if c.email and (u in c.email or c.email.endswith(u)):
+        if (c.email and (u in c.email or c.email.endswith(u))) or "@" + u in text:
             continue
         kind = _url_kind(u)
         c.links.setdefault(kind, u if u.startswith("http") else f"https://{u}")
+    # LinkedIn and GitHub profiles are unambiguous wherever they sit (a sidebar, a footer)
+    for kind, rx in _PROFILE_URLS.items():
+        if kind not in c.links and (m := rx.search(text)):
+            u = m.group(0).rstrip(".,;)")
+            c.links[kind] = u if u.startswith("http") else f"https://{u}"
     return c
+
+
+_PROFILE_URLS = {
+    "linkedin": re.compile(r"(?:https?://)?(?:[a-z]{2,3}\.)?linkedin\.com/in/[\w%-]+/?", re.I),
+    "github": re.compile(r"(?:https?://)?(?:www\.)?github\.com/[A-Za-z0-9-]+(?![\w/.-]*@)", re.I),
+}
 
 
 def redact(text: str, contact: Contact) -> str:
@@ -346,25 +437,99 @@ def _continues(bullet: str, raw: str, ln: str) -> bool:
     return not bullet.rstrip().endswith((".", "!", "?", ":")) and not _header_like(ln)
 
 
+def _sentence(ln: str) -> bool:
+    """A bullet whose glyph the PDF lost: a sentence (6+ words, mostly lowercase after the
+    first, no date range or "Org — Title" separator)."""
+    words = ln.split()
+    if len(words) < 6 or _RANGE.search(ln) or re.search(r" [—–|] ", ln):
+        return False
+    lower = sum(1 for w in words[1:] if w[:1].islower() or w[:1].isdigit())
+    return lower >= (len(words) - 1) / 2
+
+
 def _entries(lines: list[str]) -> list[tuple[str, list[str]]]:
     """(header, bullets) blocks: a non-bullet line starts a new entry, unless it carries on a
-    bullet that wrapped."""
+    bullet that wrapped, is a bullet whose glyph was lost, or is the second line of a two-line
+    header ("Title  dates" over "Org  City, ST"; "Title — Org" over "dates")."""
     out: list[tuple[str, list[str]]] = []
+    joined: set[int] = set()  # entries whose header already took a second line
     for raw in lines:
         if _BULLET.match(raw):
             if out:
                 out[-1][1].append(_BULLET.sub("", raw).strip())
             continue
         ln = _clean(raw)
-        if out and out[-1][1] and _continues(out[-1][1][-1], raw, ln):
+        if out and out[-1][1] and (
+            _continues(out[-1][1][-1], raw, ln)
+            or (len(ln.split()) == 1 and not out[-1][1][-1].rstrip().endswith((".", "!", "?")))
+        ):  # fmt: skip
             out[-1][1][-1] = f"{out[-1][1][-1]} {ln}"
             continue
-        if out and not out[-1][1] and not _RANGE.search(out[-1][0]) and _RANGE.search(ln):
-            # a date line under its header ("Acme Corp" / "Engineer, Jun 2024 – present")
-            out[-1] = (f"{out[-1][0]}, {ln}", [])
+        if out and _sentence(ln):
+            out[-1][1].append(ln)
             continue
+        if out and not out[-1][1] and len(out) - 1 not in joined:
+            prev_dates, dates = bool(_RANGE.search(out[-1][0])), bool(_RANGE.search(ln))
+            if prev_dates != dates and len(ln.split()) <= 10 and ":" not in ln:
+                out[-1] = (f"{out[-1][0]} | {ln}", [])
+                joined.add(len(out) - 1)
+                continue
         out.append((ln, []))
     return out
+
+
+# A job title's head noun: it tells the title from the employer in "Title, Org" lines.
+_ROLE = re.compile(
+    r"\b(intern(?:ship)?|engineer|developer|analyst|scientist|assistant|associate|researcher|"
+    r"manager|consultant|specialist|coordinator|lead|director|designer|technician|tutor|fellow|"
+    r"officer|administrator|architect|representative|volunteer|president|founder|instructor|"
+    r"teacher|programmer|co-?op|apprentice|trainee|head|chair|captain|editor|writer|advisor|"
+    r"mentor|counselor|clerk|cashier|associate)s?\b",
+    re.I,
+)
+_CITY_PREFIX = {
+    "new", "san", "los", "las", "santa", "st", "st.", "saint", "fort", "palo", "salt", "ann",
+    "mountain", "grand", "long", "baton", "little", "el", "des", "sioux", "cedar", "college",
+    "menlo", "redwood", "oak", "overland", "park", "rock", "round", "silver", "sugar", "thousand",
+    "virginia", "walnut", "white", "winston", "north", "south", "east", "west", "lake", "kansas",
+    "oklahoma", "jersey", "iowa", "bowling", "coral", "daly", "half", "mount", "glen", "elk",
+}  # fmt: skip
+_PLACE = re.compile(r"(?:\s|^|,\s*)((?:(\S+)\s+)?(\S+)),\s*(?:[A-Z]{2}|Remote|USA|UK)\b")
+
+
+def _drop_place(s: str) -> str:
+    """Remove a trailing "City, ST" (one-word city, or two when the first is a city prefix
+    like "New" or "San") and "Remote"."""
+
+    def cut(m: re.Match[str]) -> str:
+        first = m.group(2)
+        if first and first.lower() in _CITY_PREFIX:
+            return " "
+        return f" {first} " if first else " "
+
+    s = _PLACE.sub(cut, s)
+    return re.sub(r"\bRemote\b", " ", s)
+
+
+def title_org(head: str) -> tuple[str, str]:
+    """(employer, title) from an experience header in any common order: "Org — Title",
+    "Title, Org — City, ST (dates)", "Title at Org", "Title | dates | Org City, ST". The part
+    naming a role (intern, engineer, assistant...) is the title; the first other part is the
+    employer. Without a role word, the old order (employer first) stands."""
+    h = _RANGE.sub(" ", head)
+    h = re.sub(r"\(\s*\)", " ", h)
+    h = _drop_place(h)
+    parts = [p.strip(" ,()") for p in re.split(r"\s+[—–|-]\s+|\s+at\s+|,\s+|\s\|\s|\|", h)]
+    parts = [p for p in parts if p and not re.fullmatch(r"(?:present|current|now)", p, re.I)]
+    if not parts:
+        return head.strip(), ""
+    roles = [p for p in parts if _ROLE.search(p)]
+    if len(roles) == 1 and len(parts) > 1:
+        title = roles[0]
+        org = next(p for p in parts if p is not title)
+        return org, title
+    org, title = _split_head(" — ".join(parts))
+    return org, title
 
 
 def _split_head(head: str) -> tuple[str, str]:
@@ -387,7 +552,7 @@ def _experience(lines: list[str]) -> list[dict[str, Any]]:
         if rng:
             start, end = _ym(rng.group("start")), _ym(rng.group("end"))
             head = (head[: rng.start()] + head[rng.end() :]).strip(" ,|–—-")
-        org, title = _split_head(head)
+        org, title = title_org(head)
         out.append(
             {
                 "org": org or head,
@@ -400,10 +565,41 @@ def _experience(lines: list[str]) -> list[dict[str, Any]]:
     return out
 
 
+def _strip_tail(s: str) -> str:
+    """A name without the dates, GPA or "City, ST" a layout put on the same line."""
+    s = _RANGE.sub(" ", s)
+    s = re.sub(r"\bGPA\b.*$", " ", s, flags=re.I)
+    s = re.sub(r"\s+[A-Z][A-Za-z. ]+,\s*[A-Z]{2}\s*$", " ", s)
+    s = re.sub(rf"\s+(?:{_MON}\s+)?(?:19|20)\d{{2}}\s*$", " ", s, flags=re.I)
+    return " ".join(s.split()).strip(" ,|–—-")
+
+
+def _merge_school_lines(entries: list[tuple[str, list[str]]]) -> list[tuple[str, list[str]]]:
+    """Two-line education headers: "School  dates" over "Degree  GPA" (LaTeX templates), or
+    "School" / "Degree" / "dates" in a sidebar: a line without a degree joins the next."""
+    out: list[tuple[str, list[str]]] = []
+
+    def school_like(h: str) -> bool:
+        return ":" not in h and len(h.split()) <= 10 and not re.match(r"(relevant )?coursework",
+                                                                      h, re.I)  # fmt: skip
+
+    for head, bullets in entries:
+        if out and not out[-1][1] and (
+            (_DEGREE.search(head) and not _DEGREE.search(out[-1][0]) and school_like(out[-1][0]))
+            or (not _DEGREE.search(head) and _DEGREE.search(out[-1][0])
+                and (_RANGE.search(head) or _SINGLE.fullmatch(head.strip())
+                     or re.match(r"^GPA\b", head, re.I)))
+        ):  # fmt: skip
+            out[-1] = (f"{out[-1][0]} — {head}", bullets)
+            continue
+        out.append((head, bullets))
+    return out
+
+
 def _education(lines: list[str]) -> tuple[list[dict[str, Any]], list[str]]:
     out: list[dict[str, Any]] = []
     coursework: list[str] = []
-    for head, bullets in _entries(lines):
+    for head, bullets in _merge_school_lines(_entries(lines)):
         low = head.lower()
         if low.startswith(("coursework", "relevant coursework")):
             coursework += [c.strip() for c in head.split(":", 1)[-1].split(",") if c.strip()]
@@ -416,15 +612,24 @@ def _education(lines: list[str]) -> tuple[list[dict[str, Any]], list[str]]:
         if deg and deg.start() < len(school) and rest:
             school, rest = rest, school  # "B.S. ..., School"
         grad = None
-        if m := _SINGLE.search(rest or head):
-            grad = _ym(m.group("d"))
+        if rng := _RANGE.search(head):  # "Sep 2024 – May 2028": graduation is the end
+            grad = _ym(rng.group("end"))
+            head_wo = (head[: rng.start()] + head[rng.end() :]).strip(" ,|–—-")
+            school, rest = _split_head(head_wo)
+            if deg and deg.start() < len(school) and rest:
+                school, rest = rest, school
+        elif dates := list(_SINGLE.finditer(rest or head)):
+            grad = _ym(dates[-1].group("d"))
+        school = _strip_tail(school)
         majors: list[str] = []
         minors: list[str] = []
         if deg:
             src = rest if deg.group(0) in rest else head
             after = src[src.index(deg.group(0)) + len(deg.group(0)) :]
+            after = re.split(r"\s*(?:\(|\||—|–|;|\bGPA\b)", after, maxsplit=1, flags=re.I)[0]
             parts = [p.strip() for p in after.split(",")]
-            major = re.sub(r"^(?:in|of)\s+", "", parts[0]).strip(" .")
+            major = re.sub(r"^[\s.]*(?:in|of)\s+", "", parts[0]).strip(" .")
+            major = _strip_tail(major)
             if major and not _SINGLE.fullmatch(major):
                 majors = [major]
             for p in parts[1:]:

@@ -17,6 +17,8 @@ identity.address: [address, street address, home address, mailing address]
 identity.city_region: [what city and state do you reside in, city and state, in what city and state do you currently reside, if located in the us in what city and state do you reside]
 identity.location: [location, current location, city, where are you located, where are you currently located, location city]
 identity.postal_code: [zip code, postal code, zip]
+identity.address_city: [address city, city address]
+identity.address_region: [address state, state address, state or province address]
 identity.country: [country, country of residence, what country do you currently reside in, select the country where you currently reside, which country do you live in]
 identity.school_email: [university email, school email, university email address, school email address, student email, student email address, edu email address, your university email address]
 identity.over_18: [are you at least 18 years of age, are you 18 years of age or older, are you over 18, are you at least 18 years old]
@@ -66,7 +68,7 @@ compensation.expected: [expected salary, desired salary, salary expectations, wh
 experience.years: [years of experience, how many years of experience do you have, how many years of professional experience do you have, total years of experience]
 experience.current_employer: [current company, current employer, who is your current or previous employer, most recent employer, company, current or most recent employer]
 experience.current_title: [current title, current job title, what is your current or previous job title, most recent job title, job title]
-experience.previously_employed: [have you ever been employed by company, have you previously worked at company, have you ever worked for company, have you worked at company before, have you ever been employed by company or a company affiliate]
+experience.previously_employed: [have you ever been employed by company, have you been previously employed by company, have you previously worked at company, have you ever worked for company, have you worked at company before, have you ever been employed by company or a company affiliate]
 
 skills.languages: [what languages do you speak, languages spoken, which languages do you speak fluently]
 
