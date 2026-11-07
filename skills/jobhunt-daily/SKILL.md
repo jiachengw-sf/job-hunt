@@ -42,7 +42,9 @@ contract: every command prints one JSON envelope; relay `hints.user_actions` ver
    `jobhunt answers map "<label>" <key> ["<label>" <key> ...]`. Code checks every pair and
    refuses ones that ask different things (authorization vs. sponsorship, now vs. future); the
    user reviews each mapped field before Submit, and submitting confirms it. Don't map EEO,
-   essays, or anything you're unsure of. Then group the remaining non-sensitive ones into one
+   essays, or anything you're unsure of; sensitive questions are never filled from a mapping
+   (the user confirms them in the form), and a question that asks the opposite ("not",
+   "unable", "without") or another number ("under 18", "at least 21") is not the same one. Then group the remaining non-sensitive ones into one
    short message and ask them all at once; save each answer with `jobhunt answers add`. A
    question that asks two things ("authorized to work without sponsorship") is its own question.
    To change a non-sensitive built-in (graduation, relocation, start date), use

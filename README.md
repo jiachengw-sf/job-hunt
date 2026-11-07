@@ -36,7 +36,9 @@ Your data stays on your machine in `~/.jobhunt/`. Set `JOBHUNT_HOME` to use anot
   GitHub and Greenhouse, Lever and Ashby job boards.
 - Guess an answer. Every value comes from your profile, an answer you confirmed, or text you
   approved. A question you already answered in other words is filled from that answer and
-  flagged for your review (never for EEO questions).
+  flagged for your review. Sensitive questions (work authorization, sponsorship, age, EEO and
+  similar) are never filled this way, and a look-alike that asks the opposite ("NOT
+  authorized", "under 18") is a different question.
 - Show your sensitive answers (work authorization, sponsorship, salary, EEO, disability,
   veteran status, background checks) to the AI. You enter them in a local form.
 - Game screeners with hidden text, keyword stuffing or instructions aimed at AI reviewers.

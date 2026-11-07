@@ -104,6 +104,7 @@ ANSWER_FIELDS: list[F] = [
     F("identity.postal_code", "Postal code", section="Identity and contact"),
     F("identity.country", "Country (ISO, e.g. US)", section="Identity and contact"),
     F("identity.over_18", "18 or older", "yesno", section="Identity and contact"),
+    F("identity.age", "Age", "int", help="Only to answer questions like “Are you at least 21?”; it counts up on its own", section="Identity and contact"),
     F("identity.school_email", "University email", help="Only for forms that ask for it apart from your email", section="Identity and contact"),
     F("links.linkedin", "LinkedIn URL", section="Links"),
     F("links.github", "GitHub URL", section="Links"),
@@ -300,6 +301,18 @@ def _parse_value(f: F, raw: list[str]) -> tuple[Any, str | None]:
         return None, f"{f.label}: “{s}” isn't valid"
 
 
+def _stamp_age(answers: dict[str, Any], existing: dict[str, Any]) -> None:
+    """Date a newly entered age, so it can count up on its own (``bank/keys.py:age_range``)."""
+    from datetime import date
+
+    ident = answers.get("identity") or {}
+    old = (existing.get("identity") or {}).get("age")
+    if ident.get("age") is None:
+        ident.pop("age_as_of", None)
+    elif ident["age"] != old or not ident.get("age_as_of"):
+        ident["age_as_of"] = date.today().isoformat()
+
+
 def parse(
     form: dict[str, list[str]],
     *,
@@ -347,6 +360,7 @@ def parse(
         if v is None or (f.widget == "check" and v is False):
             continue
         _set(answers, f.path, v)
+    _stamp_age(answers, existing_answers or {})
     wa: dict[str, dict[str, Any]] = {}
     for name, raw in form.items():
         m = re.fullmatch(r"a:work_authorization\.([A-Z]{2})\.(\w+)", name)

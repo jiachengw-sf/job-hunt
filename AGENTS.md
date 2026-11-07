@@ -26,7 +26,10 @@ The model **proposes** (writes JSON to `~/.jobhunt/work/results/`); code **valid
    user-approved text; a question with no answer there goes back to the user. A question that
    is clearly one the user already answered in other words (wording similarity, or the agent's
    `jobhunt answers map`, both checked by code) is filled from that answer and flagged for the
-   user's review before Submit; submitting confirms the wording. Never for EEO answers.
+   user's review before Submit; submitting with the value unchanged confirms the wording.
+   Never for sensitive or EEO questions: those fill only from a wording the user confirmed. A
+   look-alike that asks the opposite or another number ("not", "unable", "without", "under 18"
+   vs "at least 21") is a different question. Age questions are answered from the user's age.
 4. Sensitive fields (work authorization, sponsorship, salary, EEO, disability, veteran, background
    checks, attestations) come only from the user's own answers and are never shown to the model.
 5. Public, documented job sources only. No LinkedIn or Indeed scraping or automation.

@@ -34,6 +34,11 @@ class Identity(Strict):
     postal_code: str | None = None
     country: str | None = None
     over_18: YesNo | None = None
+    age: int | None = Field(
+        None, ge=13, le=100,
+        description="Answers questions like 'Are you at least 21?'. Never shown to the AI.",
+    )  # fmt: skip
+    age_as_of: date | None = Field(None, description="When the age was entered (set by the form).")
 
 
 class Links(Strict):
