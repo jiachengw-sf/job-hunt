@@ -4,7 +4,9 @@
 2. Every click the engine makes goes through :func:`safe_click`, which refuses ``type=submit``
    elements, ``<button>``s without a type inside a form (they submit it), and buttons or links
    whose text says submit / apply / send / finish / complete. Pressing Enter in a field (implicit
-   submission) is refused too. A source test checks that adapters never click any other way.
+   submission) is refused too; the one exception is Workday's own prompt search box
+   (:func:`search_enter`), which is outside any form and only searches. A source test checks
+   that adapters never click or press keys any other way.
 3. While the engine drives a tab, :class:`RouteGuard` aborts every request that could change
    state: any method other than GET/HEAD/OPTIONS is blocked unless the adapter allow-lists it
    (resume uploads, read-only queries), and the adapter's known submit endpoints are blocked
@@ -80,6 +82,37 @@ def safe_press(locator: Any, key: str) -> None:
     if key in _REFUSED_KEYS or key.split("+")[-1] in _REFUSED_KEYS:
         raise SubmitRefused("Enter in a form field submits the form")
     locator.press(key)
+
+
+# Workday's search prompts (school, field of study, ...) search only on Enter. The one place
+# Enter is allowed: an <input> Workday itself marks as its prompt search box. It sits outside any
+# <form>, and the route guard still blocks every submit endpoint while the engine runs.
+_SEARCH_BOX_JS = """el => ({
+  aid: el.getAttribute('data-automation-id') || '',
+  tag: el.tagName.toLowerCase(),
+  type: (el.getAttribute('type') || 'text').toLowerCase(),
+  in_form: !!(el.form || el.closest('form')),
+})"""
+
+
+def search_refusal(el: dict[str, Any]) -> str | None:
+    """Why Enter is refused in this element, or None for a Workday prompt search box."""
+    if el.get("aid") != "searchBox":
+        return "Enter is allowed only in a Workday search box"
+    if el.get("tag") != "input" or el.get("type") not in ("text", "search"):
+        return "not a text input"
+    if el.get("in_form"):
+        return "inside a <form>: Enter would submit it"
+    return None
+
+
+def search_enter(locator: Any) -> None:
+    """Press Enter in a Workday prompt search box, the only field where jobhunt presses Enter.
+    Raises SubmitRefused for anything else."""
+    if why := search_refusal(locator.evaluate(_SEARCH_BOX_JS)):
+        log.warning("refused Enter: %s", why)
+        raise SubmitRefused(why)
+    locator.press("Enter")
 
 
 def _compile(patterns: Iterable[str]) -> list[re.Pattern[str]]:

@@ -160,6 +160,11 @@ class BankEntry(Strict):
     wordings: list[str] = Field(
         default_factory=list, description="Every label the user has confirmed maps to this key."
     )
+    proposed: list[str] = Field(
+        default_factory=list,
+        description="Labels the AI agent mapped to this key (`jobhunt answers map`). They fill "
+        "flagged for your review and become confirmed wordings once you submit with them.",
+    )
     options: list[str] = Field(
         default_factory=list, description="Acceptable dropdown option texts, in preference order."
     )

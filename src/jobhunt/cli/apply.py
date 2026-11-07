@@ -63,6 +63,7 @@ def form_inputs(paths: Paths, cfg: Config, now: str) -> Inputs:
         or next((paths.resume_dir / r["file"] for r in listed_resumes(paths)), None),
         now,
         threshold=cfg.forms.candidate_threshold,
+        fill_similar=cfg.forms.fill_similar,
     )
 
 
@@ -75,13 +76,28 @@ def loader_factory(cfg: Config, client: HttpClient, fixtures: Path | None):
 
 
 def threshold_jobs(conn: sqlite3.Connection, threshold: float, limit: int) -> list[int]:
+    """Jobs whose forms to read: recalled, not gated out, at or above ``threshold`` first. If
+    that's fewer than ``limit``, the next-highest priorities on an ATS whose form can be read
+    fill the rest: before judgment tasks run, code-only priorities often stay under the
+    threshold, and reading no forms at all would leave nothing Ready."""
     rows = conn.execute(
         "SELECT j.id FROM jobs j JOIN fits f ON f.job_id=j.id WHERE j.live=1 AND f.recalled=1 "
         "AND coalesce(f.gate_status,'') != 'failed' AND coalesce(f.priority,0) >= ? "
         "ORDER BY f.priority DESC, j.id LIMIT ?",
         (threshold, limit),
     ).fetchall()
-    return [r["id"] for r in rows]
+    ids = [r["id"] for r in rows]
+    if len(ids) < limit:
+        marks = ",".join("?" * len(SUPPORTED))
+        more = conn.execute(
+            "SELECT j.id FROM jobs j JOIN fits f ON f.job_id=j.id WHERE j.live=1 "
+            "AND f.recalled=1 AND coalesce(f.gate_status,'') != 'failed' "
+            f"AND coalesce(f.priority,0) < ? AND j.ats IN ({marks}) "
+            "ORDER BY f.priority DESC, j.id LIMIT ?",
+            (threshold, *sorted(SUPPORTED), limit - len(ids)),
+        ).fetchall()
+        ids += [r["id"] for r in more]
+    return ids
 
 
 def undescribed_jobs(
@@ -253,7 +269,8 @@ def register(cli: click.Group) -> None:
     ) -> Result:
         """Read and classify application forms: Ready, Needs answers, Essay or Manual.
 
-        Default: recalled jobs at or above fit.priority_threshold. Greenhouse via its questions
+        Default: recalled jobs at or above fit.priority_threshold, topped up to --top with the
+        next-highest priorities whose forms can be read. Greenhouse via its questions
         API, Lever via the /apply page, Ashby via a headless read-only page load. Never submits.
         Posting text read along the way fills in jobs whose source had none (Simplify).
         """

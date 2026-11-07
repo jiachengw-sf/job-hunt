@@ -7,6 +7,8 @@ as a detached process and returns at once. The driver:
 2. fills it through the ATS adapter, reads every value back, highlights what needs the human,
    takes a screenshot, and marks the job **Prefilled**;
 3. releases the guard (handoff) only after it has stopped interacting with that tab;
+   A Workday job (``prefill/workday_flow.py``) opens on the employer's sign-in page instead: the
+   human signs in, then each step is read, filled and saved as it appears, up to Review;
 4. watches the open tabs. When a tab shows the ATS's confirmation after the human submits, the
    job is marked **Applied** and its application record is created: the confirmation ID (when
    the ATS shows one), a screenshot of the confirmation, a snapshot of the job description and
@@ -38,7 +40,7 @@ from pydantic import BaseModel, Field
 from jobhunt.config import load_config
 from jobhunt.locking import file_lock
 from jobhunt.paths import Paths, get_paths, secure_file
-from jobhunt.prefill.adapters import Adapter, adapter_for
+from jobhunt.prefill.adapters import LIVE, Adapter, adapter_for
 from jobhunt.prefill.browser import persistent_context
 from jobhunt.prefill.fixtures import FixtureRouter
 from jobhunt.prefill.guard import RouteGuard
@@ -123,6 +125,7 @@ def mark_applied(
     sheet: str | None = None,
     shot: str | None = None,
     confirmation_id: str | None = None,
+    company: str = "",
 ) -> int:
     """The human submitted: record the application (Applied, its proof and where to check its
     status). Returns the application id."""
@@ -136,6 +139,10 @@ def mark_applied(
     now = now or now_iso()
     tz = zone(cfg.tracking.timezone)
     answers = read_sheet(Path(sheet)) if sheet and Path(sheet).exists() else None
+    if answers is not None:  # Workday: each step's answers sit beside answers.json
+        for step in sorted(Path(str(sheet)).parent.glob("workday-*.json")):
+            with contextlib.suppress(Exception):
+                answers.fields += read_sheet(step).fields
     with file_lock(paths.lock, timeout=60), open_store(paths.db) as conn:
         submitted = submitted_from_sheet(conn, answers) if answers else []
         resume = next(
@@ -149,7 +156,13 @@ def mark_applied(
             screenshot=Path(shot) if shot else None,
         )  # fmt: skip
         refresh_views(conn, paths, cfg)
-        return out.app_id
+    # the user reviewed and submitted: similar wordings filled here become confirmed wordings
+    if sheet:
+        from jobhunt.bank.learn import learn_from_submission
+
+        d = Path(sheet).parent
+        learn_from_submission(paths, [Path(sheet), *sorted(d.glob("workday-*.json"))], company)
+    return out.app_id
 
 
 # --- filling and watching ------------------------------------------------------------------------
@@ -162,9 +175,12 @@ class Tab:
     page: Any = None
     guard: RouteGuard | None = None
     review: TabReview | None = None
-    status: str = "filling"  # filling | ready_for_review | failed | applied | closed | stopped
+    # filling | ready_for_review | failed | applied | closed | stopped; Workday also
+    # waiting_sign_in | needs_you
+    status: str = "filling"
     applied_on: str | None = None
     extra: dict[str, Any] = field(default_factory=dict)
+    workday: Any = None  # a WorkdayRun for Workday jobs
 
     def public(self) -> dict[str, Any]:
         out = {
@@ -177,6 +193,12 @@ class Tab:
         }
         if self.review:
             out["review"] = self.review.model_dump(mode="json")
+        if self.workday is not None:
+            out["steps"] = [
+                {"name": st.name, "advanced": st.advanced, "empty": len(st.empty),
+                 "errors": len(st.errors)}
+                for st in self.workday.steps
+            ]  # fmt: skip
         return out
 
 
@@ -218,6 +240,30 @@ def fill_tab(ctx: Any, tab: Tab, screens: Path) -> None:
         log.info("job %s: blocked during fill: %s %s", tab.job.job_id, b["method"], b["url"])
 
 
+def open_workday_tab(ctx: Any, tab: Tab, paths: Paths) -> None:
+    """Open a Workday job on its sign-in page; :func:`check_tab` fills each step as it appears.
+    No guard until a step is filled: the human signs in on this page."""
+    from jobhunt.prefill.workday_flow import WorkdayRun, load_inputs
+
+    page = ctx.new_page()
+    tab.page = page
+    try:
+        tab.workday = WorkdayRun(
+            job_id=tab.job.job_id, company=tab.job.company, title=tab.job.title, url=tab.job.url,
+            sheet_dir=Path(tab.job.sheet).parent, screens=paths.screens,
+            inputs=load_inputs(paths, tab.job.job_id), now=now_iso(),
+        )  # fmt: skip
+        page.goto(tab.job.url, wait_until="domcontentloaded", timeout=45_000)
+        tab.status = "waiting_sign_in"
+    except Exception as e:
+        log.warning("job %s: couldn't open the Workday page: %s", tab.job.job_id, e)
+        tab.review = TabReview(
+            job_id=tab.job.job_id, company=tab.job.company, title=tab.job.title, ats="workday",
+            status="failed", error=f"{type(e).__name__}: {e}"[:300],
+        )  # fmt: skip
+        tab.status = "failed"
+
+
 def record_confirmed(paths: Paths, tab: Tab, now: str | None = None) -> None:
     """The tab shows the confirmation: capture it, then record the application."""
     now = now or now_iso()
@@ -229,26 +275,38 @@ def record_confirmed(paths: Paths, tab: Tab, now: str | None = None) -> None:
     try:
         tab.extra["app_id"] = mark_applied(
             paths, tab.job.job_id, now=now, sheet=tab.job.sheet, shot=shot,
-            confirmation_id=confirmation_id,
+            confirmation_id=confirmation_id, company=tab.job.company,
         )  # fmt: skip
     except Exception as e:
         log.warning("job %s: couldn't record the application: %s", tab.job.job_id, e)
         tab.extra["mark_error"] = str(e)
 
 
-def check_tab(tab: Tab, on_applied: Callable[[Tab], None]) -> bool:
-    """One look at a handed-off tab. True once it's resolved (applied or closed)."""
+def check_tab(
+    tab: Tab,
+    on_applied: Callable[[Tab], None],
+    on_review: Callable[[Tab], None] | None = None,
+) -> bool:
+    """One look at a handed-off tab. True once it's resolved (applied or closed). A Workday tab
+    also gets its next step filled here (:meth:`WorkdayRun.tick`)."""
     if tab.status in ("applied", "closed", "stopped"):
         return True
     if tab.page is None or tab.page.is_closed():
-        tab.status = "closed"  # closed without submitting: stays Prefilled
+        tab.status = "closed"  # closed without submitting: stays Prefilled (or New)
         return True
     try:
         if tab.adapter.confirmed(tab.page):
             tab.status = "applied"
             on_applied(tab)
             return True
-    except Exception:  # navigating or closing right now; look again next round
+        if tab.workday is not None and tab.workday.tick(tab.page):
+            before = tab.status
+            tab.status = tab.workday.status
+            tab.review = tab.workday.review()
+            if tab.status == "ready_for_review" and before != "ready_for_review" and on_review:
+                on_review(tab)
+    except Exception as e:  # navigating or closing right now; look again next round
+        log.debug("job %s: tab check: %s", tab.job.job_id, e)
         return False
     return False
 
@@ -258,16 +316,17 @@ def watch(
     on_applied: Callable[[Tab], None],
     on_change: Callable[[], None],
     *,
+    on_review: Callable[[Tab], None] | None = None,
     deadline: float,
     should_stop: Callable[[], bool],
     poll_s: float = 1.0,
 ) -> None:
-    pending = [t for t in tabs if t.status in ("ready_for_review", "failed")]
+    pending = [t for t in tabs if t.status in ("ready_for_review", "failed") or t.workday]
     while pending and time.monotonic() < deadline and not should_stop():
         changed = False
         for t in list(pending):
             before = t.status
-            if check_tab(t, on_applied):
+            if check_tab(t, on_applied, on_review):
                 pending.remove(t)
             changed |= t.status != before
         if changed:
@@ -311,6 +370,13 @@ class Driver:
     def applied(self, tab: Tab) -> None:
         record_confirmed(self.paths, tab)
 
+    def reviewed(self, tab: Tab) -> None:
+        """A Workday tab reached Review: it is Prefilled, waiting for the human's Submit."""
+        try:
+            mark_prefilled(self.paths, tab.job.job_id)
+        except Exception as e:
+            log.warning("job %s: couldn't mark Prefilled: %s", tab.job.job_id, e)
+
     def run_in(self, ctx: Any) -> None:
         if self.plan.fixtures:
             FixtureRouter(
@@ -324,6 +390,10 @@ class Driver:
         for tab in self.tabs:
             if self.stop_requested:
                 break
+            if tab.job.ats in LIVE:
+                open_workday_tab(ctx, tab, self.paths)
+                self.save()
+                continue
             fill_tab(ctx, tab, self.paths.screens)
             if tab.status == "ready_for_review":
                 try:
@@ -338,6 +408,7 @@ class Driver:
             self.save,
             deadline=time.monotonic() + self.plan.watch_hours * 3600,
             should_stop=lambda: self.stop_requested,
+            on_review=self.reviewed,
         )
 
     def run(self) -> None:

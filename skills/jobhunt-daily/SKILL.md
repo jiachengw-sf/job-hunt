@@ -36,10 +36,14 @@ contract: every command prints one JSON envelope; relay `hints.user_actions` ver
    applications yet. Then `jobhunt digest --human` and show it. It lists Ready jobs, questions
    only the user can answer, Essay jobs with prompts and deadlines, Manual jobs, closures,
    legitimacy flags, follow-ups due and referral questions.
-4. **Batched questions.** `jobhunt answers questions`. Group the non-sensitive ones into one
-   short message and ask them all at once. Save each answer the user gives with
-   `jobhunt answers add` (or `jobhunt answers confirm "<label>" ["<label>" ...] <key>` for
-   suggested matches the user agrees are the same question; one call can take several). A
+4. **Batched questions.** `jobhunt answers questions`. First, for each one that is clearly a
+   question the user already answered in other words (its `suggested_key`, or a key you can see
+   in `jobhunt answers show`), map it yourself in one call:
+   `jobhunt answers map "<label>" <key> ["<label>" <key> ...]`. Code checks every pair and
+   refuses ones that ask different things (authorization vs. sponsorship, now vs. future); the
+   user reviews each mapped field before Submit, and submitting confirms it. Don't map EEO,
+   essays, or anything you're unsure of. Then group the remaining non-sensitive ones into one
+   short message and ask them all at once; save each answer with `jobhunt answers add`. A
    question that asks two things ("authorized to work without sponsorship") is its own question.
    To change a non-sensitive built-in (graduation, relocation, start date), use
    `jobhunt answers edit <key> --answer <value>`. For sensitive ones, say: "Answer these in the

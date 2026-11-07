@@ -101,6 +101,7 @@ def test_scanner_flags_real_looking_data(line):
         "x@sub.example.com",
         "x@school.test",
         "git@github.com",
+        "Co-Authored-By: Claude <noreply@anthropic.com>",
         "(312) 555-0101",
         "617-555-0199",
         "000-12-3456",

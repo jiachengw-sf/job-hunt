@@ -76,10 +76,13 @@ class Inputs:
     resume: Path | None
     now: str
     threshold: float = 0.6
+    fill_similar: bool = False
     matcher: Matcher = field(init=False)
 
     def __post_init__(self) -> None:
-        self.matcher = Matcher(self.answers, threshold=self.threshold)
+        self.matcher = Matcher(
+            self.answers, threshold=self.threshold, fill_similar=self.fill_similar
+        )
 
     def ctx(self, job: JobView) -> AnswerContext:
         countries = sorted(job_countries(job))
@@ -107,6 +110,13 @@ def read_form(
     row: sqlite3.Row, client: HttpClient, ashby_loader: Callable[[], ashby.Loader]
 ) -> FormSpec:
     ats, board, jid = row["ats"], row["board_token"], row["ats_job_id"]
+    if ats == "workday":
+        raise FormError(
+            "Workday's form is behind the employer's sign-in, so it can't be read ahead: "
+            f"`jobhunt prefill {row['id']}` fills it step by step after you sign in, or apply "
+            "by hand with the packet",
+            "unsupported",
+        )
     if ats not in SUPPORTED:
         raise FormError(
             f"{ats or 'unknown'} isn't a supported ATS: apply by hand with the packet",

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Software Intern</title>
+<!-- Synthetic Workday-style application (Northwind is fictional). Built from the widget shapes
+     Workday serves: formField boxes, listbox buttons, search prompts with categories, MM/YYYY
+     spinbuttons that ignore clicks, Add/Add Another sections, per-field autosave, a sticky
+     footer, Save and Continue, and Review with Submit. See static/workday-mock.js. -->
+<style>
+  body { font: 15px/1.5 system-ui, sans-serif; margin: 0; padding: 0 0 140px; }
+  main { max-width: 640px; margin: 0 auto; padding: 24px; }
+  [data-automation-id^="formField-"] { margin: 14px 0; position: relative; }
+  label, legend { display: block; font-weight: 600; }
+  input[type=text], textarea, button[aria-haspopup] { width: 320px; padding: 6px; }
+  .datewrap { position: relative; display: inline-block; }
+  .datewrap .display { position: absolute; inset: 0; background: transparent; }
+  .datewrap input { width: 40px; }
+  .popup { position: absolute; z-index: 5; background: #fff; border: 1px solid #888; width: 320px;
+           max-height: 240px; overflow-y: auto; }
+  .popup [role=option] { padding: 6px; cursor: pointer; }
+  [data-automation-id=selectedItem] { display: inline-block; background: #eef; padding: 2px 6px; margin: 2px; }
+  footer { position: fixed; bottom: 0; left: 0; right: 0; height: 90px; background: #f4f4f4;
+           border-top: 1px solid #ccc; display: flex; justify-content: flex-end; align-items: center;
+           padding: 0 24px; z-index: 4; }
+  [data-automation-id=errorMessage] { color: #b00; }
+</style>
+</head>
+<body>
+<main id="root"></main>
+<footer id="footer"></footer>
+<script src="/static/workday-mock.js"></script>
+</body>
+</html>

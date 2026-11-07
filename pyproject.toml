@@ -46,6 +46,9 @@ browser = ["playwright>=1.45"]
 recall = ["sentence-transformers>=3.0"]
 # Google Sheets tracker. XLSX needs nothing extra.
 sheets = ["gspread>=6.0", "google-auth>=2.0"]
+ocr = [
+    "pypdfium2>=4.30",
+]
 
 [project.scripts]
 jobhunt = "jobhunt.cli.main:main"
