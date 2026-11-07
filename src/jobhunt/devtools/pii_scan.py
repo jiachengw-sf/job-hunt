@@ -25,7 +25,7 @@ ALLOW_MARK = "pii-scan: allow"
 EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+-]+@([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+)\b")
 SAFE_EMAIL_DOMAINS = {"example.com", "example.org", "example.net", "users.noreply.github.com"}
 SAFE_EMAIL_TLDS = {"example", "test", "invalid", "localhost"}
-SAFE_EMAIL_EXACT = {"git@github.com"}
+SAFE_EMAIL_EXACT = {"git@github.com", "noreply@anthropic.com"}  # bot co-author trailers
 
 # North American numbers. 555-0100..555-0199 is reserved for fiction.
 NANP_RE = re.compile(
