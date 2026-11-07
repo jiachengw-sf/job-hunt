@@ -29,6 +29,11 @@ application.
    that job). `--resume` always needs the job ids it is for.
 2. **Confirm.** Ask the user: "Fill these N applications now? You'll review each tab and click
    Submit yourself." Wait for yes. To fill specific jobs: `jobhunt prefill <id> <id>`.
+   **Workday jobs** are never in the default batch: fill one with `jobhunt prefill <id>`. Its
+   tab shows `waiting_sign_in` until the user signs in on the employer's page; tell them to
+   sign in there (never offer to do it). jobhunt then fills each step and clicks Save and
+   Continue on clean steps. A step that shows `needs_you` is the user's to finish; once they
+   click Save and Continue, jobhunt picks up the next step. It stops at Review.
 3. **Fill.** `jobhunt prefill` (default batch of 5). It returns at once. Poll
    `jobhunt prefill --status` every 20–30 seconds until each tab is `ready_for_review` (or an
    error).

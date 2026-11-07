@@ -1,7 +1,7 @@
 # Contributing to jobhunt
 
-Thanks for helping. The most useful contributions are **new job sources** and **ATS adapters**,
-Workday first. This guide covers setup, the rules every change keeps, and step-by-step recipes
+Thanks for helping. The most useful contributions are **new job sources** and **ATS adapters**
+(iCIMS, SmartRecruiters, Taleo and others; Greenhouse, Lever, Ashby and Workday exist). This guide covers setup, the rules every change keeps, and step-by-step recipes
 for both. [AGENTS.md](AGENTS.md) has the full module map and is also what AI coding agents read.
 
 ## Setup
@@ -136,26 +136,32 @@ values.
 - **Live testing never clicks a submit control or lets a submit request through.** Fill a real
   posting, check the read-back, close the tab.
 
-### Workday: what's known
+### Workday: how the adapter works, and what's open
 
-Workday is the biggest gap. About a third of the rows in Simplify's internship list point to
-`*.myworkdayjobs.com`. The resolver already recognizes it, so those jobs are Manual and get
-hand-off packets. Questions to settle in an issue before writing code:
+Workday pre-fill exists (`prefill/adapters/workday.py`, `prefill/workday_flow.py`, AGENTS.md
+"Pre-fill rules"). How it settles the questions it had to answer:
 
-- **Discovery.** Career sites load jobs from a JSON endpoint per tenant and site. It's public, but
-  is it documented enough for the "public, documented sources" rule? Until that's agreed, Workday
-  jobs arrive through Simplify and `jobhunt add <url>`.
-- **Accounts.** Most Workday tenants make candidates sign in or create an account before applying.
-  jobhunt never logs in or creates accounts. An adapter would have to open the tab, let the
-  user sign in themselves, and start filling only after that. Design this hand-over explicitly.
-- **Multi-page wizard.** Applications span several steps (My Information, My Experience,
-  Application Questions, Voluntary Disclosures, Review). Moving between steps uses "Save and
-  Continue" buttons, and the guard must tell those apart from the final Submit, both by control
-  and by endpoint.
-- **Resume parsing** fills My Experience after upload, so this is an `upload_first` ATS, and
-  parsed values must be read back and flagged `autofilled`.
-- **Tenant variation.** Field ids and question sets differ per employer, so match on labels the
-  way the other adapters do, and expect `not_found` to be common at first.
+- **Accounts.** jobhunt never signs in. It opens the employer's apply page, and the human signs
+  in or creates the account. `WorkdayRun` waits (`waiting_sign_in`) and starts on the first
+  application step it sees.
+- **Multi-page wizard.** Each step is read into a FormSpec and goes through classify →
+  build_sheet → validate like any other form. Save and Continue is clicked only when the step is
+  clean. Review is never acted on. The route guard allows only Workday's autosave, step-save and
+  upload endpoints, and anything naming submit is always blocked.
+- **Workday widgets.** Prompts with categories and "All" lists, MM/YYYY date spinbuttons,
+  repeatable sections (work, education, languages, websites). Enter is pressed only in
+  Workday's own `searchBox` (`guard.search_enter`).
+- **Tests.** `tests/fixtures/forms/pages/northwind.wd1.myworkdayjobs.com/` is a mock Workday
+  portal; `tests/test_prefill_workday.py` runs the whole flow on it for every persona.
+
+Still open:
+
+- **Discovery.** Career sites load jobs from a JSON endpoint per tenant. It's public, but is it
+  documented enough for the "public, documented sources" rule? Until that's agreed, Workday jobs
+  arrive through Simplify and `jobhunt add <url>`.
+- **Tenant variation.** Live runs have been on two tenants with a fake persona. Language
+  proficiency, phone type and subsidiary questions are left to the human. Add new stable field
+  names to `CANONICAL` in the adapter as you meet them.
 
 ## Pull requests
 
