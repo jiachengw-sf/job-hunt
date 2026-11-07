@@ -5,6 +5,7 @@ There is no submit command. The human reviews each tab and clicks Submit themsel
 
 from __future__ import annotations
 
+import re
 import secrets
 import sqlite3
 from pathlib import Path
@@ -31,10 +32,10 @@ from jobhunt.forms.inspect import Inputs
 from jobhunt.forms.model import FormSpec
 from jobhunt.paths import Paths
 from jobhunt.prefill import driver
-from jobhunt.prefill.adapters import ADAPTERS
+from jobhunt.prefill.adapters import ADAPTERS, LIVE
 from jobhunt.prefill.browser import require_playwright
 from jobhunt.prefill.review import TabReview
-from jobhunt.prefill.values import build_sheet, validate, write_sheet
+from jobhunt.prefill.values import AnswerSheet, build_sheet, validate, write_sheet
 from jobhunt.store import open_store
 
 DONE_STATES = ("Applied", "OA", "Interviewing", "Offer", "Rejected", "Withdrawn", "Skipped")
@@ -47,7 +48,7 @@ class PrefillJob(BaseModel):
     ats: str = ""
     status: str = Field(
         description="queued | skipped | invalid | filling | ready_for_review | failed | applied "
-        "| closed | stopped"
+        "| closed | stopped; Workday also waiting_sign_in | needs_you"
     )
     reason: str | None = None
     resume: str | None = Field(None, description="The resume chosen for this job (its name).")
@@ -106,6 +107,8 @@ def prepare_job(
     if app and app["status"] in DONE_STATES:
         out.reason = f"already {app['status']}"
         return out, None
+    if job.ats in LIVE:
+        return prepare_live_job(conn, job, out, paths, now, dry_run=dry_run, resume=resume)
     row = conn.execute("SELECT * FROM form_specs WHERE job_id=?", (job_id,)).fetchone()
     if not row or not row["spec_json"]:
         out.reason = "form not read yet: run `jobhunt inspect` first"
@@ -198,6 +201,59 @@ def status_result(paths: Paths, *, dry_run: bool = True) -> Result:
     elif rep.driver in ("done", "stopped"):
         nxt.append("Run `jobhunt prefill` for the next batch; `jobhunt sync` updates the sheet.")
     return Result(data=rep, next_actions=nxt, user_actions=user)
+
+
+def workday_apply_url(posting_url: str | None) -> str | None:
+    """``.../job/<loc>/<slug>_<req>`` -> ``.../job/<loc>/<slug>_<req>/apply/applyManually``."""
+    if not posting_url:
+        return None
+    u = posting_url.split("?", 1)[0].split("#", 1)[0].rstrip("/")
+    if "/job/" not in u:
+        return None
+    u = re.sub(r"/apply(/.*)?$", "", u)
+    return u + "/apply/applyManually"
+
+
+def prepare_live_job(
+    conn: sqlite3.Connection,
+    job: Any,
+    out: PrefillJob,
+    paths: Paths,
+    now: str,
+    *,
+    dry_run: bool,
+    resume: Path | None = None,
+) -> tuple[PrefillJob, driver.BatchJob | None]:
+    """A Workday job: its form is behind the employer's sign-in, so nothing is read or built
+    here. The browser opens the sign-in page; after the human signs in, each step is read,
+    classified, built and validated in the browser (``prefill/workday_flow.py``)."""
+    out.ats = job.ats
+    row = conn.execute("SELECT canonical_url FROM jobs WHERE id=?", (job.id,)).fetchone()
+    url = workday_apply_url(row["canonical_url"] if row else None)
+    if not url:
+        out.reason = "the Workday posting link is unknown: apply by hand"
+        return out, None
+    chosen, _picked = job_resume(paths, job.id, resume, kept_only=True)
+    if chosen is None and listed_resumes(paths):
+        out.suggested_resume = suggest_resume(paths, job.text)
+        out.reason = (
+            f"several resumes and no default: choose one with `jobhunt prefill {job.id} "
+            "--resume <file>`"
+        )
+        return out, None
+    out.resume = chosen.name if chosen else None
+    out.status = "queued"
+    out.reason = "Workday: sign in on the page that opens; jobhunt fills each step after that"
+    path = paths.prefill / str(job.id) / "answers.json"
+    if not dry_run:  # keeps the resume choice; each step's answers are written beside it
+        write_sheet(path, AnswerSheet(
+            job_id=job.id, ats=job.ats, url=url, built_at=now,
+            resume=str(chosen) if chosen else None, resume_chosen=_picked,
+        ))  # fmt: skip
+    return out, driver.BatchJob(
+        job_id=job.id, company=job.company, title=job.title, ats=job.ats, url=url,
+        sheet=str(path),
+    )  # fmt: skip
 
 
 def register(cli: click.Group) -> None:

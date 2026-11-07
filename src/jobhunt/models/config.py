@@ -137,7 +137,13 @@ class FormsConfig(Strict):
         True, description="Read Ashby forms with a headless browser (needs the [browser] extra)."
     )
     candidate_threshold: float = Field(
-        0.6, ge=0, le=1, description="Similarity that makes a label a candidate (asks the user)."
+        0.6, ge=0, le=1, description="Similarity that makes a label a candidate."
+    )
+    fill_similar: bool = Field(
+        True,
+        description="Fill a clearly similar question from your answer to the known one and "
+        "flag it for your review before Submit, instead of asking you first. Submitting teaches "
+        "the bank that wording. Never for EEO answers.",
     )
 
 

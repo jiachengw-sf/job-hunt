@@ -94,6 +94,16 @@ def _city_region(c: AnswerContext) -> str | None:
     return ", ".join(parts) or None
 
 
+def _state_aliases(v: str) -> list[str]:
+    """A US state code and its name, each way ("IL" <-> "Illinois")."""
+    from jobhunt.prefill.adapters.base import US_STATE_NAMES
+
+    code = v.strip().upper()
+    if code in US_STATE_NAMES:
+        return [US_STATE_NAMES[code]]
+    return [k for k, name in US_STATE_NAMES.items() if name.casefold() == v.strip().casefold()]
+
+
 def country_names(code: str | None) -> list[str]:
     if not code:
         return []
@@ -286,6 +296,8 @@ SPECS: list[KeySpec] = [
     _spec("identity.city_region", "City and state of residence", "text", _city_region, sensitive=True),
     _spec("identity.location", "Current location", "text", _city_region, sensitive=True),
     _spec("identity.postal_code", "Postal code", "text", lambda c: c.answers.identity.postal_code, sensitive=True),
+    _spec("identity.address_city", "City (address)", "text", lambda c: c.answers.identity.city, sensitive=True),
+    _spec("identity.address_region", "State or province (address)", "choice", lambda c: c.answers.identity.region, sensitive=True, aliases=_state_aliases),
     _spec("identity.country", "Country of residence", "choice", lambda c: c.answers.identity.country, sensitive=True),
     _spec("identity.over_18", "Are you at least 18 years old?", "yesno", lambda c: _yn(c.answers.identity.over_18), sensitive=True),
     _spec("identity.school_email", "University email", "text", lambda c: c.answers.identity.school_email, sensitive=True),

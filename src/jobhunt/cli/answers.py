@@ -14,7 +14,14 @@ import yaml
 from pydantic import BaseModel, Field, ValidationError
 
 from jobhunt.bank.keys import BUILTIN, AnswerContext, is_sensitive_label
-from jobhunt.bank.match import Matcher, normalize
+from jobhunt.bank.match import (
+    Matcher,
+    canonical,
+    normalize,
+    placeless,
+    same_question,
+    seed_wordings,
+)
 from jobhunt.cli.framework import Result, agent_command
 from jobhunt.config import read_yaml
 from jobhunt.errors import NeedsUser, NotFound, OnboardingIncomplete, ValidationFailed
@@ -141,6 +148,46 @@ class BankChange(BaseModel):
 class QuestionsReport(BaseModel):
     questions: list[dict[str, Any]]
     total: int
+
+
+class MapReport(BaseModel):
+    dry_run: bool
+    mapped: list[dict[str, str]] = Field(default_factory=list)
+    rejected: list[dict[str, str]] = Field(
+        default_factory=list, description="Pairs code refused, with the reason."
+    )
+
+
+def key_wordings(key: str, answers: Answers) -> list[str]:
+    """Every known wording of a key: its question, curated synonyms, confirmed wordings."""
+    spec = BUILTIN.get(key)
+    out = [spec.question] if spec else []
+    out += seed_wordings().get(key, [])
+    for e in answers.bank:
+        if e.key == key:
+            out += [e.question, *e.wordings]
+    return [w for w in out if w]
+
+
+def map_refusal(label: str, key: str, answers: Answers) -> str | None:
+    """Why an agent's LABEL -> KEY mapping is refused, or None."""
+    spec = BUILTIN.get(key)
+    if spec is None and not any(e.key == key for e in answers.bank):
+        return f"no question {key}: see `jobhunt answers show`"
+    if spec and spec.eeo:
+        return "EEO answers are mapped only by the user (`jobhunt setup form`)"
+    if spec and spec.kind == "essay":
+        return "an essay prompt is written fresh each time"
+    if is_sensitive_label(label) and not (spec and spec.sensitive):
+        return "the label looks sensitive but the key isn't: ask the user"
+    q = canonical(normalize(placeless(label)))
+    if not any(same_question(q, canonical(normalize(placeless(w))))
+               for w in key_wordings(key, answers)):  # fmt: skip
+        return (
+            "it asks about different things than this key (authorization, sponsorship, now vs. "
+            "future, relocation, on-site...): ask the user"
+        )
+    return None
 
 
 def _load(paths: Paths) -> tuple[dict[str, Any], Answers]:
@@ -419,6 +466,50 @@ def register(cli: click.Group) -> None:
                 dry_run=dry_run, key=key, action="confirmed", entry=_entry_status(new, key, paths)
             ),
             next_actions=nxt,
+        )
+
+    @agent_command(cli, "answers map", output=MapReport, writes=True)
+    @click.argument("pairs", nargs=-1, required=True, metavar="LABEL KEY [LABEL KEY ...]")
+    def answers_map(pairs: tuple[str, ...], dry_run: bool) -> Result:
+        """The agent's judgment that each LABEL (a question as a form words it) asks the same
+        thing as KEY, so the user's answer to KEY can fill it. Use it for questions from
+        `jobhunt answers questions` that are clearly a known question in other words; ask the
+        user only about genuinely new ones.
+
+        Code checks each pair: KEY exists, isn't an EEO question, and asks about the same things
+        (authorization vs. sponsorship, now vs. future, relocation, on-site...). Accepted labels
+        are *proposed*: they fill flagged for the user's review before Submit, and become
+        confirmed once the user submits with them. You never see or need the answers.
+        """
+        if len(pairs) < 2 or len(pairs) % 2:
+            raise ValidationFailed('Give LABEL KEY pairs: `jobhunt answers map "<label>" <key>`.')
+        paths = get_paths()
+        raw, answers = _load(paths)
+        bank = raw.setdefault("bank", [])
+        mapped, rejected = [], []
+        for label, key in zip(pairs[::2], pairs[1::2], strict=True):
+            if why := map_refusal(label, key, answers):
+                rejected.append({"question": label, "key": key, "reason": why})
+                continue
+            spec = BUILTIN.get(key)
+            e = next((x for x in bank if x.get("key") == key), None)
+            if e is None:
+                e = {"key": key, "question": spec.question if spec else key, "wordings": []}
+                bank.append(e)
+            known = {normalize(w) for w in [*e.get("wordings", []), *e.get("proposed", [])]}
+            if normalize(label) not in known:
+                e.setdefault("proposed", []).append(label)
+            mapped.append({"question": label, "key": key})
+        if mapped and not dry_run:
+            with file_lock(paths.lock):
+                _save(paths, raw)
+        nxt = []
+        if mapped:
+            nxt.append("Run `jobhunt inspect` so jobs re-classify with the new mappings.")
+        if rejected:
+            nxt.append("Ask the user the rejected ones; save answers with `jobhunt answers add`.")
+        return Result(
+            data=MapReport(dry_run=dry_run, mapped=mapped, rejected=rejected), next_actions=nxt
         )
 
     @agent_command(cli, "answers questions", output=QuestionsReport)
