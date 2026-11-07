@@ -3,6 +3,8 @@
 Start every milestone in a fresh session: reread the build spec and this file, propose a short plan,
 get approval, build, test, run with a persona, show the output, commit, update this file.
 
+For a reader's summary of what exists and the build history, see [docs/JOURNEY.md](docs/JOURNEY.md).
+
 ## Milestone 0 — Skeleton ✅ (2026-10-18)
 
 Done when `jobhunt doctor` and `jobhunt schema` work and the CI personal-data check passes. Met:
@@ -711,9 +713,8 @@ venv with a scratch `HOME`. Persona `newgrad-analyst`, offline fixtures, no `[br
 
 ### Known product gaps (from earlier milestones, still open)
 
-- **No Workday adapter or other ATS adapters.** Pre-fill covers Greenhouse, Lever and Ashby;
-  every other ATS gets a hand-off packet. Workday alone is about a third of Simplify's
-  internship rows. CONTRIBUTING lists the open questions.
+- ~~**No Workday adapter or other ATS adapters.**~~ Workday done 2026-11-06 (see "Workday
+  pre-fill" below). Other ATSs (iCIMS, SmartRecruiters, Taleo...) still get a hand-off packet.
 - **Simplify-only jobs** get a band only when jobhunt can read their posting text from a
   supported ATS. Others rank on recall relevance alone, with band "unknown".
 - **Confirmation pages are educated guesses** for Lever and Ashby, since nothing may be
@@ -1025,7 +1026,7 @@ Still open:
 - Not verified live: the Ashby parse wait on a real form, a full Greenhouse Education block fill,
   resume parsing on more PDF layouts, Codex CLI.
 
-## Workday pre-fill (2026-11-06, branch `feat/workday-prefill`)
+## Workday pre-fill (2026-11-06, merged in PR #1 on 2026-11-07)
 
 Workday is about half of the top matches. Its form sits behind each employer's own sign-in, so it
 can't be read ahead like Greenhouse / Lever / Ashby. A live prototype first reached Review on two
@@ -1068,7 +1069,7 @@ Still open:
 - Older Workday UI (automation ids only, no `--` ids), "Autofill with Resume" and "Use My Last
   Application" paths, cookie banners: untested.
 
-## Fewer repeat questions (2026-11-06, branch `feat/workday-prefill`)
+## Fewer repeat questions (2026-11-06, merged in PR #1 on 2026-11-07)
 
 Using pre-fill, the user kept answering the same question again because a form worded it
 differently. A similar wording used to wait for "confirm once" per wording. Now:
@@ -1090,7 +1091,7 @@ differently. A similar wording used to wait for "confirm once" per wording. Now:
 - Workday's submitted record now includes each step's answers.
 - AGENTS.md non-negotiable 3 updated to say this.
 
-## Resumes in any layout + setup form filled from them (2026-11-06, branch `feat/workday-prefill`)
+## Resumes in any layout + setup form filled from them (2026-11-06, merged in PR #1 on 2026-11-07)
 
 - Setup form (`onboarding/suggest.py`): every empty answer that the resume, profile or
   preferences state is filled in and outlined in yellow ("From your resume: check it, then Save

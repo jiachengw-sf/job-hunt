@@ -109,6 +109,7 @@ tests/fixtures/forms/    form specs (`overlay/`) and browser pages (`pages/`), f
 evals/fit/        seed fit eval set: 40 synthetic postings x 4 personas (`jobhunt eval-fit`)
 evals/triggers/   skill trigger queries and results (`python -m jobhunt.devtools.trigger_eval`)
 evals/daily/      daily-flow end-to-end results (`python -m jobhunt.devtools.daily_e2e`)
+docs/            JOURNEY.md (capabilities, known gaps, build history), demo GIF + VHS tape
 ```
 
 ## Pre-fill rules

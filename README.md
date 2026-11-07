@@ -3,7 +3,11 @@
 A local-first job-hunt agent that runs on the AI subscription you already have (Claude Code,
 Codex CLI, or any tool that reads Agent Skills). It finds fresh postings, filters out the ones you
 can't get, ranks the rest against your resume, researches companies, pre-fills applications for
-you to review, and keeps everything in a spreadsheet you own.
+you to review (Greenhouse, Lever, Ashby and Workday), and keeps everything in a spreadsheet you
+own.
+
+**New here?** [docs/JOURNEY.md](docs/JOURNEY.md) lists everything jobhunt can do today, where it
+stops, and how it was built.
 
 **You always click Submit.** jobhunt has no code path that submits an application or sends a
 message.
@@ -18,8 +22,9 @@ The demo uses the synthetic persona `intl-sponsorship` and offline fixtures. Re-
 - **A Python core with no AI inside** (`jobhunt` CLI). It handles discovery, dedupe, gates,
   ranking, form reading, your answer bank, pre-fill, the SQLite store and the tracker. It never
   calls an AI API and ships no keys.
-- **Seven skills** (`skills/`) teach your AI tool to drive the CLI and where to use judgment:
-  reading requirements, company research, essay drafts and outreach drafts. The AI writes
+- **Eight skills** (`skills/`: setup, daily, judge, research, essays, outreach, apply, track)
+  teach your AI tool to drive the CLI and where to use judgment: reading requirements, company
+  research, essay drafts and outreach drafts. The AI writes
   proposals; the CLI checks every one (quotes, citations, limits) before saving anything.
 
 Your data stays on your machine in `~/.jobhunt/`. Set `JOBHUNT_HOME` to use another folder.
@@ -30,23 +35,26 @@ Your data stays on your machine in `~/.jobhunt/`. Set `JOBHUNT_HOME` to use anot
 - Scrape LinkedIn or Indeed. It uses public, documented job sources only: the Simplify lists on
   GitHub and Greenhouse, Lever and Ashby job boards.
 - Guess an answer. Every value comes from your profile, an answer you confirmed, or text you
-  approved.
+  approved. A question you already answered in other words is filled from that answer and
+  flagged for your review (never for EEO questions).
 - Show your sensitive answers (work authorization, sponsorship, salary, EEO, disability,
   veteran status, background checks) to the AI. You enter them in a local form.
 - Game screeners with hidden text, keyword stuffing or instructions aimed at AI reviewers.
 
 ## Coverage, honestly
 
-| | Greenhouse | Lever | Ashby | Workday and others |
-|---|---|---|---|---|
-| Find postings | yes (watchlist boards and Simplify) | yes | yes | through Simplify, or `jobhunt add <url>` |
-| Read the application form | yes | yes | yes (needs the browser extra) | no |
-| Pre-fill for your review | yes | yes | yes | no: you get a hand-off packet |
+| | Greenhouse | Lever | Ashby | Workday | Others |
+|---|---|---|---|---|---|
+| Find postings | yes (watchlist boards and Simplify) | yes | yes | through Simplify, or `jobhunt add <url>` | same as Workday |
+| Read the application form ahead of time | yes | yes | yes (needs the browser extra) | no: it's behind the employer's sign-in | no |
+| Pre-fill for your review | yes | yes | yes | yes, after you sign in | no: you get a hand-off packet |
 
-Workday is common, especially in internship lists (about a third of Simplify's rows), and it has
-no adapter yet. For those jobs, `jobhunt packet <id>` writes a local page with every answer ready
-to copy. A Workday adapter is the most wanted contribution; see
-[CONTRIBUTING.md](CONTRIBUTING.md).
+**Workday** is about a third of Simplify's internship rows. Run `jobhunt prefill <id>` (or
+`/jobhunt-apply`) for a Workday job. Sign in on the page that opens. jobhunt then fills each step
+from your answers and profile: work, education, languages and websites, with dates. It clicks
+Save and Continue only when a step is clean, and stops at Review. It has reached Review on real
+employer portals with a fake persona, but hasn't been run with real data yet. For any other ATS,
+`jobhunt packet <id>` writes a local page with every answer ready to copy.
 
 CI runs the full offline test suite on Linux, macOS and Windows with Python 3.11 and 3.13, and
 it passes on all six. Day-to-day use has been tested on macOS in Claude Code. On Windows the
@@ -69,9 +77,10 @@ cd job-hunt
 uv tool install '.[browser]'
 ```
 
-Optional extras: `sheets` (Google Sheets tracker instead of a local XLSX) and `recall` (embedding
-search on top of BM25; it pulls in PyTorch, 1–2 GB). Combine them like `'.[browser,sheets]'`. With
-pipx: `pipx install '.[browser]'`.
+Optional extras: `sheets` (Google Sheets tracker instead of a local XLSX), `recall` (embedding
+search on top of BM25; it pulls in PyTorch, 1–2 GB) and `ocr` (reads scanned or image-only resume
+PDFs locally; also needs the `tesseract` program, `brew install tesseract` on macOS). Combine
+them like `'.[browser,ocr]'`. With pipx: `pipx install '.[browser]'`.
 
 Then set up the data folder and the skills:
 
@@ -93,13 +102,16 @@ Open your AI tool and say:
 
 The setup skill walks you through it:
 
-1. **Resume.** Give it the path to your resume (PDF, DOCX, Markdown or text).
+1. **Resume.** Give it the path to your resume (PDF, DOCX, Markdown or text; LaTeX and
+   two-column layouts work, and scans work with the `ocr` extra).
    `jobhunt resume add` writes a draft profile without your contact details. You check it, fix
    anything wrong, and confirm it (`jobhunt profile confirm`). Nothing is invented: claims about
    you have to trace back to a line you approved.
 2. **Preferences and screening answers.** `jobhunt setup form` opens a local page (bound to
-   127.0.0.1) where you fill roles, locations, pay, dealbreakers and the screening questions. This
-   is where sensitive answers go. They never pass through the chat.
+   127.0.0.1) where you fill roles, locations, pay, dealbreakers and the screening questions.
+   Whatever your resume already says (city, school email, GPA, graduation and class standing,
+   languages, past employers) is pre-filled and marked for you to check. This is where sensitive
+   answers go: you type those yourself, and they never pass through the chat.
 3. **Watchlist (optional).** Companies you especially want, in `~/.jobhunt/watchlist.yaml`. Add
    single postings any time with `jobhunt add <url>`.
 4. **First run.** `jobhunt run` fetches every source. The first run per source is a silent
@@ -132,14 +144,16 @@ The daily skill:
    against your profile, so bands stop being provisional
 3. shows the digest (`jobhunt digest`): Ready jobs, questions only you can answer, Essay and
    Manual jobs, closures, legitimacy flags and follow-ups due
-4. asks the questions it needs in one batch and saves your answers to the bank
+4. maps questions you already answered in other words (`jobhunt answers map`, checked by code),
+   then asks the rest in one batch and saves your answers to the bank
 5. offers pre-fill without starting it, and offers essay and outreach drafts
 6. syncs the tracker and lists what's waiting on you
 
 To pre-fill, invoke the apply skill yourself: `/jobhunt-apply` in Claude Code, `$jobhunt-apply`
 in Codex. It opens a browser, fills each Ready job's form from your saved answers, reads every
 value back, outlines the fields it left for you, and stops. You review each tab and click
-Submit. jobhunt notices the confirmation page, marks the job Applied and records the
+Submit. For Workday jobs you sign in first, then it fills step by step and stops at Review.
+jobhunt notices the confirmation page, marks the job Applied and records the
 application (see [Tracking your applications](#tracking-your-applications)).
 
 ## Daily use
@@ -200,7 +214,7 @@ to check on it. A job you haven't applied to has no record.
 - **After pre-fill**, when you click Submit and jobhunt sees the confirmation page, it records the
   application. It saves a screenshot, a copy of the job description, the resume you used, and the
   Greenhouse confirmation ID.
-- **Applied somewhere else** (Workday, a hand-off packet, anywhere): tell your AI tool "I applied
+- **Applied somewhere else** (a hand-off packet, a site jobhunt doesn't fill, anywhere): tell your AI tool "I applied
   to Stripe's SWE intern this afternoon", or run
   `jobhunt applied <job id or URL> --at "today 3pm"`. If jobhunt doesn't know the URL yet, it asks
   you to `jobhunt add` it first.
@@ -263,6 +277,8 @@ Common problems:
   `jobhunt tasks` to see them.
 - **No Simplify jobs.** The internship list moves to a new repo each season. Set
   `discovery.simplify.internship_repo` in `~/.jobhunt/config.yaml`.
+- **"no text found (a scanned image?)".** The resume PDF is a scan or an image export. Install
+  the `ocr` extra and `tesseract`, or give jobhunt a DOCX or text version.
 - **Pre-fill says no browser.** `jobhunt doctor --fix` installs Playwright's Chromium; pre-fill
   also needs a display.
 - **Google Sheets errors.** Install the `sheets` extra and share the spreadsheet with the service
@@ -285,7 +301,8 @@ Then delete `~/.jobhunt/` if you want your data gone too.
 ## Contributing
 
 New job sources and ATS adapters are welcome; start with [CONTRIBUTING.md](CONTRIBUTING.md). AI
-coding agents should read [AGENTS.md](AGENTS.md). Build status is in [PROGRESS.md](PROGRESS.md).
+coding agents should read [AGENTS.md](AGENTS.md). What it can do and how it got here:
+[docs/JOURNEY.md](docs/JOURNEY.md). The detailed build log is [PROGRESS.md](PROGRESS.md).
 
 ## License
 
