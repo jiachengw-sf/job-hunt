@@ -21,6 +21,7 @@ identity.address_city: [address city, city address]
 identity.address_region: [address state, state address, state or province address]
 identity.country: [country, country of residence, what country do you currently reside in, select the country where you currently reside, which country do you live in]
 identity.school_email: [university email, school email, university email address, school email address, student email, student email address, edu email address, your university email address]
+identity.age: [what is your age, your age, age, how old are you]
 identity.over_18: [are you at least 18 years of age, are you 18 years of age or older, are you over 18, are you at least 18 years old]
 
 links.linkedin: [linkedin, linkedin profile, linkedin url, linkedin profile url]

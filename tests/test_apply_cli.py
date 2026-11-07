@@ -234,14 +234,17 @@ def ask_first(home) -> None:
     cfg_path.write_text(yaml.safe_dump(cfg), encoding="utf-8")
 
 
-def test_similar_wording_fills_for_review_without_asking(cli, persona_home, fx):
-    home = persona_home("intl-sponsorship")
+def test_a_sensitive_similar_wording_is_asked_even_with_fill_similar(cli, persona_home, fx):
+    home = persona_home("intl-sponsorship")  # forms.fill_similar is on by default
     cli("run", "--fixtures", str(fx), "--no-sync", "--no-inspect")
     with db(home) as c:
         jid = c.execute("SELECT id FROM jobs WHERE ats_job_id='1004'").fetchone()[0]
     cli("inspect", str(jid), "--fixtures", str(fx))
     _, qs, _ = cli("answers", "questions")
-    assert not [q for q in qs["data"]["questions"] if "sponsor" in q["question"]]
+    spons = [q for q in qs["data"]["questions"] if "sponsor" in q["question"]]
+    assert spons and spons[0]["suggested_key"] == "work_auth.sponsorship"
+    code, _, _ = cli("answers", "confirm", spons[0]["question"], "work_auth.sponsorship")
+    assert code == ExitCode.OK
     code, env, _ = cli(
         "answers", "add", "--question", "Do you have a valid driver's license?",
         "--answer", "Yes", "--option", "Yes",

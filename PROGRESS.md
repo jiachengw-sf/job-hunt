@@ -1133,3 +1133,40 @@ duplicates on re-fetch) and live forms.
   tied at 0.428). Fix: score recall on the title plus a bounded slice of the description and rank
   watchlist jobs too; re-check with `jobhunt eval-fit`.
 - Open: `coverage` takes 49-82 s (reads ~30 forms live).
+
+## Answer reuse: wording checks, age questions (2026-11-07)
+
+An independent review found that reusing answers across wordings ignored negation and numbers:
+"Are you NOT legally authorized…" filled Yes from the authorization answer (0.93 similar), "Are
+you under 18?" and "at least 21?" filled from the over-18 answer, and after one Submit the
+wording was learned as confirmed even if the user had fixed the value. Fixed and tested:
+
+- `bank/match.py:same_question` also compares polarity ("not", "never", "without", "can't",
+  "no longer", un-/in-/non- forms of words like able, willing, eligible, authorized), numbers
+  (both sides: must be equal; one side: allowed unless it's a limit) and comparisons ("under"
+  vs "at least"), and keeps "applied before", "worked here before", "relatives" and age apart.
+  It's used by similarity matching and by `answers map`.
+- Sensitive questions never fill from a similar or agent-mapped wording, only from a confirmed
+  one (`forms/classify.py:similar_is_clear`); they're asked as a candidate (one click in the
+  form). Non-sensitive similar fills still go to review.
+- Learning on submit (`bank/learn.py`) needs proof the user kept the value: the pre-fill
+  driver re-reads every similar-filled field on the page the human is on
+  (`driver.observe_similar`, Workday: the current step) and only fields whose last read-back
+  still matched are learned; sensitive keys never.
+- Age: `identity.age` in the setup form (dated with `age_as_of` when entered, so it counts up).
+  Questions with one age threshold and a direction ("at least 21", "under the age of 18", "21+")
+  become `identity.age_check` and are answered from the age; when a birthday could put the user
+  on either side, or the question is negated/two-sided, it goes to the user. Without an age, an
+  18 threshold still uses the "18 or older" answer.
+- "Previously worked here" (`bank/keys.py:_previously_employed`): yes on the same name; a name
+  sharing a distinctive word ("Amazon Web Services" vs "Amazon") goes to the user; no otherwise.
+- Tests: `tests/test_wording_checks.py` (92: look-alike pairs, every trap for all four
+  personas, age thresholds and counting up, employer names, read-back recording); the similar
+  fill tests now use non-sensitive questions. Suite: 1073 tests, 0 failures, 1 skipped.
+
+Applications dashboard checked with a persona (four applications: Greenhouse, Workday, email;
+Applied, OA → Interviewing, Rejected; one Skipped): summary counts, needs-attention follow-up,
+search, status filter, sorting, the detail panel with clickable portal and file links and the
+status timeline, Esc to close, keyboard-focusable rows; light and dark; 390 px phone with no
+sideways scroll (the detail panel scrolls); no console errors. `APPLICATIONS.md`, `apps --human`
+and the per-application folders agree with it.

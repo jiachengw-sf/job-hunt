@@ -16,6 +16,7 @@ Output never carries answer values: only where a value comes from and whether it
 from __future__ import annotations
 
 import re
+from dataclasses import replace
 from pathlib import Path
 from typing import Literal
 
@@ -186,6 +187,7 @@ def _choose(key: str, value: str | list[str], opts: list[str], matcher: Matcher)
 def resolve_field(
     f: FormField, ctx: AnswerContext, matcher: Matcher, *, ats: str, eeo_confirmed: bool
 ) -> FieldResult:
+    ctx = replace(ctx, label=f.label)  # per-label keys (the age check) read the question
     m: Match = matcher.match(f.label, field_name=f.id, company=ctx.company)
     if not m.confident and (tk := _type_key(f)):
         m = Match(tk, "exact", 1.0, "field_type")
@@ -257,19 +259,18 @@ def resolve_field(
     return out("answered")
 
 
-SIMILAR_MARGIN = 0.08  # the best key must beat any other key by this much...
-SIMILAR_SENSITIVE = 0.75  # ...and a sensitive key needs at least this similarity
+SIMILAR_MARGIN = 0.08  # the best key must beat any other key by this much
 
 
 def similar_is_clear(m: Match, ctx: AnswerContext, matcher: Matcher, sensitive: bool) -> bool:
     """Whether a similar wording may be filled from its key's answer (and reviewed by the user)
-    instead of asked first. Never for EEO answers; a sensitive key needs a close match; and the
-    runner-up key must be clearly worse, unless it would give the same answer anyway."""
+    instead of asked first. Never for sensitive questions (work authorization, sponsorship, age,
+    clearance, background, EEO...): those are filled only from a wording the user confirmed,
+    because a near-identical wording can ask the opposite. Otherwise the runner-up key must be
+    clearly worse, unless it would give the same answer anyway."""
     key = m.key or ""
     spec = BUILTIN.get(key)
-    if not key or (spec and spec.eeo):
-        return False
-    if sensitive and m.score < SIMILAR_SENSITIVE:
+    if not key or (spec and spec.eeo) or sensitive:
         return False
     if m.alt_key is None or m.alt_key == key or m.score - m.alt_score >= SIMILAR_MARGIN:
         return True
@@ -339,6 +340,7 @@ def fill_value(
     Computed locally for the packet and the pre-fill engine; never put in an envelope."""
     if fr.resolution != "answered" or not fr.key:
         return None
+    ctx = replace(ctx, label=fr.label)
     opts = fr.options if options is None else options
     spec = BUILTIN.get(fr.key)
     entry = next((e for e in matcher.answers.bank if e.key == fr.key), None)

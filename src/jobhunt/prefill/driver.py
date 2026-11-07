@@ -126,6 +126,7 @@ def mark_applied(
     shot: str | None = None,
     confirmation_id: str | None = None,
     company: str = "",
+    kept: dict[str, bool] | None = None,
 ) -> int:
     """The human submitted: record the application (Applied, its proof and where to check its
     status). Returns the application id."""
@@ -156,12 +157,13 @@ def mark_applied(
             screenshot=Path(shot) if shot else None,
         )  # fmt: skip
         refresh_views(conn, paths, cfg)
-    # the user reviewed and submitted: similar wordings filled here become confirmed wordings
-    if sheet:
+    # the user reviewed and submitted: similar wordings they kept become confirmed wordings
+    if sheet and kept:
         from jobhunt.bank.learn import learn_from_submission
 
         d = Path(sheet).parent
-        learn_from_submission(paths, [Path(sheet), *sorted(d.glob("workday-*.json"))], company)
+        files = [Path(sheet), *sorted(d.glob("workday-*.json"))]
+        learn_from_submission(paths, files, company, kept)
     return out.app_id
 
 
@@ -276,10 +278,42 @@ def record_confirmed(paths: Paths, tab: Tab, now: str | None = None) -> None:
         tab.extra["app_id"] = mark_applied(
             paths, tab.job.job_id, now=now, sheet=tab.job.sheet, shot=shot,
             confirmation_id=confirmation_id, company=tab.job.company,
+            kept=tab.extra.get("similar_kept"),
         )  # fmt: skip
     except Exception as e:
         log.warning("job %s: couldn't record the application: %s", tab.job.job_id, e)
         tab.extra["mark_error"] = str(e)
+
+
+def observe_similar(tab: Tab) -> None:
+    """Re-read the fields filled from a *similar* question on the page the human is looking at,
+    and keep the latest "still holds the filled value" per field. On Submit only those still
+    holding it teach the bank their wording (``bank/learn.py``). Reads only; never fails."""
+    from jobhunt.bank.learn import seen_key
+
+    if tab.page is None:
+        return
+    if tab.workday is not None:  # only the step on screen: other steps' fields aren't there
+        from jobhunt.prefill.workday_flow import slug
+
+        name = tab.adapter.step_name(tab.page)
+        if not name:
+            return
+        p = Path(tab.job.sheet).parent / f"workday-{slug(name)}.json"
+    else:
+        p = Path(tab.job.sheet)
+    cache: dict[str, Any] = tab.extra.setdefault("_similar_fields", {})
+    if str(p) not in cache:
+        if not p.exists():
+            return
+        cache[str(p)] = [
+            f for f in read_sheet(p).fields if f.similar and f.key and f.action == "fill"
+        ]
+    kept: dict[str, bool] = tab.extra.setdefault("similar_kept", {})
+    for ff in cache[str(p)]:
+        actual = tab.adapter._safe_read(tab.page, ff)
+        if actual is not None:
+            kept[seen_key(ff.label, ff.key or "")] = tab.adapter.matches(ff, actual)
 
 
 def check_tab(
@@ -305,6 +339,8 @@ def check_tab(
             tab.review = tab.workday.review()
             if tab.status == "ready_for_review" and before != "ready_for_review" and on_review:
                 on_review(tab)
+        if tab.status != "filling":
+            observe_similar(tab)
     except Exception as e:  # navigating or closing right now; look again next round
         log.debug("job %s: tab check: %s", tab.job.job_id, e)
         return False

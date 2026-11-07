@@ -7,7 +7,7 @@ import json
 
 import yaml
 
-from jobhunt.bank.learn import add_wordings, learn_from_submission
+from jobhunt.bank.learn import add_wordings, learn_from_submission, reviewed_pairs, seen_key
 from jobhunt.bank.match import Match, Matcher
 from jobhunt.errors import ExitCode
 from jobhunt.forms.classify import classify, similar_is_clear
@@ -28,20 +28,30 @@ def yesno(fid: str, label: str, required: bool = True) -> FormField:
 
 
 def test_a_clear_similar_wording_fills_flagged_for_review():
-    ctx, matcher, eeo = ctx_for("intl-sponsorship", "Northwind")
-    label = SPONSOR.replace("[Company]", "Northwind")
+    ctx, matcher, eeo = ctx_for("first-year-intern", "Northwind")
+    label = "When is your earliest start date?"
     assert matcher.match(label, company="Northwind").status == "candidate"
-    asked = classify(spec_of(yesno("q1", label)), ctx, matcher, eeo_confirmed=eeo)
+    text = FormField(id="q1", label=label, type="text", required=True)
+    asked = classify(spec_of(text), ctx, matcher, eeo_confirmed=eeo)
     assert asked.fields[0].resolution == "candidate"  # the default Matcher still asks first
 
     matcher.fill_similar = True
-    c = classify(spec_of(yesno("q1", label)), ctx, matcher, eeo_confirmed=eeo)
+    c = classify(spec_of(text), ctx, matcher, eeo_confirmed=eeo)
     fr = c.fields[0]
     assert fr.resolution == "answered" and fr.match == "candidate"
     assert any(h.startswith("similar question") for h in fr.human)
-    sheet = build_sheet(1, spec_of(yesno("q1", label)), c, ctx, matcher, "2026-11-06T00:00:00Z")
+    sheet = build_sheet(1, spec_of(text), c, ctx, matcher, "2026-11-06T00:00:00Z")
     ff = sheet.fields[0]
-    assert ff.action == "fill" and ff.value == "Yes" and ff.similar  # the persona needs one
+    assert ff.action == "fill" and ff.value and ff.similar
+
+
+def test_a_sensitive_similar_wording_is_asked_never_filled():
+    ctx, matcher, eeo = ctx_for("intl-sponsorship", "Northwind")
+    matcher.fill_similar = True
+    label = SPONSOR.replace("[Company]", "Northwind")
+    assert matcher.match(label, company="Northwind").status == "candidate"
+    fr = classify(spec_of(yesno("q1", label)), ctx, matcher, eeo_confirmed=eeo).fields[0]
+    assert fr.resolution == "candidate" and fr.sensitive
 
 
 def test_an_ambiguous_match_with_different_answers_still_asks():
@@ -53,12 +63,12 @@ def test_an_ambiguous_match_with_different_answers_still_asks():
     assert similar_is_clear(m, ctx, matcher, sensitive=False)
 
 
-def test_sensitive_needs_a_close_match_and_eeo_never_fills_by_similarity():
+def test_sensitive_and_eeo_never_fill_by_similarity():
     ctx, matcher, _ = ctx_for("first-year-intern", "Northwind")
-    near = Match("work_auth.sponsorship", "candidate", 0.70, "similarity", "x")
+    near = Match("work_auth.sponsorship", "candidate", 0.99, "similarity", "x")
     assert not similar_is_clear(near, ctx, matcher, sensitive=True)
-    near.score = 0.8
-    assert similar_is_clear(near, ctx, matcher, sensitive=True)
+    agent = Match("work_auth.sponsorship", "candidate", 1.0, "agent", "x")
+    assert not similar_is_clear(agent, ctx, matcher, sensitive=True)
     eeo = Match("eeo.gender", "candidate", 0.99, "similarity", "x")
     assert not similar_is_clear(eeo, ctx, matcher, sensitive=True)
 
@@ -111,13 +121,15 @@ def test_submitting_teaches_the_bank(persona_home, tmp_path):
     ])  # fmt: skip
     p = tmp_path / "answers.json"
     write_sheet(p, sheet)
-    assert learn_from_submission(paths, [p], "Acme") == ["start.summer_availability"]
+    kept = {seen_key("Can Acme count on you all summer?", "start.summer_availability"): True}
+    assert learn_from_submission(paths, [p], "Acme") == []  # never read back: not learned
+    assert learn_from_submission(paths, [p], "Acme", kept) == ["start.summer_availability"]
     raw = yaml.safe_load((home / "answers.yaml").read_text(encoding="utf-8"))
     e = next(x for x in raw["bank"] if x["key"] == "start.summer_availability")
     assert "Can [Company] count on you all summer?" in e["wordings"]
     assert "Riley" not in (home / "answers.yaml").read_text(encoding="utf-8").split("bank:")[1]
     # learned once: the same label isn't added twice, and now matches exactly
-    assert learn_from_submission(paths, [p], "Acme") == []
+    assert learn_from_submission(paths, [p], "Acme", kept) == []
     from jobhunt.models import Answers
 
     m = Matcher(Answers.model_validate(raw)).match("Can Globex count on you all summer?",
@@ -131,3 +143,23 @@ def test_add_wordings_promotes_a_proposed_label():
     assert add_wordings(raw, [("Around all summer?", "start.summer_availability")])
     e = raw["bank"][0]
     assert e["wordings"] == ["Around all summer?"] and "proposed" not in e
+
+
+def test_a_changed_or_sensitive_field_is_not_learned():
+    def ff(fid, label, key):
+        return FillField(id=fid, label=label, type="select", required=True, section="main",
+                         key=key, action="fill", value="Yes", similar=True)  # fmt: skip
+
+    sheet = AnswerSheet(job_id=1, ats="greenhouse", url=None, built_at="t", fields=[
+        ff("a", "Can Acme count on you all summer?", "start.summer_availability"),
+        ff("b", "Open to moving for Acme?", "location.relocate"),
+        ff("c", "Acme visa needs?", "work_auth.sponsorship"),
+    ])  # fmt: skip
+    kept = {
+        seen_key("Can Acme count on you all summer?", "start.summer_availability"): True,
+        seen_key("Open to moving for Acme?", "location.relocate"): False,  # the user changed it
+        seen_key("Acme visa needs?", "work_auth.sponsorship"): True,
+    }
+    assert reviewed_pairs([sheet], "Acme", kept) == [
+        ("Can [Company] count on you all summer?", "start.summer_availability")
+    ]
