@@ -164,6 +164,7 @@ parts that need judgment. Everything stays in `~/.jobhunt/` on your computer.
 | 2026-11-07 | Merged (PR #1) | All of the above on `main`; CI green on all six platform and Python combinations |
 | 2026-11-07 | Look-alike questions (PR #3) | A question asking the opposite or another number never reuses an answer; sensitive ones only from confirmed wordings; age questions from your age |
 | 2026-11-07 | Ranking v2 | Tier, then Nice preferences met, then date, with a reason on every job; recall reads title plus a bounded description, so title-only rows no longer crowd out full postings and watchlist jobs; 168 ranking cases added to `eval-fit` |
+| 2026-11-07 | Skills in the CLI and desktop app (PR #5) | `skills install` also writes `$CLAUDE_CONFIG_DIR/skills`, so a CLI with a custom config folder and the desktop app both find the skills. **v0.3.0** |
 
 ### What the latest check measured (2026-11-06)
 
