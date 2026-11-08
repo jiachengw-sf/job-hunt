@@ -25,16 +25,17 @@ application.
    answers.json without opening a browser. Show the user the queued jobs and any skipped ones
    with their reason (not Ready, essays not approved, no adapter for this ATS...). A job
    skipped for "several resumes and no default" shows `suggested_resume`: ask the user which
-   file to send, then run `jobhunt prefill <id> --resume <file>` with that job's id (kept for
+   file to send, then run `jobhunt prefill <id> --resume <file> --dry-run` with that job's id (kept for
    that job). `--resume` always needs the job ids it is for.
 2. **Confirm.** Ask the user: "Fill these N applications now? You'll review each tab and click
-   Submit yourself." Wait for yes. To fill specific jobs: `jobhunt prefill <id> <id>`.
-   **Workday jobs** are never in the default batch: fill one with `jobhunt prefill <id>`. Its
+   Submit yourself." Wait for yes. To fill specific jobs: `jobhunt prefill <id> <id> --from-apply-skill`.
+   **Workday jobs** are never in the default batch: fill one with `jobhunt prefill <id> --from-apply-skill`. Its
    tab shows `waiting_sign_in` until the user signs in on the employer's page; tell them to
    sign in there (never offer to do it). jobhunt then fills each step and clicks Save and
    Continue on clean steps. A step that shows `needs_you` is the user's to finish; once they
    click Save and Continue, jobhunt picks up the next step. It stops at Review.
-3. **Fill.** `jobhunt prefill` (default batch of 5). It returns at once. Poll
+3. **Fill.** `jobhunt prefill --from-apply-skill` (default batch of 5). The flag says the
+   user asked for this skill; without it the command opens nothing. It returns at once. Poll
    `jobhunt prefill --status` every 20–30 seconds until each tab is `ready_for_review` (or an
    error).
 4. **Explain the review.** For each tab, tell the user what to look at

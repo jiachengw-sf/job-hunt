@@ -50,6 +50,19 @@ _ATTEST = re.compile(
     r"notice)|terms and conditions|signature|e-?sign)",
     re.I,
 )
+# An agreement to a specific document: always the user's own answer on the form, never filled
+# from the bank or a look-alike, never offered in the setup form. "Agree" alone is not enough:
+# "Do you agree to relocate?" is an ordinary question.
+_AGREEMENT = re.compile(
+    r"\bcode of (?:conduct|ethics)\b|"
+    r"\b(?:agree|consent)\s+to\s+(?:the|our|this|these|its|abide|comply|adhere|be bound)\b|"
+    r"\bagree\s+(?:with|to)\s+(?:all\s+)?(?:the\s+)?(?:above|following|terms|policy|policies|"
+    r"statement)\b|"
+    r"\bhave\s+(?:read|reviewed)(?:,)?\s+(?:and\s+)?(?:understand|understood|agree|accept)|"
+    r"\b(?:read|reviewed)\s+and\s+(?:agree|accept)",
+    re.I,
+)
+AGREEMENT_REASON = "agreement: answer it yourself"
 _ESSAY_LABEL = re.compile(
     r"^(why|describe|tell us|explain|what (?:interests|excites|motivates|draws)|share|please "
     r"(?:describe|explain|elaborate|share|tell))|\b(elaborate|in \d+ words|cover letter)\b",
@@ -128,7 +141,9 @@ def _type_key(f: FormField) -> str | None:
 
 def _human_reasons(f: FormField, ats: str, eeo_confirmed: bool) -> list[str]:
     out = []
-    if _ATTEST.search(f.label) or (f.description and _ATTEST.search(f.description)):
+    if _AGREEMENT.search(f.label) or (f.description and _AGREEMENT.search(f.description)):
+        out.append(AGREEMENT_REASON)
+    elif _ATTEST.search(f.label) or (f.description and _ATTEST.search(f.description)):
         out.append("attestation or policy question: answer it yourself")
     if f.section == "consent":
         out.append("consent: your call each time")
@@ -219,7 +234,11 @@ def resolve_field(
             res, reason = "skipped", reason or "optional: left blank"
         return FieldResult(**base, resolution=res, reason=reason)
 
-    is_human_only = any(h.startswith(("attestation", "consent", "voluntary")) for h in human)
+    is_human_only = any(
+        h.startswith(("agreement", "attestation", "consent", "voluntary")) for h in human
+    )
+    if any(h == AGREEMENT_REASON for h in human):
+        return out("human_only", "an agreement: yours to answer on the form")
     if m.status == "candidate":
         if is_human_only:
             return out("human_only")

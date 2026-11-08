@@ -55,6 +55,29 @@ OTHER_HEADERS = re.compile(
 INLINE_HEADER = re.compile(
     r"^\W*(requirements|qualifications|preferred|nice to have|bonus)\s*:\s*(.+)$", re.I
 )
+# Pay, benefits, equal-opportunity, accommodation, fraud-warning and privacy text. Postings often
+# put it straight after the last requirement list with no header, so it is never a requirement:
+# a line like this ends the section it is in.
+BOILERPLATE = re.compile(
+    r"\b(?:base\s+(?:pay|salary)|pay\s+(?:range|transparency|scale|rate)|salary\s+range|"
+    r"compensation\s+(?:range|package|for\s+this)|annual\s+(?:base|salary)|hourly\s+(?:rate|pay)|"
+    r"equal\s+(?:employment\s+)?opportunity|affirmative\s+action|without\s+regard\s+to|"
+    r"regardless\s+of\s+(?:race|sex|gender|age|religion|national)|sexual\s+orientation|"
+    r"protected\s+veteran|reasonable\s+accommodations?|e-?verify|fair\s+chance|"
+    r"(?:arrest|conviction)\s+records?|"
+    r"(?:recruit(?:ment|ing)|hiring|job|employment|interview)\s+(?:fraud|scams?)|fraudulent|"
+    r"phishing|privacy\s+(?:notice|policy)|benefits?\s+(?:include|package|such\s+as|offered)|"
+    r"401\s?\(?k\)?|medical,\s+dental|paid\s+time\s+off|parental\s+leave)\b"
+    r"|\$\s?\d{2,3}(?:,\d{3}|k)",
+    re.I,
+)
+
+
+def is_boilerplate(text: str) -> bool:
+    """Pay, benefits, EEO, accommodation, fraud-warning or privacy text: never a requirement."""
+    return bool(BOILERPLATE.search(text))
+
+
 _BULLET = re.compile(r"^[\s•●▪◦‣·*\-–—]+")
 _SENTENCE = re.compile(r"(?<=[.;])\s+(?=[A-Z])")
 MAX_ITEM_CHARS = 400
@@ -123,6 +146,9 @@ def split_sections(description: str) -> list[Section]:
         if m:
             k = "preferred" if re.match(r"preferred|nice|bonus", m.group(1), re.I) else "must"
             sections.append(Section(k, m.group(1), [m.group(2).strip()]))
+            continue
+        if sections[-1].kind in ("must", "preferred") and is_boilerplate(line):
+            sections.append(Section("other", None, [line]))  # ends the requirement list
             continue
         sections[-1].lines.append(line)
     return sections

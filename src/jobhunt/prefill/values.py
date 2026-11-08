@@ -93,7 +93,7 @@ def _action(fr: FieldResult, ats: str) -> tuple[Action, str | None]:
     if fr.resolution == "answered":
         if ats == "lever" and fr.type in ("radio", "checkbox"):
             return "recommend", "Lever: tick this yourself; the recommended value is shown"
-        if any(h.startswith(("attestation", "consent")) for h in fr.human):
+        if any(h.startswith(("agreement", "attestation", "consent")) for h in fr.human):
             return "human", "yours to answer on the form"
         return "fill", None
     if fr.resolution in ("human_only", "essay"):

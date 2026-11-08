@@ -361,3 +361,61 @@ def test_form_filters_skip_or_deprioritize_forms_needing_what_you_lack():
     assert classify(spec, ctx, matcher, eeo_confirmed=eeo).filter == "skip"
     ctx.answers.education.sat_score = "1400"  # answered: nothing is missing
     assert classify(spec, ctx, matcher, eeo_confirmed=eeo).filter is None
+
+
+AGREEMENTS = [
+    "Do you agree to the Interview Code of Conduct?",
+    "I agree to abide by the {company} Code of Ethics",
+    "I have read and agree to the candidate privacy terms",
+    "I have read, and understand, the AI policy above",
+    "Do you consent to the following terms?",
+    "Please confirm you agree with the statement above",
+]
+NOT_AGREEMENTS = [
+    "Do you agree to relocate to New York?",
+    "Would you agree to work weekends during launches?",
+    "Are you willing to travel up to 25%?",
+]
+
+
+@pytest.mark.parametrize("persona", PERSONAS)
+def test_agreements_are_always_yours_even_with_a_saved_answer(persona):
+    from jobhunt.bank.keys import AnswerContext
+    from jobhunt.forms.model import FormField
+    from jobhunt.models.answers import BankEntry
+    from jobhunt.prefill.values import _action
+
+    profile, prefs, answers = _load_persona(PERSONAS_DIR / persona)
+    labels = [a.format(company="Acme") for a in AGREEMENTS]
+    # a saved answer for the exact wording must still never be filled
+    answers.bank.append(BankEntry(key="custom.coc", question=labels[0], answer="Yes"))
+    ctx = AnswerContext(profile, answers, prefs, company="Acme", country="US", resume=Path("r"))
+    fields = [
+        FormField(id=f"q{i}", label=lbl, type="select", options=["Yes", "No"], required=req)
+        for i, lbl in enumerate(labels)
+        for req in (True, False)
+    ]
+    c = classify(
+        FormSpec(ats="greenhouse", fields=fields), ctx, Matcher(answers), eeo_confirmed=False
+    )
+    for f in c.fields:
+        assert f.resolution == "human_only", f.label
+        assert "agreement: answer it yourself" in f.human
+        assert _action(f, "greenhouse")[0] == "human"
+
+
+@pytest.mark.parametrize("persona", PERSONAS)
+def test_agree_alone_is_not_an_agreement(persona):
+    from jobhunt.forms.model import FormField
+
+    ctx, matcher, eeo = ctx_for(persona, "Acme")
+    spec = FormSpec(
+        ats="greenhouse",
+        fields=[
+            FormField(id=f"q{i}", label=lbl, type="text", required=True)
+            for i, lbl in enumerate(NOT_AGREEMENTS)
+        ],
+    )
+    for f in classify(spec, ctx, matcher, eeo_confirmed=eeo).fields:
+        assert "agreement: answer it yourself" not in f.human, f.label
+        assert f.resolution != "human_only", f.label
