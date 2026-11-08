@@ -1238,3 +1238,15 @@ Still wrong, reported as `known_misorders`: two title-only Ledgerline pairs for 
 persona that only the title could settle. Not done: deadlines from posting text (only
 Greenhouse's field is read), company size (no source gives it). Suite: 1105 tests, 0 failures,
 1 skipped.
+
+## Skills for both the CLI and the desktop app; v0.3.0 (2026-11-07)
+
+With `CLAUDE_CONFIG_DIR` set, the Claude Code CLI reads user skills from
+`$CLAUDE_CONFIG_DIR/skills`; the desktop app still reads `~/.claude/skills`. `skills install`,
+`status` and `remove` now cover both, and `doctor` checks each folder. Found on a real upgrade:
+"run my job hunt" in a new folder didn't trigger the skills. Checked from an empty folder with
+`claude -p`: the seven automatic skills are listed; apply stays explicit-only.
+
+Tagged **v0.3.0**: Workday pre-fill, ranking v2, look-alike question checks, resumes in any
+layout, the setup form pre-filled from the resume, and the fixes since v0.2.0.
+
