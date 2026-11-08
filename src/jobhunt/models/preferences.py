@@ -1,4 +1,4 @@
-"""preferences.yaml. Each preference is Must (a hard gate) or Nice (priority only, the default).
+"""preferences.yaml. Each preference is Must (a hard gate) or Nice (ranking only, the default).
 
 Each preference is written either as ``{value: ..., importance: must|nice}`` or as the bare value
 (shorthand for Nice).

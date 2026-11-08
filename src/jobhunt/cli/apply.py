@@ -25,6 +25,7 @@ from jobhunt.drafts.essays import approved_essays
 from jobhunt.envelope import Envelope, render_human_default
 from jobhunt.errors import NotFound
 from jobhunt.fit.jobview import load_jobs
+from jobhunt.fit.rank import RANK_ORDER, tier_clause
 from jobhunt.forms import ashby
 from jobhunt.forms.classify import Classification, FieldResult, classify, display_value
 from jobhunt.forms.coverage import CoverageReport, report, sample_jobs
@@ -75,26 +76,24 @@ def loader_factory(cfg: Config, client: HttpClient, fixtures: Path | None):
     return lambda: ashby.browser_session()
 
 
-def threshold_jobs(conn: sqlite3.Connection, threshold: float, limit: int) -> list[int]:
-    """Jobs whose forms to read: recalled, not gated out, at or above ``threshold`` first. If
-    that's fewer than ``limit``, the next-highest priorities on an ATS whose form can be read
-    fill the rest: before judgment tasks run, code-only priorities often stay under the
-    threshold, and reading no forms at all would leave nothing Ready."""
+def threshold_jobs(conn: sqlite3.Connection, ready_tier: str, limit: int) -> list[int]:
+    """Jobs whose forms to read, in rank order: matched jobs in ``ready_tier`` or better
+    first. If that's fewer than ``limit``, the next-ranked jobs on an ATS whose form can be
+    read fill the rest, so a run with no strong match still has forms to read."""
+    cond, tiers = tier_clause(ready_tier)
+    base = (
+        "SELECT j.id FROM jobs j JOIN fits f ON f.job_id=j.id "
+        "WHERE j.live=1 AND f.rank IS NOT NULL "
+    )
     rows = conn.execute(
-        "SELECT j.id FROM jobs j JOIN fits f ON f.job_id=j.id WHERE j.live=1 AND f.recalled=1 "
-        "AND coalesce(f.gate_status,'') != 'failed' AND coalesce(f.priority,0) >= ? "
-        "ORDER BY f.priority DESC, j.id LIMIT ?",
-        (threshold, limit),
+        f"{base}AND {cond} ORDER BY {RANK_ORDER}, j.id LIMIT ?", (*tiers, limit)
     ).fetchall()
     ids = [r["id"] for r in rows]
     if len(ids) < limit:
         marks = ",".join("?" * len(SUPPORTED))
         more = conn.execute(
-            "SELECT j.id FROM jobs j JOIN fits f ON f.job_id=j.id WHERE j.live=1 "
-            "AND f.recalled=1 AND coalesce(f.gate_status,'') != 'failed' "
-            f"AND coalesce(f.priority,0) < ? AND j.ats IN ({marks}) "
-            "ORDER BY f.priority DESC, j.id LIMIT ?",
-            (threshold, *sorted(SUPPORTED), limit - len(ids)),
+            f"{base}AND NOT ({cond}) AND j.ats IN ({marks}) ORDER BY {RANK_ORDER}, j.id LIMIT ?",
+            (*tiers, *sorted(SUPPORTED), limit - len(ids)),
         ).fetchall()
         ids += [r["id"] for r in more]
     return ids
@@ -250,7 +249,7 @@ class PacketReport(BaseModel):
 def register(cli: click.Group) -> None:
     @agent_command(cli, "inspect", output=InspectReport, writes=True)
     @click.argument("job_ids", nargs=-1, type=int)
-    @click.option("--top", type=int, default=30, help="How many top-priority jobs (no ids given).")
+    @click.option("--top", type=int, default=30, help="How many top-ranked jobs (no ids given).")
     @click.option("--refresh", is_flag=True, help="Re-read forms even if cached.")
     @click.option("--no-match", is_flag=True, help="Don't recompute fit after new posting text.")
     @click.option(
@@ -269,9 +268,10 @@ def register(cli: click.Group) -> None:
     ) -> Result:
         """Read and classify application forms: Ready, Needs answers, Essay or Manual.
 
-        Default: recalled jobs at or above fit.priority_threshold, topped up to --top with the
-        next-highest priorities whose forms can be read. Greenhouse via its questions
-        API, Lever via the /apply page, Ashby via a headless read-only page load. Never submits.
+        Default: matched jobs in fit.ready_tier or better (strong matches), in rank order,
+        topped up to --top with the next-ranked jobs whose forms can be read. Greenhouse via
+        its questions API, Lever via the /apply page, Ashby via a headless read-only page load.
+        Never submits.
         Posting text read along the way fills in jobs whose source had none (Simplify).
         """
         paths, cfg = _prepare(dry_run)
@@ -279,7 +279,7 @@ def register(cli: click.Group) -> None:
         inp = form_inputs(paths, cfg, now)
         client = make_client(cfg, fixtures)
         with _lock(paths, dry_run), open_store(paths.db, dry_run=dry_run) as conn:
-            ids = list(job_ids) or threshold_jobs(conn, cfg.fit.priority_threshold, top)
+            ids = list(job_ids) or threshold_jobs(conn, cfg.fit.ready_tier, top)
             if job_ids:
                 known = {j.id for j in load_jobs(conn, ids, live_only=False)}
                 if missing := [i for i in ids if i not in known]:
@@ -299,7 +299,7 @@ def register(cli: click.Group) -> None:
                 _rematch(conn, paths, cfg, now, dry_run)
         nxt, user = inspect_actions(rep)
         if not ids:
-            nxt.insert(0, "No jobs at or above the priority threshold: run `jobhunt match` first.")
+            nxt.insert(0, "No ranked jobs with readable forms: run `jobhunt match` first.")
         return Result(data=rep, next_actions=nxt, user_actions=user)
 
     @agent_command(cli, "coverage", output=CoverageReport, writes=True, render=_render_coverage)

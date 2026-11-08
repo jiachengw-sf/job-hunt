@@ -74,7 +74,7 @@ def _sensitive_values(persona: str) -> list[str]:
 def test_judgment_tasks_hold_no_personal_data(cli, persona_home, persona):
     home = persona_home(persona)
     (home / "config.yaml").write_text(
-        "fit:\n  priority_threshold: 0\n", encoding="utf-8"
+        "fit:\n  ready_tier: weak\n", encoding="utf-8"
     )  # a task for every job
     cli("run", "--fixtures", BASE, "--no-sync")
     tasks = list((home / "work" / "tasks").glob("*.json"))
@@ -131,7 +131,7 @@ def test_show_unknown_job(cli, persona_home):
     assert code == ExitCode.NOT_FOUND
 
 
-def test_eval_fit_runs_on_persona_set(cli):
+def _eval_fit(cli) -> dict:
     code, env, _ = cli("eval-fit")
     assert code == ExitCode.OK, env
     d = (
@@ -139,13 +139,23 @@ def test_eval_fit_runs_on_persona_set(cli):
         if "macro" in env["data"]
         else json.loads(Path(env["data"]["out_file"]).read_text(encoding="utf-8"))
     )
-    m = d["macro"]
     assert set(d["personas"]) == set(PERSONAS)
+    return d["macro"]
+
+
+def test_eval_fit_gates_and_bands(cli):
+    m = _eval_fit(cli)
     assert m["wrongly_gated"] == 0  # never drop a job the user could get
     # regression floors on the seed set (single annotator; see evals/fit/manifest.yaml)
     assert m["gates_accuracy"] >= 0.95
-    assert m["final_ndcg10"] >= 0.9
     assert m["band_within_one"] >= 0.9
+
+
+def test_eval_fit_ranking(cli):
+    m = _eval_fit(cli)
+    assert m["must_rank_above_broken"] == 0  # e.g. a watchlist internship above a sales job
+    assert m["mixed_grade_ties"] == 0  # jobs of different grades are never tied
+    assert m["final_ndcg10"] >= 0.9
 
 
 def test_fixtures_env_serves_snapshots(cli, persona_home, monkeypatch):

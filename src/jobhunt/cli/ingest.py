@@ -15,6 +15,7 @@ from jobhunt.discovery.text import utc_now
 from jobhunt.envelope import ErrorInfo, paginate
 from jobhunt.errors import ExitCode
 from jobhunt.fit.engine import run_match
+from jobhunt.fit.rank import RANK_ORDER
 from jobhunt.fit.recall import make_embedder
 from jobhunt.fit.tasks import TASK_KIND
 from jobhunt.ingest import essays, judgment, outreach, research  # noqa: F401  (handlers)
@@ -61,7 +62,7 @@ def register(cli: click.Group) -> None:
             rows = conn.execute(
                 "SELECT t.*, j.company, j.title FROM tasks t LEFT JOIN jobs j ON j.id=t.job_id "
                 "LEFT JOIN fits f ON f.job_id=t.job_id "
-                f"WHERE {' AND '.join(where)} ORDER BY coalesce(f.priority, 0) DESC, t.created_at",
+                f"WHERE {' AND '.join(where)} ORDER BY {RANK_ORDER}, t.created_at",
                 params,
             ).fetchall()
         chunk, page = paginate(rows, cursor, limit)
@@ -131,7 +132,8 @@ def register(cli: click.Group) -> None:
                     dry_run=dry_run,
                 )
                 rows = conn.execute(
-                    f"SELECT job_id, band, provisional, priority FROM fits WHERE job_id IN "
+                    f"SELECT job_id, band, provisional, rank, tier, rank_reason FROM fits "
+                    f"WHERE job_id IN "
                     f"({','.join('?' * len(refit_ids))}) ORDER BY job_id",
                     sorted(refit_ids),
                 ).fetchall()
@@ -139,7 +141,9 @@ def register(cli: click.Group) -> None:
                     str(r["job_id"]): {
                         "band": r["band"],
                         "provisional": bool(r["provisional"]),
-                        "priority": r["priority"],
+                        "rank": r["rank"],
+                        "tier": r["tier"],
+                        "reason": r["rank_reason"],
                     }
                     for r in rows
                 }

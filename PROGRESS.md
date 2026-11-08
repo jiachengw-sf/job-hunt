@@ -1170,3 +1170,71 @@ search, status filter, sorting, the detail panel with clickable portal and file 
 status timeline, Esc to close, keyboard-focusable rows; light and dark; 390 px phone with no
 sideways scroll (the detail panel scrolls); no console errors. `APPLICATIONS.md`, `apps --human`
 and the per-application folders agree with it.
+
+## Ranking v2: tier, Nice preferences, date (2026-11-07)
+
+The 2026-11-06 system check found the ranking open item above. It was one blended number (band,
+relevance, preference, freshness, deadline, referral, watchlist), and relevance was 0 for every
+job past recall rank 50, which title-only Simplify rows filled. Replaced by a fixed order of keys
+(`fit/rank.py`), each job carrying the reason:
+
+1. **Tier.** Strong: the title names one of your role families (`defaults/role_families.yaml`,
+   phrases per family), the posting has text (`fit.min_text_words`: 3), and relevance reaches
+   `fit.tiers.strong`. Possible: a role match on a title-only row, or relevance at or above
+   `fit.tiers.possible` with a title that shares a word with your resume, role families or
+   keywords (so boilerplate alone can't lift "Account Executive"). Weak: the rest (`fit.hide_weak` leaves them out of `jobs`, the sheet
+   and the digest; off by default). A `not_a_fit` band makes a job weak; a listing naming only a
+   higher degree, or a "deprioritize" form filter, drops one tier; a "skip" form filter sorts
+   last.
+2. **Nice preferences met:** work mode, location (remote counted once), pay at or above your
+   minimum, term, include keyword, preferred industry, watchlist, referral; a Nice exclude
+   keyword or industry to avoid counts -1. Must preferences stay gates (unchanged).
+3. **Date:** an upcoming deadline (internships only), earliest first; a known date within
+   `fit.stale_after_days` (30), newest first; unknown (no date, or evergreen wording such as
+   "talent pipeline", "throughout the year"); a known stale date or a passed deadline. Relevance
+   then job id break what's left.
+
+Relevance: BM25 on the title plus the first `fit.recall_description_tokens` (150) description
+words, with length normalization off (the documents are bounded already; b=0.75 is what favoured
+short rows), as each job's score over the run's best. Every eligible job gets one; `recall_top_k`
+only limits judgment tasks and posting reads. Tier cutoffs from `eval-fit`, one row per distinct
+(persona, title): strong 0.5 (most grade-2 jobs among strong while keeping >= 90% of them),
+possible 0.15 (fewest errors, a plausible job left weak counting double). Leaving a persona out
+moves them 0.25-0.48 and 0.09-0.18: only 11 grade-2 jobs with text decide `strong`.
+
+Where it shows: `match` / `jobs` (`rank`, `tier`, `reason`; `--human` prints the reason under
+each job), `show`, the digest lines, alerts, the sheet ("Rank" and "Why ranked"; an old
+"Priority" header is renamed), the Companies tab ("Best match"), the packet, and the dashboard
+detail panel ("Why it ranked", the job's current ranking). Every list that sorted by priority
+sorts by `rank`; form reading, judgment, the digest's Manual list and referral prompts use
+`fit.ready_tier` (strong); alerts use `notifications.alert_tier` (strong). Migration
+`0010_ranking.sql` adds `tier`, `soft_matches`, `rank`, `rank_reason`; `priority` is no longer
+written. Old `fit.priority*`, `higher_degree_factor`, `form_filter_factor`,
+`freshness_half_life_days` and `notifications.alert_priority` still load and change nothing;
+`doctor` says so. `calibrate` no longer suggests preference weights (nothing to weight); a
+repeated skip reason now suggests making it a Must.
+
+Eval (`evals/fit`): 168 ranking cases added (`postings_ranking.yaml`, made by
+`make_ranking_cases.py`): title-only rows, bulk title-only lists, the watchlist sales job vs
+evergreen internship, undated watchlist jobs at one company, a deadline; persona watchlists
+loaded; new checks `must_rank_above` and ties between different grades.
+
+| | before | after |
+|---|---|---|
+| gate accuracy (new set / 40 originals) | 0.995 / 0.975 | 0.995 / 0.975 |
+| wrongly gated | 0 | 0 |
+| recall nDCG@10 (new / originals) | 0.878 / 0.982 | 0.906 / 0.979 |
+| final nDCG@10 (new / originals) | 0.873 / 0.978 | 0.923 / 0.976 |
+| band exact / within one | 0.542 / 1.0 | 0.542 / 1.0 |
+| must_rank_above broken | 4 | 0 |
+| ties between different grades | 31 | 0 |
+
+(The originals' 0.959 from 2026-11-06 was without watchlists; with them, before is 0.978.) On
+the 40 originals the final score dips 0.002: first-year 1.0 -> 0.965 and intl 1.0 -> 0.981,
+new-grad 0.931 -> 0.973 and senior 0.979 -> 0.987. Relevance is relative to the best job in the
+run, so in a 40-job set "Data Engineering Intern" falls just under strong for the first-year
+persona. The cutoffs were not tuned to undo it.
+Still wrong, reported as `known_misorders`: two title-only Ledgerline pairs for the new-grad
+persona that only the title could settle. Not done: deadlines from posting text (only
+Greenhouse's field is read), company size (no source gives it). Suite: 1105 tests, 0 failures,
+1 skipped.

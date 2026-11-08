@@ -163,7 +163,7 @@ application (see [Tracking your applications](#tracking-your-applications)).
 | You want to... | Say | Or run |
 |---|---|---|
 | see what's new | "run my job hunt" | `jobhunt run`, then `jobhunt digest --human` |
-| list jobs by priority | "which jobs should I apply to today?" | `jobhunt jobs --human` |
+| list jobs in rank order, with why | "which jobs should I apply to today?" | `jobhunt jobs --human` |
 | see why a job was filtered out | | `jobhunt jobs --gated --human`, `jobhunt show <id>` |
 | fill applications | `/jobhunt-apply` | `jobhunt prefill --dry-run` (no browser) |
 | draft an essay | "help me with the essay for <company>" | `jobhunt essays list` |
@@ -177,13 +177,37 @@ application (see [Tracking your applications](#tracking-your-applications)).
 Every command has `--help`. Commands print one JSON envelope, which is what the skills read. Add
 `--human` for readable text. Commands that write have `--dry-run`.
 
-### Bands, priority and calibration
+### How jobs are ranked
 
-Each job gets a **qualification band** (`strong`, `good`, `stretch`, `not_a_fit`) from how its
-must-have and preferred requirements match your profile, and a separate **preference score**
-(pay, location, work mode, term, keywords, industry). **Priority** combines them with
-freshness, deadline, referral and watchlist. Every weight is in config and you can see it:
-`jobhunt show <id>` explains each score.
+Your Must preferences are gates: a job that fails one is filtered out, with the reason, and is
+never ranked. Everything that passes is sorted by three things, in this order:
+
+1. **How well the role matches.** Each job is a *strong*, *possible* or *weak* match.
+   - Strong: the title names one of your role families (software engineering, data
+     analytics...), the posting has a description, and it reads like your resume.
+   - Possible: related (the title shares words with your resume or search and the text reads
+     close enough), or not enough to judge. A listing with only a title (most Simplify rows)
+     is at most possible.
+   - Weak: neither. Weak matches go last; set `fit.hide_weak: true` to hide them.
+2. **How many of your Nice preferences it meets:** location, remote or hybrid, pay at or above
+   your minimum, term, title keywords, industry, plus your watchlist and a referral. More is
+   higher. A Nice exclude keyword or an industry to avoid counts one against.
+3. **Date**, only to break ties: for internships an upcoming application deadline comes first,
+   earliest first. Then a recent posting date, newest first. A post with no date, or one that's
+   always open, counts as "date unknown", which sorts after recent posts and before old ones.
+
+Every job carries the reason in plain words, in `jobhunt jobs`, the digest, the sheet's "Why
+ranked" column and the dashboard: `Strong match · Remote ✓ · Chicago ✓ · posted 2 days ago`.
+The cutoffs and how they were chosen are in `defaults/config.yaml` (`fit.tiers`); the title
+phrases for each role family are in `defaults/role_families.yaml`.
+
+Separately, each job gets a **qualification band** (`strong`, `good`, `stretch`, `not_a_fit`)
+from how its must-have and preferred requirements match your profile. The band doesn't sort the
+list (until a judgment confirms it, it is a code-only estimate), but `not_a_fit` makes a job a
+weak match, and a listing that asks only for a higher degree than yours drops one tier until
+it's judged. `jobhunt show <id>` explains all of it.
+
+### Calibration
 
 `jobhunt calibrate` checks the bands against your own outcomes. For each band it shows
 interview and offer rates and a label:

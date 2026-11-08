@@ -14,8 +14,8 @@ notifications:
     password_env: JOBHUNT_SMTP_PASSWORD  # the variable's NAME; never put the password here
     to: you@example.com
   digest: daily        # every_run | daily | off
-  alerts: true         # push high-priority new postings right away
-  alert_priority: 0.75
+  alerts: true         # push new matches right away
+  alert_tier: strong   # strong | possible | weak: new matches this good or better alert
 ```
 
 The user installs the ntfy app and subscribes to the topic, or creates the Discord webhook, or

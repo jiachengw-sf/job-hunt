@@ -135,9 +135,23 @@ def emit(
 ) -> None:
     envelope = spill_if_large(envelope, out=out, spill_dir=_spill_dir(), command=command)
     if human:
-        click.echo((renderer or render_human_default)(envelope))
+        click.echo(console_safe((renderer or render_human_default)(envelope)))
     else:
         click.echo(to_json(envelope))
+
+
+_ASCII = str.maketrans({"✓": "+", "✗": "x"})
+
+
+def console_safe(text: str, encoding: str | None = None) -> str:
+    """Readable text the console can print. A Windows console in a legacy code page (cp1252)
+    can't encode "✓": rather than crash, use ASCII stand-ins and "?" for anything else."""
+    enc = encoding or getattr(sys.stdout, "encoding", None) or "utf-8"
+    try:
+        text.encode(enc)
+        return text
+    except (UnicodeEncodeError, LookupError):
+        return text.translate(_ASCII).encode(enc, errors="replace").decode(enc)
 
 
 def _spill_dir() -> Path:

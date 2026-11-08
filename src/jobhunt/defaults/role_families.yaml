@@ -1,0 +1,27 @@
+# Role families (preferences.yaml roles.families) and the title phrases that name each one.
+# A job's title "names" a family when every word of one phrase appears in it (words compare on
+# their first six letters, so "engineering" matches "Engineer" but "analytics" doesn't match
+# "Analyst"; short forms like SWE, ML and BI are spelled out first). A family not listed here
+# matches on its own words.
+# A role match is needed for "Strong match"; see `fit.tiers` in config.yaml.
+
+software engineering:
+  [software engineering, software engineer, software developer, software intern, swe, sde,
+   backend, back end, frontend, front end, full stack, fullstack, web developer,
+   mobile engineer, mobile developer, application developer]
+backend engineering:
+  [backend, back end, server engineer, distributed systems, api engineer]
+frontend engineering:
+  [frontend, front end, web developer, ui engineer]
+platform engineering:
+  [platform, infrastructure, site reliability, devops, cloud engineer]
+data engineering:
+  [data engineering, data engineer, data platform, data infrastructure, etl, analytics engineer]
+data science:
+  [data science, data scientist]
+data analytics:
+  [data analyst, data analytics, analytics, reporting analyst, insights analyst, product analyst]
+business intelligence:
+  [business intelligence, bi analyst, bi developer, bi engineer]
+machine learning engineering:
+  [machine learning, deep learning, ml engineer, ai engineer, applied scientist]

@@ -4,8 +4,8 @@ import sqlite3
 
 from jobhunt.fit.recall import BM25, recall, rrf, tokenize
 from jobhunt.fit.requirements import Requirement
-from jobhunt.fit.scoring import preference, priority, qualify
-from tests.fit_helpers import TODAY, job, persona_ctx
+from jobhunt.fit.scoring import preference, qualify
+from tests.fit_helpers import job, persona_ctx
 
 
 def req(importance="must", status=None, tier=None, seq=0):
@@ -64,19 +64,6 @@ def test_preference_pay_and_missing_pay_flag():
     none = preference(job("Data Analyst", locations=["Boston, MA"], work_mode="hybrid"), prefs, CFG)
     assert good.components["pay"] == 1.0 and good.components["location"] == 1.0
     assert none.components["pay"] is None and "pay not listed" in none.flags
-
-
-def test_priority_prefers_better_band_and_fresher():
-    j = job()
-    hi, _ = priority(j, "strong", 0.8, CFG, TODAY, referral=False, watchlist=False)
-    lo, _ = priority(j, "stretch", 0.8, CFG, TODAY, referral=False, watchlist=False)
-    assert hi.score > lo.score
-    old = job()
-    old.posted_at = "2026-08-01T00:00:00Z"
-    stale, _ = priority(old, "strong", 0.8, CFG, TODAY, referral=False, watchlist=False)
-    assert stale.score < hi.score
-    ref, _ = priority(j, "strong", 0.8, CFG, TODAY, referral=True, watchlist=False)
-    assert ref.score > hi.score
 
 
 def test_bm25_and_rrf():
@@ -167,14 +154,3 @@ def test_broken_embedder_falls_back_to_bm25():
     res = recall(sqlite3.connect(":memory:"), [job(jid=1)], "python", ctx.prefs, ctx.cfg,
                  watch_companies=set(), embedder=Broken())  # fmt: skip
     assert res.mode == "bm25" and "BM25 only" in (res.note or "")
-
-
-def test_priority_drops_when_the_listing_names_only_higher_degrees():
-    j = job()
-    plain, _ = priority(j, None, 0.8, CFG, TODAY, referral=False, watchlist=False)
-    lower, flags = priority(
-        j, None, 0.8, CFG, TODAY, referral=False, watchlist=False, degree_above="PhD"
-    )
-    assert abs(lower.score - plain.score * CFG.higher_degree_factor) < 0.002
-    assert lower.components["higher_degree"] == CFG.higher_degree_factor
-    assert any("PhD" in f and "ranked lower" in f for f in flags)

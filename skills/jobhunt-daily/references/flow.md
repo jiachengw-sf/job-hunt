@@ -9,10 +9,10 @@ Paged lists return `page.next_cursor`; pass it back as `--cursor`.
 
 ## Useful reads
 
-- `jobhunt jobs --limit 10` — top jobs by priority (gated-out jobs show their reason with
-  `--gated`).
+- `jobhunt jobs --limit 10` — top jobs in rank order, each with its `tier` and `reason`
+  (gated-out jobs show their reason with `--gated`).
 - `jobhunt show <id>` — one job: gates with evidence, requirements with the profile line that
-  backs each, band, priority inputs, signals.
+  backs each, band, rank and its reason, signals.
 - `jobhunt tasks` — pending AI tasks by kind, with each file and result path.
 - `jobhunt essays list`, `jobhunt outreach due`, `jobhunt digest --human`.
 

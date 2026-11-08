@@ -20,7 +20,8 @@ contract: every command prints one JSON envelope; relay `hints.user_actions` ver
   checks) go only in the local form: `jobhunt setup form`. Never collect them in chat.
 - Never run `jobhunt prefill` from this skill and never submit anything. Pre-fill is the
   explicit-only jobhunt-apply skill.
-- "Relevance" is search ranking, not fit. Talk about the qualification band and priority.
+- "Relevance" is search ranking, not fit. Each job's `reason` says why it ranks where it does
+  ("Strong match · Remote ✓ · posted 2 days ago"); quote it rather than inventing your own.
 
 ## Steps
 
@@ -28,7 +29,7 @@ contract: every command prints one JSON envelope; relay `hints.user_actions` ver
    uses conditional requests.) Tell the user in one line: new postings, closures, errors.
 2. **Judgment tasks.** `jobhunt tasks --kind requirement_evidence`. Do them with the
    jobhunt-judge skill: one posting per task, write the result, run `jobhunt ingest`, fix
-   rejections. If there are many, do the top 10 by priority and say how many remain. Bands stay
+   rejections. If there are many, do the top 10 in rank order and say how many remain. Bands stay
    provisional until their task is ingested.
 3. **Digest.** Start with three lines from `jobhunt apps` (its `summary`): applications by
    status and this week; what needs attention (follow-ups due, likely no response); upcoming

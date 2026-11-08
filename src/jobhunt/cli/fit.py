@@ -30,6 +30,7 @@ from jobhunt.fit.engine import (
     update_gated_out,
 )
 from jobhunt.fit.jobview import load_jobs
+from jobhunt.fit.rank import RANK_ORDER, hide_weak_clause
 from jobhunt.fit.recall import make_embedder
 from jobhunt.locking import file_lock
 from jobhunt.models import Answers, Config, Preferences, Profile
@@ -166,7 +167,9 @@ class JobRow(BaseModel):
     status: str | None
     band: str | None
     provisional: bool | None
-    priority: float | None
+    rank: int | None = Field(None, description="1 = first; none when gated out.")
+    tier: str | None = Field(None, description="strong | possible | weak match.")
+    reason: str | None = Field(None, description="Why it ranks here.")
     gate_status: str | None
     gate_reasons: list[str] = Field(default_factory=list)
     live: bool
@@ -239,6 +242,21 @@ def _reason_texts(reasons_json: str | None) -> list[str]:
     return [f"{r['gate']} {r['result']}: {r['reason']}" for r in json.loads(reasons_json or "[]")]
 
 
+def _render_jobs(env: Envelope) -> str:
+    d = env.data
+    if not isinstance(d, dict) or "jobs" not in d:
+        return render_human_default(env)
+    lines = []
+    for j in d["jobs"]:
+        pos = f"{j['rank']:>4}." if j.get("rank") else "   -."
+        lines.append(f"{pos} #{j['id']:<5} {j['company']}: {j['title']}")
+        if j.get("reason"):
+            lines.append(f"       {j['reason']}")
+        elif j.get("gate_reasons"):
+            lines.append(f"       gated out: {'; '.join(j['gate_reasons'])}")
+    return "\n".join(lines) or "No jobs."
+
+
 def _render_match(env: Envelope) -> str:
     d = env.data
     if not isinstance(d, dict) or "top" not in d:
@@ -262,18 +280,20 @@ def _render_match(env: Envelope) -> str:
         + ", ".join(f"{k} {v}" for k, v in sorted(d["bands"].items()))
         + f" ({d['provisional']} provisional)"
     )
+    tiers = d.get("tiers") or {}
+    lines.append(
+        "Matches: "
+        + ", ".join(f"{t} {tiers[t]}" for t in ("strong", "possible", "weak") if t in tiers)
+    )
     t = d["tasks"]
     lines.append(
         f"Judgment tasks: {t['written']} new, {t['replaced']} replaced, {t['pending_total']} "
         f"pending"
     )
-    lines.append("\nTop priorities:")
+    lines.append("\nTop of the ranking:")
     for j in d["top"]:
-        band = (j["band"] or "?") + ("*" if j["provisional"] else "")
-        lines.append(
-            f"  #{j['id']:<5} {j['priority']:.2f}  {band:<11} {j['company']}: {j['title']}"
-        )
-    lines.append("  (* provisional: some evidence not judged yet)")
+        lines.append(f"  {j['rank']:>3}. #{j['id']:<5} {j['company']}: {j['title']}")
+        lines.append(f"       {j['reason']}")
     for w in d["warnings"]:
         lines.append(f"WARN {w}")
     if env.hints.user_actions:
@@ -318,9 +338,10 @@ def register(cli: click.Group) -> None:
     def match_cmd(dry_run: bool) -> Result:
         """Gate, recall, extract requirements, score and rank every live job; write judgment tasks.
 
-        Qualification band and preference score are separate; priority combines them with
-        freshness, deadline, referral and watchlist. Bands are provisional until the judgment
-        tasks in ~/.jobhunt/work/tasks/ are done.
+        Ranking is a fixed order of keys: match tier (strong, possible, weak), then how many
+        Nice preferences the job meets, then date (an upcoming internship deadline, a recent
+        posting date, an unknown date, a stale date). Each job carries the reason. Bands are
+        separate and provisional until the judgment tasks in ~/.jobhunt/work/tasks/ are done.
         """
         paths, cfg = _prepare(dry_run)
         inp = _inputs(paths, cfg, utc_now())
@@ -382,7 +403,7 @@ def register(cli: click.Group) -> None:
         """The scheduled pipeline: fetch → gate → recall → score → classify → notify → sync.
 
         No AI needed. Classify reads the application forms of the top jobs (cached for a week).
-        Notify pushes fast alerts for high-priority new postings and, when due, the digest to
+        Notify pushes fast alerts for new strong matches and, when due, the digest to
         your configured channels (ntfy, Discord, email); `jobhunt digest` shows it here.
         """
         from jobhunt.cli.apply import (
@@ -415,7 +436,7 @@ def register(cli: click.Group) -> None:
             forms = None
             ids = []
             if not no_inspect and cfg.forms.max_per_run:
-                ids = threshold_jobs(conn, cfg.fit.priority_threshold, cfg.forms.max_per_run)
+                ids = threshold_jobs(conn, cfg.fit.ready_tier, cfg.forms.max_per_run)
             if not no_inspect and cfg.forms.max_per_run:  # 0 turns form reading off
                 # jobs with no posting text can't be judged until it's read
                 more = undescribed_jobs(
@@ -497,7 +518,7 @@ def register(cli: click.Group) -> None:
             else [],
         )
 
-    @agent_command(cli, "jobs", output=JobsList)
+    @agent_command(cli, "jobs", output=JobsList, render=_render_jobs)
     @click.option(
         "--status", default=None, help="Only this application status (e.g. New, Applied)."
     )
@@ -516,13 +537,14 @@ def register(cli: click.Group) -> None:
         limit: int,
         cursor: str | None,
     ) -> Result:
-        """List jobs by priority. Gated-out jobs always show why."""
-        paths, _ = _prepare(True)
+        """List jobs in rank order, each with why it ranks there. Gated-out jobs show why."""
+        paths, cfg = _prepare(True)
         where, params = [], []
         if gated:
             where.append("f.gate_status='failed'")
         elif not all_:
             where.append("j.live=1 AND coalesce(f.gate_status,'') != 'failed'")
+            where.append(hide_weak_clause(cfg.fit))
         if status:
             where.append("coalesce(a.status, ?) = ?")
             params += [machine().initial, machine().get(status).name]
@@ -530,13 +552,14 @@ def register(cli: click.Group) -> None:
             where.append("f.band=?")
             params.append(band)
         sql = (
-            "SELECT j.id, j.company, j.title, j.live, a.status, f.band, f.provisional, f.priority, "
+            "SELECT j.id, j.company, j.title, j.live, a.status, f.band, f.provisional, f.rank, "
+            "f.tier, f.rank_reason, "
             "f.gate_status, f.gate_reasons_json, json_extract(fs.details_json, '$.filter') AS "
             "form_filter, json_extract(fs.details_json, '$.filter_reasons') AS form_why "
             "FROM jobs j LEFT JOIN fits f ON f.job_id=j.id "
             "LEFT JOIN applications a ON a.job_id=j.id LEFT JOIN form_specs fs ON fs.job_id=j.id"
             + (" WHERE " + " AND ".join(where) if where else "")
-            + " ORDER BY coalesce(f.priority, -1) DESC, j.id"
+            + f" ORDER BY {RANK_ORDER}, j.id"
         )
         with open_store(paths.db, dry_run=True) as conn:
             rows = conn.execute(sql, params).fetchall()
@@ -549,7 +572,9 @@ def register(cli: click.Group) -> None:
                 status=r["status"] or machine().initial,
                 band=r["band"],
                 provisional=None if r["provisional"] is None else bool(r["provisional"]),
-                priority=r["priority"],
+                rank=r["rank"],
+                tier=r["tier"],
+                reason=r["rank_reason"],
                 gate_status=r["gate_status"],
                 gate_reasons=_reason_texts(r["gate_reasons_json"]),
                 live=bool(r["live"]),
@@ -767,7 +792,10 @@ def job_detail(conn: Any, job_id: int) -> dict[str, Any]:
         else {
             "band": f["band"],
             "provisional": bool(f["provisional"]),
-            "priority": f["priority"],
+            "rank": f["rank"],
+            "tier": f["tier"],
+            "rank_reason": f["rank_reason"],
+            "soft_matches": f["soft_matches"],
             "preference_score": f["preference_score"],
             "relevance": f["relevance"],
             "relevance_note": "recall relevance, not fit",
@@ -775,7 +803,6 @@ def job_detail(conn: Any, job_id: int) -> dict[str, Any]:
             "recalled": bool(f["recalled"]),
             "qualification": js(f["qualification_json"]),
             "preference": js(f["preference_json"]),
-            "priority_inputs": js(f["priority_json"]),
             "flags": js(f["flags_json"]) or [],
             "ai_disagreement": js(f["disagreement"]),
             "narrative": js(f["narrative_json"]),

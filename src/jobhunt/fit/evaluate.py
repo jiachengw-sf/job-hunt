@@ -3,7 +3,8 @@
 Reports per persona and macro-averaged:
   gates         accuracy, wrongly gated (the costly error), missed (kept but should be out)
   recall        nDCG@10 of the relevance ranking
-  final         nDCG@10 of the priority ranking
+  final         nDCG@10 of the final ranking; ``must_rank_above`` pairs it breaks; ties between
+                jobs labeled with different grades
   band          exact and within-one agreement with labeled bands
   requirements  extracted / assessed by code / accuracy where assessed
 """
@@ -59,14 +60,20 @@ def _load_persona(d: Path) -> tuple[Profile, Preferences, Answers]:
 def _insert_postings(
     conn: sqlite3.Connection, postings: list[dict[str, Any]], today: date
 ) -> dict[str, int]:
+    def day(n: int) -> str:
+        return (today - timedelta(days=n)).isoformat() + "T00:00:00Z"
+
     ids = {}
     for p in postings:
-        posted = (today - timedelta(days=p.get("posted_days_ago", 0))).isoformat() + "T00:00:00Z"
+        ago = p.get("posted_days_ago", 0)  # null: the source gives no date
+        posted = None if ago is None else day(ago)
+        first_seen = day(p.get("first_seen_days_ago", ago or 0))
+        deadline = day(-p["deadline_days"]) if p.get("deadline_days") is not None else None
         cur = conn.execute(
             "INSERT INTO jobs (dedupe_key, ats, company, title, locations_json, work_mode, "
             "employment_type, "
-            "description, pay_json, posted_at, first_seen, last_seen, live) VALUES "
-            "(?,?,?,?,?,?,?,?,?,?,?,?,1)",
+            "description, pay_json, posted_at, deadline, first_seen, last_seen, live) VALUES "
+            "(?,?,?,?,?,?,?,?,?,?,?,?,?,1)",
             (
                 f"eval:{p['id']}",
                 "eval",
@@ -78,8 +85,9 @@ def _insert_postings(
                 p.get("description", ""),
                 json.dumps(p["pay"]) if p.get("pay") else None,
                 posted,
-                posted,
-                posted,
+                deadline,
+                first_seen,
+                first_seen,
             ),
         )
         ids[p["id"]] = int(cur.lastrowid or 0)
@@ -98,8 +106,20 @@ def _match_req(key: str, rows: list[sqlite3.Row]) -> sqlite3.Row | None:
     return None
 
 
+def final_order(conn: sqlite3.Connection) -> list[int]:
+    """Job ids in the order jobhunt shows them."""
+    return [r["job_id"] for r in conn.execute(ORDER_SQL)]
+
+
+ORDER_SQL = "SELECT job_id FROM fits ORDER BY rank IS NULL, rank, job_id"
+
+
 def _persona_metrics(
-    conn: sqlite3.Connection, ids: dict[str, int], labels: dict[str, dict[str, Any]]
+    conn: sqlite3.Connection,
+    ids: dict[str, int],
+    labels: dict[str, dict[str, Any]],
+    above: list[list[str]] | None = None,
+    soft_above: list[list[str]] | None = None,
 ) -> dict[str, Any]:
     fits = {r["job_id"]: r for r in conn.execute("SELECT * FROM fits")}
     grade = {
@@ -125,8 +145,17 @@ def _persona_metrics(
                 missed_passed += 1
     # rankings
     by_rel = sorted(labels, key=lambda pid: (-(fits[ids[pid]]["relevance"] or -1), pid))
-    by_pri = sorted(labels, key=lambda pid: (-(fits[ids[pid]]["priority"] or 0), pid))
+    pos = {jid: i for i, jid in enumerate(final_order(conn))}
+    by_pri = sorted(labels, key=lambda pid: pos[ids[pid]])
     all_g = list(grade.values())
+    broken = [[a, b] for a, b in above or [] if pos[ids[a]] > pos[ids[b]]]
+    misordered = [[a, b] for a, b in soft_above or [] if pos[ids[a]] > pos[ids[b]]]
+    # jobs labeled with different grades that the ranking can't tell apart
+    shown = {pid: _sort_key(fits[ids[pid]]) for pid in labels if not labels[pid].get("gated")}
+    groups: dict[Any, set[int]] = {}
+    for pid, k in shown.items():
+        groups.setdefault(k, set()).add(grade[pid])
+    ties = sum(1 for gs in groups.values() if len(gs) > 1)
     # bands
     exact = within = compared = null_band = 0
     for pid, lab in labels.items():
@@ -171,6 +200,10 @@ def _persona_metrics(
         },
         "recall_ndcg10": ndcg_at([grade[p] for p in by_rel], all_g),
         "final_ndcg10": ndcg_at([grade[p] for p in by_pri], all_g),
+        "must_rank_above": {"checked": len(above or []), "broken": broken},
+        "known_misorders": misordered,
+        "mixed_grade_ties": ties,
+        "top10": sorted(shown, key=lambda p: pos[ids[p]])[:10],
         "band": {
             "compared": compared,
             "exact": round(exact / compared, 3) if compared else None,
@@ -186,6 +219,32 @@ def _persona_metrics(
     }
 
 
+def _sort_key(fit: sqlite3.Row) -> Any:
+    """What the ranking sorts on; equal keys are a tie that only the job id breaks."""
+    return (fit["tier"], fit["soft_matches"], fit["rank_reason"], fit["relevance"])
+
+
+def _load_list(set_dir: Path, names: str | list[str]) -> Any:
+    out: Any = None
+    for name in [names] if isinstance(names, str) else names:
+        part = yaml.safe_load((set_dir / name).read_text(encoding="utf-8"))
+        if out is None:
+            out = part
+        elif isinstance(part, list):
+            out += part
+        else:
+            for k, v in part.items():
+                out.setdefault(k, {}).update(v)
+    return out
+
+
+def _persona_watchlist(d: Path) -> Watchlist:
+    path = d / "watchlist.yaml"
+    if not path.exists():
+        return Watchlist()
+    return Watchlist.model_validate(yaml.safe_load(path.read_text("utf-8")) or {})
+
+
 def _mean(vals: list[float | None]) -> float | None:
     xs = [v for v in vals if v is not None]
     return round(sum(xs) / len(xs), 3) if xs else None
@@ -195,8 +254,10 @@ def evaluate_set(set_dir: Path, cfg: Config | None = None) -> dict[str, Any]:
     manifest = yaml.safe_load((set_dir / "manifest.yaml").read_text(encoding="utf-8"))
     today = date.fromisoformat(str(manifest["today"]))
     now = f"{today.isoformat()}T12:00:00Z"
-    postings = yaml.safe_load((set_dir / manifest["postings"]).read_text(encoding="utf-8"))
-    labels = yaml.safe_load((set_dir / manifest["labels"]).read_text(encoding="utf-8"))
+    postings = _load_list(set_dir, manifest["postings"])
+    labels = _load_list(set_dir, manifest["labels"])
+    order_checks = manifest.get("must_rank_above") or {}
+    soft_checks = manifest.get("known_misorders") or {}
     personas_dir = (set_dir / manifest["personas_dir"]).resolve()
     if cfg is None:
         with tempfile.TemporaryDirectory() as td:
@@ -212,7 +273,8 @@ def evaluate_set(set_dir: Path, cfg: Config | None = None) -> dict[str, Any]:
         migrate(conn)
         ids = _insert_postings(conn, postings, today)
         missing = sorted(set(ids) - set(plabels))
-        inp = Inputs(profile, prefs, answers, Watchlist(), cfg, today, now)
+        watch = _persona_watchlist(personas_dir / persona)
+        inp = Inputs(profile, prefs, answers, watch, cfg, today, now)
         with tempfile.TemporaryDirectory() as td:
             run_match(
                 conn,
@@ -223,7 +285,14 @@ def evaluate_set(set_dir: Path, cfg: Config | None = None) -> dict[str, Any]:
                 embed_note=None,
                 dry_run=True,
             )
-        per[persona] = _persona_metrics(conn, ids, plabels)
+        per[persona] = _persona_metrics(
+            conn, ids, plabels, order_checks.get(persona), soft_checks.get(persona)
+        )
+        per[persona]["top10_titles"] = [
+            f"{pid} {next(p['company'] for p in postings if p['id'] == pid)}: "
+            f"{next(p['title'] for p in postings if p['id'] == pid)}"
+            for pid in per[persona]["top10"]
+        ]
         if missing:
             per[persona]["unlabeled"] = missing
         conn.close()
@@ -232,6 +301,8 @@ def evaluate_set(set_dir: Path, cfg: Config | None = None) -> dict[str, Any]:
         "wrongly_gated": sum(p["gates"]["wrongly_gated"] for p in per.values()),
         "recall_ndcg10": _mean([p["recall_ndcg10"] for p in per.values()]),
         "final_ndcg10": _mean([p["final_ndcg10"] for p in per.values()]),
+        "must_rank_above_broken": sum(len(p["must_rank_above"]["broken"]) for p in per.values()),
+        "mixed_grade_ties": sum(p["mixed_grade_ties"] for p in per.values()),
         "band_exact": _mean([p["band"]["exact"] for p in per.values()]),
         "band_within_one": _mean([p["band"]["within_one"] for p in per.values()]),
         "requirement_accuracy": _mean(
@@ -271,9 +342,9 @@ def evaluate_personal(paths: Paths, cfg: Config) -> dict[str, Any]:
     from jobhunt.store import open_store
 
     with open_store(paths.db, dry_run=True) as conn:
-        rows = {r["job_id"]: r for r in conn.execute("SELECT job_id, priority, band FROM fits")}
+        rows = {r["job_id"]: r for r in conn.execute("SELECT job_id, rank, band FROM fits")}
     known = [j for j in labels if j in rows]
-    by_pri = sorted(known, key=lambda j: (-(rows[j]["priority"] or 0), j))
+    by_pri = sorted(known, key=lambda j: (rows[j]["rank"] is None, rows[j]["rank"] or 0, j))
     by_band: dict[str, list[int]] = {}
     for j in known:
         by_band.setdefault(rows[j]["band"] or "none", []).append(labels[j])

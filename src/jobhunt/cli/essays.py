@@ -24,6 +24,7 @@ from jobhunt.drafts.grounding import edit_ratio, job_sources
 from jobhunt.envelope import paginate
 from jobhunt.errors import NotFound, ValidationFailed
 from jobhunt.fit.jobview import JobView, load_jobs
+from jobhunt.fit.rank import RANK_ORDER
 from jobhunt.ingest.verify import clean_text
 from jobhunt.store import open_store
 
@@ -46,7 +47,8 @@ class EssayJob(BaseModel):
     company: str
     title: str
     deadline: str | None
-    priority: float | None
+    rank: int | None = None
+    reason: str | None = None
     fields: list[EssayField]
 
 
@@ -129,15 +131,16 @@ def register(cli: click.Group) -> None:
     @click.option("--limit", type=int, default=10, help="Jobs per page.")
     @click.option("--cursor", default=None, help="Page cursor from a previous call.")
     def list_cmd(limit: int, cursor: str | None) -> Result:
-        """Essay jobs by priority, with each prompt, its limit and its draft status."""
+        """Essay jobs in rank order, with each prompt, its limit and its draft status."""
         paths, _ = _prepare(True)
         with open_store(paths.db, dry_run=True) as conn:
             rows = conn.execute(
-                "SELECT j.id, j.company, j.title, j.deadline, f.priority FROM form_specs fs "
+                "SELECT j.id, j.company, j.title, j.deadline, f.rank, f.rank_reason "
+                "FROM form_specs fs "
                 "JOIN jobs j ON j.id=fs.job_id LEFT JOIN fits f ON f.job_id=j.id "
                 "LEFT JOIN applications a ON a.job_id=j.id WHERE fs.class='essay' AND j.live=1 "
                 "AND coalesce(a.status,'New') IN ('New','Prefilled') "
-                "ORDER BY coalesce(f.priority,0) DESC, j.id"
+                f"ORDER BY {RANK_ORDER}, j.id"
             ).fetchall()
             chunk, page = paginate(rows, cursor, limit)
             jobs = [
@@ -146,7 +149,8 @@ def register(cli: click.Group) -> None:
                     company=r["company"],
                     title=r["title"],
                     deadline=r["deadline"],
-                    priority=r["priority"],
+                    rank=r["rank"],
+                    reason=r["rank_reason"],
                     fields=_fields(conn, paths.work, r["id"]),
                 )
                 for r in chunk

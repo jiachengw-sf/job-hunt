@@ -1,0 +1,1124 @@
+# Ranking cases for the fit eval set: title-only rows like Simplify's, watchlist jobs, and the
+# two ranking failures found in the 2026-11-06 system check. Every company here is fictional.
+# posted_days_ago: null means the source gives no date (first_seen_days_ago says when jobhunt
+# first saw it); deadline_days is days from manifest `today`.
+
+# --- a watchlist company: a fresh sales job vs an evergreen internship (the Stripe case). Both
+# carry the full-length text live postings have; long text is what loses to title-only rows. ---
+
+- id: r01
+  company: Quillstack
+  title: Account Executive
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 1
+  description: |
+    Quillstack is hiring an Account Executive to grow our mid-market book of business.
+    You will own the full sales cycle from prospecting to close and partner with solutions engineers.
+    Requirements
+    - 2+ years of quota-carrying sales experience
+    - Excellent written and verbal communication
+    - Experience with Salesforce
+    
+    About Quillstack
+    Quillstack is a financial infrastructure platform for businesses. Millions of companies, from
+    the world's largest enterprises to the most ambitious startups, use Quillstack to accept
+    payments, grow their revenue, and accelerate new business opportunities. Our mission is to
+    increase the GDP of the internet, and we have a staggering amount of work ahead.
+    Who we are looking for
+    We look for people who are rigorous, curious and kind, who take ownership of outcomes and who
+    want to grow with a fast-moving company. You will collaborate with people across product,
+    design, operations, legal and finance in offices around the world.
+    In-office expectations
+    Quillstack employees in most locations are currently expected to spend at least 50% of the
+    time in a given month in their local office or with users. This hits a balance between
+    bringing people together for in-person collaboration and learning from each other, while
+    supporting flexibility about how to do this in a way that makes sense for individuals and
+    their teams.
+    Pay and benefits
+    The annual US base salary range for this role is listed by location. This salary range may
+    be inclusive of several career levels and will be narrowed during the interview process
+    based on a number of factors, including the candidate's experience, qualifications, and
+    location. Applicants interested in this role and who are not located in the US may request
+    the annual salary range for their location during the interview process. Specific benefits
+    and details about what compensation is included in the salary range listed above will vary
+    depending on the applicant's location and can be discussed in more detail during the
+    interview process. Benefits and other compensation include equity, health insurance,
+    retirement plans, wellness stipends and paid parental leave.
+    Equal opportunity
+    Quillstack is proud to be an equal opportunity employer. We are committed to providing equal
+    employment opportunity regardless of race, color, ancestry, religion, sex, national origin,
+    sexual orientation, age, citizenship, marital status, disability, gender identity or veteran
+    status. We also consider qualified applicants regardless of criminal histories, consistent
+    with legal requirements. If you need assistance or an accommodation due to a disability, you
+    may contact us. We will never ask for payment during the hiring process.
+
+- id: r02
+  company: Quillstack
+  title: Software Engineer, Intern
+  locations: ["San Francisco, CA", "Seattle, WA"]
+  employment_type: Intern
+  posted_days_ago: 400
+  description: |
+    Quillstack hires software engineering interns throughout the year. Interns join a product team,
+    write production code in Python, Java or Go, and ship to users with a mentor.
+    Requirements
+    - Currently pursuing a degree in Computer Science or a related field
+    - Experience with Python, Java, or Go
+    - Familiarity with Git
+    
+    About Quillstack
+    Quillstack is a financial infrastructure platform for businesses. Millions of companies, from
+    the world's largest enterprises to the most ambitious startups, use Quillstack to accept
+    payments, grow their revenue, and accelerate new business opportunities. Our mission is to
+    increase the GDP of the internet, and we have a staggering amount of work ahead.
+    Who we are looking for
+    We look for people who are rigorous, curious and kind, who take ownership of outcomes and who
+    want to grow with a fast-moving company. You will collaborate with people across product,
+    design, operations, legal and finance in offices around the world.
+    In-office expectations
+    Quillstack employees in most locations are currently expected to spend at least 50% of the
+    time in a given month in their local office or with users. This hits a balance between
+    bringing people together for in-person collaboration and learning from each other, while
+    supporting flexibility about how to do this in a way that makes sense for individuals and
+    their teams.
+    Pay and benefits
+    The annual US base salary range for this role is listed by location. This salary range may
+    be inclusive of several career levels and will be narrowed during the interview process
+    based on a number of factors, including the candidate's experience, qualifications, and
+    location. Applicants interested in this role and who are not located in the US may request
+    the annual salary range for their location during the interview process. Specific benefits
+    and details about what compensation is included in the salary range listed above will vary
+    depending on the applicant's location and can be discussed in more detail during the
+    interview process. Benefits and other compensation include equity, health insurance,
+    retirement plans, wellness stipends and paid parental leave.
+    Equal opportunity
+    Quillstack is proud to be an equal opportunity employer. We are committed to providing equal
+    employment opportunity regardless of race, color, ancestry, religion, sex, national origin,
+    sexual orientation, age, citizenship, marital status, disability, gender identity or veteran
+    status. We also consider qualified applicants regardless of criminal histories, consistent
+    with legal requirements. If you need assistance or an accommodation due to a disability, you
+    may contact us. We will never ask for payment during the hiring process.
+
+# --- a watchlist company whose jobs have no date and no text (the Ramp all-tied case) ---
+
+- id: r03
+  company: Ledgerline Financial
+  title: Data Analyst, New Grad
+  locations: ["New York, NY"]
+  posted_days_ago: null
+  first_seen_days_ago: 3
+
+- id: r04
+  company: Ledgerline Financial
+  title: Analytics Engineer
+  locations: ["New York, NY"]
+  posted_days_ago: null
+  first_seen_days_ago: 3
+
+- id: r05
+  company: Ledgerline Financial
+  title: Business Operations Associate
+  locations: ["New York, NY"]
+  posted_days_ago: null
+  first_seen_days_ago: 3
+
+- id: r06
+  company: Ledgerline Financial
+  title: Software Engineer, New Grad
+  locations: ["New York, NY"]
+  posted_days_ago: null
+  first_seen_days_ago: 3
+
+- id: r07
+  company: Ledgerline Financial
+  title: Account Executive, Mid-Market
+  locations: ["New York, NY"]
+  posted_days_ago: null
+  first_seen_days_ago: 3
+
+# --- internships with and without an application deadline ---
+
+- id: r08
+  company: Copperfield Transit
+  title: Software Engineering Intern, Summer 2027
+  locations: ["Chicago, IL"]
+  work_mode: hybrid
+  employment_type: Intern
+  posted_days_ago: 20
+  deadline_days: 10
+  description: |
+    Build trip-planning tools used by riders across the city. Applications close on the deadline.
+    Requirements
+    - Pursuing a Bachelor's degree in Computer Science
+    - Experience with Python or Java
+
+- id: r09
+  company: Marlowe Learning
+  title: Software Engineering Intern, Summer 2027
+  locations: ["Chicago, IL"]
+  work_mode: hybrid
+  employment_type: Intern
+  posted_days_ago: 2
+  description: |
+    Build classroom tools for teachers. Interns work in Python and React with a mentor.
+    Requirements
+    - Pursuing a Bachelor's degree in Computer Science
+    - Experience with Python or Java
+
+# --- title-only rows, like most Simplify listings ---
+
+- id: r10
+  company: Aldermoor
+  title: Software Engineer Intern
+  locations: ["Chicago, IL"]
+  posted_days_ago: 0
+
+- id: r11
+  company: Basaltline
+  title: Software Engineering Intern - Summer 2027
+  locations: ["New York, NY"]
+  posted_days_ago: 3
+
+- id: r12
+  company: Cobaltwing
+  title: SWE Intern
+  locations: ["Boston, MA"]
+  posted_days_ago: 6
+
+- id: r13
+  company: Dunmere
+  title: Software Developer Intern
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 9
+
+- id: r14
+  company: Emberlake
+  title: Backend Engineering Intern
+  locations: ["Austin, TX"]
+  posted_days_ago: 12
+
+- id: r15
+  company: Foxglove Systems
+  title: Software Engineer Intern (Summer 2027)
+  locations: ["Seattle, WA"]
+  posted_days_ago: 15
+
+- id: r16
+  company: Greyheron
+  title: Full Stack Engineering Intern
+  locations: ["Chicago, IL"]
+  posted_days_ago: 18
+
+- id: r17
+  company: Hollowpine
+  title: Data Engineering Intern
+  locations: ["New York, NY"]
+  posted_days_ago: 2
+
+- id: r18
+  company: Ironbark
+  title: Data Science Intern
+  locations: ["Boston, MA"]
+  posted_days_ago: 5
+
+- id: r19
+  company: Juniper Row
+  title: Data Platform Intern
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 8
+
+- id: r20
+  company: Kelpforge
+  title: Machine Learning Intern
+  locations: ["Austin, TX"]
+  posted_days_ago: 11
+
+- id: r21
+  company: Larkspur Data
+  title: ML Engineer Intern
+  locations: ["Seattle, WA"]
+  posted_days_ago: 14
+
+- id: r22
+  company: Marrowstone
+  title: Machine Learning Engineering Intern
+  locations: ["Chicago, IL"]
+  posted_days_ago: 17
+
+- id: r23
+  company: Nettlefield
+  title: Data Analyst Intern
+  locations: ["New York, NY"]
+  posted_days_ago: 1
+
+- id: r24
+  company: Oakhaven
+  title: Business Analyst Intern
+  locations: ["Boston, MA"]
+  posted_days_ago: 4
+
+- id: r25
+  company: Pebblecreek
+  title: Marketing Intern
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 7
+
+- id: r26
+  company: Quartzridge
+  title: Finance Intern
+  locations: ["Austin, TX"]
+  posted_days_ago: 10
+
+- id: r27
+  company: Rookwood
+  title: Human Resources Intern
+  locations: ["Seattle, WA"]
+  posted_days_ago: 13
+
+- id: r28
+  company: Saffronvale
+  title: Mechanical Engineering Intern
+  locations: ["Chicago, IL"]
+  posted_days_ago: 16
+
+- id: r29
+  company: Thistledown
+  title: Product Design Intern
+  locations: ["New York, NY"]
+  posted_days_ago: 0
+
+- id: r30
+  company: Umberfall
+  title: Sales Intern
+  locations: ["Boston, MA"]
+  posted_days_ago: 3
+
+- id: r31
+  company: Vantablue
+  title: Communications Intern
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 6
+
+- id: r32
+  company: Willowmere
+  title: Supply Chain Intern
+  locations: ["Austin, TX"]
+  posted_days_ago: 9
+
+- id: r33
+  company: Yarrowby
+  title: Data Analyst, New Grad
+  locations: ["Seattle, WA"]
+  posted_days_ago: 12
+
+- id: r34
+  company: Zephyrine
+  title: Business Intelligence Analyst, New Grad
+  locations: ["Chicago, IL"]
+  posted_days_ago: 15
+
+- id: r35
+  company: Ashcombe
+  title: Analytics Analyst, New Grad 2027
+  locations: ["New York, NY"]
+  posted_days_ago: 18
+
+- id: r36
+  company: Briarwood Labs
+  title: Data Analyst
+  locations: ["Boston, MA"]
+  posted_days_ago: 2
+
+- id: r37
+  company: Cindertrail
+  title: Business Intelligence Analyst
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 5
+
+- id: r38
+  company: Dovecote
+  title: Reporting Analyst
+  locations: ["Austin, TX"]
+  posted_days_ago: 8
+
+- id: r39
+  company: Elderglen
+  title: Product Analyst
+  locations: ["Seattle, WA"]
+  posted_days_ago: 11
+
+- id: r40
+  company: Aldermoor
+  title: Senior Backend Engineer
+  locations: ["Remote - US"]
+  posted_days_ago: 14
+
+- id: r41
+  company: Basaltline
+  title: Senior Platform Engineer
+  locations: ["Remote - US"]
+  posted_days_ago: 17
+
+- id: r42
+  company: Cobaltwing
+  title: Staff Software Engineer, Infrastructure
+  locations: ["Remote - US"]
+  posted_days_ago: 1
+
+- id: r43
+  company: Dunmere
+  title: Senior Software Engineer, Distributed Systems
+  locations: ["Remote - US"]
+  posted_days_ago: 4
+
+- id: r44
+  company: Emberlake
+  title: Backend Engineer
+  locations: ["Austin, TX"]
+  posted_days_ago: 7
+
+- id: r45
+  company: Foxglove Systems
+  title: Platform Engineer
+  locations: ["Seattle, WA"]
+  posted_days_ago: 10
+
+- id: r46
+  company: Greyheron
+  title: Infrastructure Engineer
+  locations: ["Chicago, IL"]
+  posted_days_ago: 13
+
+- id: r47
+  company: Hollowpine
+  title: Account Executive
+  locations: ["New York, NY"]
+  posted_days_ago: 16
+
+- id: r48
+  company: Ironbark
+  title: Recruiter
+  locations: ["Boston, MA"]
+  posted_days_ago: 0
+
+- id: r49
+  company: Juniper Row
+  title: Customer Success Manager
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 3
+
+- id: r50
+  company: Kelpforge
+  title: Sales Development Representative
+  locations: ["Austin, TX"]
+  posted_days_ago: 6
+
+- id: r51
+  company: Larkspur Data
+  title: Office Coordinator
+  locations: ["Seattle, WA"]
+  posted_days_ago: 9
+
+- id: r52
+  company: Marrowstone
+  title: Registered Nurse
+  locations: ["Chicago, IL"]
+  posted_days_ago: 12
+
+- id: r53
+  company: Nettlefield
+  title: Accountant
+  locations: ["New York, NY"]
+  posted_days_ago: 15
+
+- id: r54
+  company: Oakhaven
+  title: Account Manager
+  locations: ["Boston, MA"]
+  posted_days_ago: 18
+
+- id: r55
+  company: Pebblecreek
+  title: Paralegal
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 2
+
+- id: r56
+  company: Quartzridge
+  title: Store Associate
+  locations: ["Austin, TX"]
+  posted_days_ago: 5
+
+- id: r57
+  company: Rookwood
+  title: Field Marketing Manager
+  locations: ["Seattle, WA"]
+  posted_days_ago: 8
+
+- id: r58
+  company: Saffronvale
+  title: Technical Recruiter
+  locations: ["Chicago, IL"]
+  posted_days_ago: 11
+
+# --- bulk title-only rows: live lists hold thousands, enough to push recall past top K ---
+
+- id: b001
+  company: Aldermoor Labs
+  title: Software Engineer Intern
+  locations: ["Chicago, IL"]
+  posted_days_ago: 0
+
+- id: b002
+  company: Basaltline Labs
+  title: Software Engineering Intern
+  locations: ["New York, NY"]
+  posted_days_ago: 7
+
+- id: b003
+  company: Cobaltwing Labs
+  title: Software Developer Intern
+  locations: ["Boston, MA"]
+  posted_days_ago: 14
+
+- id: b004
+  company: Dunmere Labs
+  title: Data Engineering Intern
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 21
+
+- id: b005
+  company: Emberlake Labs
+  title: Machine Learning Intern
+  locations: ["Austin, TX"]
+  posted_days_ago: 5
+
+- id: b006
+  company: Foxglove Systems Labs
+  title: Backend Engineering Intern
+  locations: ["Seattle, WA"]
+  posted_days_ago: 12
+
+- id: b007
+  company: Greyheron Labs
+  title: Software Engineer Intern
+  locations: ["Chicago, IL"]
+  posted_days_ago: 19
+
+- id: b008
+  company: Hollowpine Labs
+  title: Software Engineering Intern
+  locations: ["New York, NY"]
+  posted_days_ago: 3
+
+- id: b009
+  company: Ironbark Labs
+  title: Software Developer Intern
+  locations: ["Boston, MA"]
+  posted_days_ago: 10
+
+- id: b010
+  company: Juniper Row Labs
+  title: Data Engineering Intern
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 17
+
+- id: b011
+  company: Kelpforge Labs
+  title: Machine Learning Intern
+  locations: ["Austin, TX"]
+  posted_days_ago: 1
+
+- id: b012
+  company: Larkspur Data Labs
+  title: Backend Engineering Intern
+  locations: ["Seattle, WA"]
+  posted_days_ago: 8
+
+- id: b013
+  company: Marrowstone Labs
+  title: Software Engineer Intern
+  locations: ["Chicago, IL"]
+  posted_days_ago: 15
+
+- id: b014
+  company: Nettlefield Labs
+  title: Software Engineering Intern
+  locations: ["New York, NY"]
+  posted_days_ago: 22
+
+- id: b015
+  company: Oakhaven Labs
+  title: Software Developer Intern
+  locations: ["Boston, MA"]
+  posted_days_ago: 6
+
+- id: b016
+  company: Pebblecreek Labs
+  title: Data Engineering Intern
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 13
+
+- id: b017
+  company: Quartzridge Labs
+  title: Machine Learning Intern
+  locations: ["Austin, TX"]
+  posted_days_ago: 20
+
+- id: b018
+  company: Rookwood Labs
+  title: Backend Engineering Intern
+  locations: ["Seattle, WA"]
+  posted_days_ago: 4
+
+- id: b019
+  company: Saffronvale Labs
+  title: Software Engineer Intern
+  locations: ["Chicago, IL"]
+  posted_days_ago: 11
+
+- id: b020
+  company: Thistledown Labs
+  title: Software Engineering Intern
+  locations: ["New York, NY"]
+  posted_days_ago: 18
+
+- id: b021
+  company: Umberfall Labs
+  title: Software Developer Intern
+  locations: ["Boston, MA"]
+  posted_days_ago: 2
+
+- id: b022
+  company: Vantablue Labs
+  title: Data Engineering Intern
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 9
+
+- id: b023
+  company: Willowmere Labs
+  title: Machine Learning Intern
+  locations: ["Austin, TX"]
+  posted_days_ago: 16
+
+- id: b024
+  company: Yarrowby Labs
+  title: Backend Engineering Intern
+  locations: ["Seattle, WA"]
+  posted_days_ago: 0
+
+- id: b025
+  company: Zephyrine Labs
+  title: Software Engineer Intern
+  locations: ["Chicago, IL"]
+  posted_days_ago: 7
+
+- id: b026
+  company: Ashcombe Labs
+  title: Software Engineering Intern
+  locations: ["New York, NY"]
+  posted_days_ago: 14
+
+- id: b027
+  company: Briarwood Labs Labs
+  title: Software Developer Intern
+  locations: ["Boston, MA"]
+  posted_days_ago: 21
+
+- id: b028
+  company: Cindertrail Labs
+  title: Data Engineering Intern
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 5
+
+- id: b029
+  company: Dovecote Labs
+  title: Machine Learning Intern
+  locations: ["Austin, TX"]
+  posted_days_ago: 12
+
+- id: b030
+  company: Elderglen Labs
+  title: Backend Engineering Intern
+  locations: ["Seattle, WA"]
+  posted_days_ago: 19
+
+- id: b031
+  company: Aldermoor Works
+  title: Software Engineer Intern
+  locations: ["Chicago, IL"]
+  posted_days_ago: 3
+
+- id: b032
+  company: Basaltline Works
+  title: Software Engineering Intern
+  locations: ["New York, NY"]
+  posted_days_ago: 10
+
+- id: b033
+  company: Cobaltwing Works
+  title: Software Developer Intern
+  locations: ["Boston, MA"]
+  posted_days_ago: 17
+
+- id: b034
+  company: Dunmere Works
+  title: Data Engineering Intern
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 1
+
+- id: b035
+  company: Emberlake Works
+  title: Machine Learning Intern
+  locations: ["Austin, TX"]
+  posted_days_ago: 8
+
+- id: b036
+  company: Foxglove Systems Works
+  title: Backend Engineering Intern
+  locations: ["Seattle, WA"]
+  posted_days_ago: 15
+
+- id: b037
+  company: Greyheron Works
+  title: Software Engineer Intern
+  locations: ["Chicago, IL"]
+  posted_days_ago: 22
+
+- id: b038
+  company: Hollowpine Works
+  title: Software Engineering Intern
+  locations: ["New York, NY"]
+  posted_days_ago: 6
+
+- id: b039
+  company: Ironbark Works
+  title: Software Developer Intern
+  locations: ["Boston, MA"]
+  posted_days_ago: 13
+
+- id: b040
+  company: Juniper Row Works
+  title: Data Engineering Intern
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 20
+
+- id: b041
+  company: Kelpforge Works
+  title: Machine Learning Intern
+  locations: ["Austin, TX"]
+  posted_days_ago: 4
+
+- id: b042
+  company: Larkspur Data Works
+  title: Backend Engineering Intern
+  locations: ["Seattle, WA"]
+  posted_days_ago: 11
+
+- id: b043
+  company: Marrowstone Works
+  title: Software Engineer Intern
+  locations: ["Chicago, IL"]
+  posted_days_ago: 18
+
+- id: b044
+  company: Nettlefield Works
+  title: Software Engineering Intern
+  locations: ["New York, NY"]
+  posted_days_ago: 2
+
+- id: b045
+  company: Oakhaven Works
+  title: Software Developer Intern
+  locations: ["Boston, MA"]
+  posted_days_ago: 9
+
+- id: b046
+  company: Pebblecreek Works
+  title: Data Engineering Intern
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 16
+
+- id: b047
+  company: Quartzridge Works
+  title: Machine Learning Intern
+  locations: ["Austin, TX"]
+  posted_days_ago: 0
+
+- id: b048
+  company: Rookwood Works
+  title: Backend Engineering Intern
+  locations: ["Seattle, WA"]
+  posted_days_ago: 7
+
+- id: b049
+  company: Saffronvale Works
+  title: Software Engineer Intern
+  locations: ["Chicago, IL"]
+  posted_days_ago: 14
+
+- id: b050
+  company: Thistledown Works
+  title: Software Engineering Intern
+  locations: ["New York, NY"]
+  posted_days_ago: 21
+
+- id: b051
+  company: Umberfall Works
+  title: Software Developer Intern
+  locations: ["Boston, MA"]
+  posted_days_ago: 5
+
+- id: b052
+  company: Vantablue Works
+  title: Data Engineering Intern
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 12
+
+- id: b053
+  company: Willowmere Works
+  title: Machine Learning Intern
+  locations: ["Austin, TX"]
+  posted_days_ago: 19
+
+- id: b054
+  company: Yarrowby Works
+  title: Backend Engineering Intern
+  locations: ["Seattle, WA"]
+  posted_days_ago: 3
+
+- id: b055
+  company: Zephyrine Works
+  title: Software Engineer Intern
+  locations: ["Chicago, IL"]
+  posted_days_ago: 10
+
+- id: b056
+  company: Ashcombe Works
+  title: Software Engineering Intern
+  locations: ["New York, NY"]
+  posted_days_ago: 17
+
+- id: b057
+  company: Briarwood Labs Works
+  title: Software Developer Intern
+  locations: ["Boston, MA"]
+  posted_days_ago: 1
+
+- id: b058
+  company: Cindertrail Works
+  title: Data Engineering Intern
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 8
+
+- id: b059
+  company: Dovecote Works
+  title: Machine Learning Intern
+  locations: ["Austin, TX"]
+  posted_days_ago: 15
+
+- id: b060
+  company: Elderglen Works
+  title: Backend Engineering Intern
+  locations: ["Seattle, WA"]
+  posted_days_ago: 22
+
+- id: b061
+  company: Aldermoor Group
+  title: Data Analyst, New Grad
+  locations: ["Chicago, IL"]
+  posted_days_ago: 6
+
+- id: b062
+  company: Basaltline Group
+  title: Business Intelligence Analyst, New Grad
+  locations: ["New York, NY"]
+  posted_days_ago: 13
+
+- id: b063
+  company: Cobaltwing Group
+  title: Analytics Analyst, New Grad
+  locations: ["Boston, MA"]
+  posted_days_ago: 20
+
+- id: b064
+  company: Dunmere Group
+  title: Data Analyst I, New Grad
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 4
+
+- id: b065
+  company: Emberlake Group
+  title: Business Analyst, New Grad
+  locations: ["Austin, TX"]
+  posted_days_ago: 11
+
+- id: b066
+  company: Foxglove Systems Group
+  title: Data Analyst, New Grad
+  locations: ["Seattle, WA"]
+  posted_days_ago: 18
+
+- id: b067
+  company: Greyheron Group
+  title: Business Intelligence Analyst, New Grad
+  locations: ["Chicago, IL"]
+  posted_days_ago: 2
+
+- id: b068
+  company: Hollowpine Group
+  title: Analytics Analyst, New Grad
+  locations: ["New York, NY"]
+  posted_days_ago: 9
+
+- id: b069
+  company: Ironbark Group
+  title: Data Analyst I, New Grad
+  locations: ["Boston, MA"]
+  posted_days_ago: 16
+
+- id: b070
+  company: Juniper Row Group
+  title: Business Analyst, New Grad
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 0
+
+- id: b071
+  company: Kelpforge Group
+  title: Data Analyst, New Grad
+  locations: ["Austin, TX"]
+  posted_days_ago: 7
+
+- id: b072
+  company: Larkspur Data Group
+  title: Business Intelligence Analyst, New Grad
+  locations: ["Seattle, WA"]
+  posted_days_ago: 14
+
+- id: b073
+  company: Marrowstone Group
+  title: Analytics Analyst, New Grad
+  locations: ["Chicago, IL"]
+  posted_days_ago: 21
+
+- id: b074
+  company: Nettlefield Group
+  title: Data Analyst I, New Grad
+  locations: ["New York, NY"]
+  posted_days_ago: 5
+
+- id: b075
+  company: Oakhaven Group
+  title: Business Analyst, New Grad
+  locations: ["Boston, MA"]
+  posted_days_ago: 12
+
+- id: b076
+  company: Pebblecreek Group
+  title: Data Analyst, New Grad
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 19
+
+- id: b077
+  company: Quartzridge Group
+  title: Business Intelligence Analyst, New Grad
+  locations: ["Austin, TX"]
+  posted_days_ago: 3
+
+- id: b078
+  company: Rookwood Group
+  title: Analytics Analyst, New Grad
+  locations: ["Seattle, WA"]
+  posted_days_ago: 10
+
+- id: b079
+  company: Saffronvale Group
+  title: Data Analyst I, New Grad
+  locations: ["Chicago, IL"]
+  posted_days_ago: 17
+
+- id: b080
+  company: Thistledown Group
+  title: Business Analyst, New Grad
+  locations: ["New York, NY"]
+  posted_days_ago: 1
+
+- id: b081
+  company: Umberfall Group
+  title: Data Analyst, New Grad
+  locations: ["Boston, MA"]
+  posted_days_ago: 8
+
+- id: b082
+  company: Vantablue Group
+  title: Business Intelligence Analyst, New Grad
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 15
+
+- id: b083
+  company: Willowmere Group
+  title: Analytics Analyst, New Grad
+  locations: ["Austin, TX"]
+  posted_days_ago: 22
+
+- id: b084
+  company: Yarrowby Group
+  title: Data Analyst I, New Grad
+  locations: ["Seattle, WA"]
+  posted_days_ago: 6
+
+- id: b085
+  company: Zephyrine Group
+  title: Business Analyst, New Grad
+  locations: ["Chicago, IL"]
+  posted_days_ago: 13
+
+- id: b086
+  company: Ashcombe Group
+  title: Data Analyst, New Grad
+  locations: ["New York, NY"]
+  posted_days_ago: 20
+
+- id: b087
+  company: Briarwood Labs Group
+  title: Business Intelligence Analyst, New Grad
+  locations: ["Boston, MA"]
+  posted_days_ago: 4
+
+- id: b088
+  company: Cindertrail Group
+  title: Analytics Analyst, New Grad
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 11
+
+- id: b089
+  company: Dovecote Group
+  title: Data Analyst I, New Grad
+  locations: ["Austin, TX"]
+  posted_days_ago: 18
+
+- id: b090
+  company: Elderglen Group
+  title: Business Analyst, New Grad
+  locations: ["Seattle, WA"]
+  posted_days_ago: 2
+
+- id: b091
+  company: Aldermoor Systems
+  title: Data Analyst, New Grad
+  locations: ["Chicago, IL"]
+  posted_days_ago: 9
+
+- id: b092
+  company: Basaltline Systems
+  title: Business Intelligence Analyst, New Grad
+  locations: ["New York, NY"]
+  posted_days_ago: 16
+
+- id: b093
+  company: Cobaltwing Systems
+  title: Analytics Analyst, New Grad
+  locations: ["Boston, MA"]
+  posted_days_ago: 0
+
+- id: b094
+  company: Dunmere Systems
+  title: Data Analyst I, New Grad
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 7
+
+- id: b095
+  company: Emberlake Systems
+  title: Business Analyst, New Grad
+  locations: ["Austin, TX"]
+  posted_days_ago: 14
+
+- id: b096
+  company: Foxglove Systems Systems
+  title: Data Analyst, New Grad
+  locations: ["Seattle, WA"]
+  posted_days_ago: 21
+
+- id: b097
+  company: Greyheron Systems
+  title: Business Intelligence Analyst, New Grad
+  locations: ["Chicago, IL"]
+  posted_days_ago: 5
+
+- id: b098
+  company: Hollowpine Systems
+  title: Analytics Analyst, New Grad
+  locations: ["New York, NY"]
+  posted_days_ago: 12
+
+- id: b099
+  company: Ironbark Systems
+  title: Data Analyst I, New Grad
+  locations: ["Boston, MA"]
+  posted_days_ago: 19
+
+- id: b100
+  company: Juniper Row Systems
+  title: Business Analyst, New Grad
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 3
+
+- id: b101
+  company: Kelpforge Systems
+  title: Data Analyst, New Grad
+  locations: ["Austin, TX"]
+  posted_days_ago: 10
+
+- id: b102
+  company: Larkspur Data Systems
+  title: Business Intelligence Analyst, New Grad
+  locations: ["Seattle, WA"]
+  posted_days_ago: 17
+
+- id: b103
+  company: Marrowstone Systems
+  title: Analytics Analyst, New Grad
+  locations: ["Chicago, IL"]
+  posted_days_ago: 1
+
+- id: b104
+  company: Nettlefield Systems
+  title: Data Analyst I, New Grad
+  locations: ["New York, NY"]
+  posted_days_ago: 8
+
+- id: b105
+  company: Oakhaven Systems
+  title: Business Analyst, New Grad
+  locations: ["Boston, MA"]
+  posted_days_ago: 15
+
+- id: b106
+  company: Pebblecreek Systems
+  title: Data Analyst, New Grad
+  locations: ["San Francisco, CA"]
+  posted_days_ago: 22
+
+- id: b107
+  company: Quartzridge Systems
+  title: Business Intelligence Analyst, New Grad
+  locations: ["Austin, TX"]
+  posted_days_ago: 6
+
+- id: b108
+  company: Rookwood Systems
+  title: Analytics Analyst, New Grad
+  locations: ["Seattle, WA"]
+  posted_days_ago: 13
+
+- id: b109
+  company: Saffronvale Systems
+  title: Data Analyst I, New Grad
+  locations: ["Chicago, IL"]
+  posted_days_ago: 20
+
+- id: b110
+  company: Thistledown Systems
+  title: Business Analyst, New Grad
+  locations: ["New York, NY"]
+  posted_days_ago: 4

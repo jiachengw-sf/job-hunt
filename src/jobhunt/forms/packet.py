@@ -122,7 +122,7 @@ button{{font:inherit;font-size:13px;padding:2px 10px;border:1px solid var(--line
 <div class="meta">{_e(", ".join(j.get("locations") or []))} · <span class="cls">{_e(p.cls or "not inspected")}</span> {_e("; ".join(p.reasons))}</div>
 <p>Apply here: {link}</p>{captcha}
 <p class="note">You fill and submit this application yourself. jobhunt never submits.</p>
-<h2>Fit</h2><p>Band: <b>{_e(band)}</b> · priority {_e(fit.get("priority"))}</p>
+<h2>Fit</h2><p>{_e(fit.get("rank_reason") or "Not ranked yet")} · band <b>{_e(band)}</b></p>
 {f"<ul>{gates}</ul>" if gates else ""}{f"<ul>{reqs}</ul>" if reqs else "<p class='note'>No requirements extracted yet.</p>"}
 <h2>This form's questions</h2>{form_rows or "<p class='note'>The form wasn't read (unsupported ATS or not inspected). Use the common answers below.</p>"}
 <h2>Essays and free text</h2>{essay_rows or "<p class='note'>None required.</p>"}

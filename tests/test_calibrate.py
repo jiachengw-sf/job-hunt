@@ -171,9 +171,11 @@ def test_skip_reasons_feed_suggestions(conn):
         3,
         2,
     )
-    assert keys["fit.preference.pay"].suggested == 0.35
-    assert "pay floor" in keys["fit.preference.pay"].reason
-    assert "fit.preference.location" not in keys
+    # ranking counts Nice preferences met, so a repeated skip reason is advice to make it a Must
+    assert not any(k.startswith("fit.preference") for k in keys)
+    reviews = [s.reason for s in r.suggestions if s.kind == "review"]
+    assert any("pay floor as a Must" in t for t in reviews)
+    assert not any("location" in t.lower() and "Must" in t for t in reviews)  # low bands only
     assert r.applied == 0  # skips are not applications
     cfg(**yaml.safe_load(r.config_snippet))
 

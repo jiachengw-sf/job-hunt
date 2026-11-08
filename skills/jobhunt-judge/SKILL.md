@@ -31,7 +31,7 @@ and citation, and only then does anything reach the store.
 ## Steps
 
 1. `jobhunt tasks --kind requirement_evidence` lists pending tasks with `path` and
-   `result_path`, highest priority first, plus errors from earlier attempts.
+   `result_path`, top-ranked jobs first, plus errors from earlier attempts.
 2. Read one task file. Follow its `instructions` and its `result_schema`. Details and an example
    are in [the result format](references/result-format.md).
 3. If `extract_requirements` is true, list the posting's requirements yourself (exact quotes,
