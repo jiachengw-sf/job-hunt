@@ -105,3 +105,33 @@ def test_doctor_sees_installed_skills_and_a_loose_apply(cli):
     )
     [c] = [c for c in check_skills() if c.name == "skills.claude-code"]
     assert c.status == "warn" and "without being asked" in c.summary
+
+
+def test_claude_config_dir_gets_a_copy_too(cli, monkeypatch, tmp_path):
+    """The CLI reads $CLAUDE_CONFIG_DIR/skills; the desktop app still reads ~/.claude/skills."""
+    custom = tmp_path / "claude-alt"
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(custom))
+    code, env, _ = cli("skills", "install", "--tool", "claude-code")
+    assert code == ExitCode.OK, env
+    for d in (Path.home() / ".claude" / "skills", custom / "skills"):
+        assert sorted(p.name for p in d.iterdir() if p.is_dir()) == sk.skill_names()
+        apply_md = (d / "jobhunt-apply" / "SKILL.md").read_text(encoding="utf-8")
+        assert "disable-model-invocation: true" in apply_md.split("\n---\n")[0]
+    assert [o["directory"] for o in env["data"]["tools"]] == [
+        str(Path.home() / ".claude" / "skills"),
+        str(custom / "skills"),
+    ]
+    assert len(env["hints"]["next_actions"]) == 1
+    checks = {c.name: c.status for c in check_skills() if c.name.startswith("skills.claude-code")}
+    assert checks == {"skills.claude-code": "ok", f"skills.claude-code ({custom})": "ok"}
+    code, env, _ = cli("skills", "remove", "--tool", "claude-code")
+    assert code == ExitCode.OK, env
+    assert not (custom / "skills" / "jobhunt-setup").exists()
+    assert not (Path.home() / ".claude" / "skills" / "jobhunt-setup").exists()
+
+
+def test_claude_config_dir_same_as_default_installs_once(cli, monkeypatch):
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(Path.home() / ".claude"))
+    code, env, _ = cli("skills", "install", "--tool", "claude-code")
+    assert code == ExitCode.OK, env
+    assert len(env["data"]["tools"]) == 1

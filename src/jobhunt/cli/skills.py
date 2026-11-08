@@ -24,8 +24,8 @@ SCOPE = click.option(
     "--scope",
     type=click.Choice(["user", "project"]),
     default="user",
-    help="user: ~/.claude/skills and ~/.agents/skills. project: .claude/skills and "
-    ".agents/skills under --project-dir.",
+    help="user: ~/.claude/skills (plus $CLAUDE_CONFIG_DIR/skills when set) and ~/.agents/skills. "
+    "project: .claude/skills and .agents/skills under --project-dir.",
 )
 PROJECT = click.option(
     "--project-dir",
@@ -77,9 +77,9 @@ def register(cli: click.Group) -> None:
         """
         out = []
         for t in _tools(tool):
-            dest = sk.target_dir(t, scope, project_dir.resolve())  # type: ignore[arg-type]
-            o = sk.install(t, dest, mode=mode, force=force, dry_run=dry_run)  # type: ignore[arg-type]
-            out.append(asdict(o))
+            for dest in sk.target_dirs(t, scope, project_dir.resolve()):  # type: ignore[arg-type]
+                o = sk.install(t, dest, mode=mode, force=force, dry_run=dry_run)  # type: ignore[arg-type]
+                out.append(asdict(o))
         user = []
         if any(o["skipped"] for o in out):
             user.append("Some skill folders belong to you, not jobhunt; they were left alone "
@@ -90,7 +90,7 @@ def register(cli: click.Group) -> None:
         }  # fmt: skip
         return Result(
             data=SkillsReport(dry_run=dry_run, tools=out),
-            next_actions=[hint[o["tool"]] for o in out],
+            next_actions=list(dict.fromkeys(hint[o["tool"]] for o in out)),
             user_actions=user,
         )
 
@@ -102,15 +102,15 @@ def register(cli: click.Group) -> None:
         """Which jobhunt skills are installed for each tool, and is apply explicit-only?"""
         out = []
         for t in _tools(tool):
-            dest = sk.target_dir(t, scope, project_dir.resolve())  # type: ignore[arg-type]
-            names = sk.skill_names()
-            present = [n for n in names if (dest / n / "SKILL.md").is_file()]
-            out.append({
-                "tool": t, "directory": str(dest), "installed": present,
-                "missing": [n for n in names if n not in present],
-                "explicit_only_ok": {n: sk.explicit_ok(t, dest / n)
-                                     for n in sk.EXPLICIT_ONLY if n in present},
-            })  # fmt: skip
+            for dest in sk.target_dirs(t, scope, project_dir.resolve()):  # type: ignore[arg-type]
+                names = sk.skill_names()
+                present = [n for n in names if (dest / n / "SKILL.md").is_file()]
+                out.append({
+                    "tool": t, "directory": str(dest), "installed": present,
+                    "missing": [n for n in names if n not in present],
+                    "explicit_only_ok": {n: sk.explicit_ok(t, dest / n)
+                                         for n in sk.EXPLICIT_ONLY if n in present},
+                })  # fmt: skip
         bad = [o["tool"] for o in out if o["missing"] or not all(o["explicit_only_ok"].values())]
         return Result(
             data=SkillsReport(tools=out),
@@ -127,7 +127,7 @@ def register(cli: click.Group) -> None:
             raise ValidationFailed("Name the tool to remove from: --tool claude-code|codex|all.")
         out = []
         for t in _tools(tool):
-            dest = sk.target_dir(t, scope, project_dir.resolve())  # type: ignore[arg-type]
-            out.append({"tool": t, "directory": str(dest),
-                        "removed": sk.remove(dest, dry_run=dry_run)})  # fmt: skip
+            for dest in sk.target_dirs(t, scope, project_dir.resolve()):  # type: ignore[arg-type]
+                out.append({"tool": t, "directory": str(dest),
+                            "removed": sk.remove(dest, dry_run=dry_run)})  # fmt: skip
         return Result(data=SkillsReport(dry_run=dry_run, tools=out))

@@ -3,6 +3,9 @@
 Paths and settings (checked against the Claude Code and Codex docs, 2026-10):
 
 - Claude Code: ``~/.claude/skills/<name>/SKILL.md`` (user) or ``.claude/skills/`` (project).
+  When ``CLAUDE_CONFIG_DIR`` is set, the CLI reads user skills from ``$CLAUDE_CONFIG_DIR/skills``
+  instead, while the desktop app (started outside the shell) still reads ``~/.claude``. The
+  user-level install goes to both, so the skills work in either.
   ``disable-model-invocation: true`` in the frontmatter makes a skill explicit-only (``/name``).
 - Codex: ``~/.agents/skills/<name>/SKILL.md`` (user) or ``.agents/skills/`` (repo).
   ``agents/openai.yaml`` with ``policy.allow_implicit_invocation: false`` makes it explicit-only
@@ -17,6 +20,7 @@ it is the user's own and is never overwritten or removed.
 from __future__ import annotations
 
 import json
+import os
 import shutil
 from dataclasses import dataclass, field
 from importlib import resources
@@ -44,9 +48,29 @@ def skill_names() -> list[str]:
     return sorted(p.name for p in source_dir().iterdir() if (p / "SKILL.md").is_file())
 
 
+def claude_skill_dirs() -> list[Path]:
+    """Every user-level Claude Code skills folder: ``~/.claude/skills`` (the desktop app, and the
+    CLI by default) plus ``$CLAUDE_CONFIG_DIR/skills`` when that is set to another folder."""
+    dirs = [Path.home() / ".claude" / "skills"]
+    custom = os.environ.get("CLAUDE_CONFIG_DIR", "").strip()
+    if custom:
+        extra = Path(custom).expanduser() / "skills"
+        if extra.resolve() != dirs[0].resolve():
+            dirs.append(extra)
+    return dirs
+
+
 def target_dir(tool: Tool, scope: Literal["user", "project"], project: Path) -> Path:
-    base = Path.home() if scope == "user" else project
-    return base / (".claude" if tool == "claude-code" else ".agents") / "skills"
+    """The one folder for a project install, or the primary user folder."""
+    return target_dirs(tool, scope, project)[0]
+
+
+def target_dirs(tool: Tool, scope: Literal["user", "project"], project: Path) -> list[Path]:
+    if scope == "project":
+        return [project / (".claude" if tool == "claude-code" else ".agents") / "skills"]
+    if tool == "claude-code":
+        return claude_skill_dirs()
+    return [Path.home() / ".agents" / "skills"]
 
 
 def _add_claude_explicit(skill_md: Path) -> None:

@@ -24,6 +24,7 @@ def isolated_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setenv("USERPROFILE", str(home))
     monkeypatch.setenv("JOBHUNT_HOME", str(home / ".jobhunt"))
     monkeypatch.delenv("JOBHUNT_PII_DENYLIST", raising=False)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
     return home / ".jobhunt"
 
 
