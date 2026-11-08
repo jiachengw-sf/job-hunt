@@ -170,7 +170,7 @@ def test_detached_driver_end_to_end(cli, persona_home, fx_all):
     """The real background process, headless on fixtures: fills, hands off, stops cleanly."""
     pytest.importorskip("playwright")
     home = setup_persona(cli, persona_home, "senior-backend", fx_all)
-    code, env, _ = cli("prefill", "--fixtures", str(fx_all), "--headless")
+    code, env, _ = cli("prefill", "--fixtures", str(fx_all), "--headless", "--from-apply-skill")
     if code != ExitCode.OK and "didn't start" in json.dumps(env):
         pytest.skip("no browser binary")
     assert code == ExitCode.OK, env
@@ -178,7 +178,7 @@ def test_detached_driver_end_to_end(cli, persona_home, fx_all):
     queued = [j["job_id"] for j in env["data"]["jobs"] if j["status"] == "queued"]
     assert queued
 
-    code, again, _ = cli("prefill", "--fixtures", str(fx_all), "--headless")
+    code, again, _ = cli("prefill", "--fixtures", str(fx_all), "--headless", "--from-apply-skill")
     assert code == ExitCode.LOCKED, again  # one batch at a time
 
     deadline = time.monotonic() + 90
@@ -295,3 +295,25 @@ def test_only_a_resume_you_picked_sticks_to_a_job(cli, persona_home, fx_all):
     write_sheet(paths.prefill / "7" / "answers.json", picked)
     assert job_resume(paths, 7, kept_only=True) == (data, True)
     assert job_resume(paths, 7, software) == (software, True)
+
+
+@pytest.mark.parametrize("persona", PERSONAS)
+def test_prefill_opens_nothing_unless_the_apply_skill_asked(cli, persona_home, persona, fx_all):
+    """Another skill or a misread request can't open application pages: only the explicit-only
+    apply skill passes --from-apply-skill. Checking, status and stop still work without it."""
+    home = setup_persona(cli, persona_home, persona, fx_all)
+    with db(home) as c:
+        any_job = str(c.execute("SELECT MIN(id) FROM jobs").fetchone()[0])
+    for args in ((), (any_job,)):
+        code, env, _ = cli("prefill", *args, "--fixtures", str(fx_all), "--headless")
+        assert code == ExitCode.NEEDS_USER, env
+        assert "/jobhunt-apply" in " ".join(env["hints"]["user_actions"])
+        assert "--from-apply-skill" not in json.dumps(env)  # never suggested to the caller
+    assert not (home / "work" / "prefill" / "state.json").exists()
+    assert not list((home / "work" / "prefill").rglob("answers.json"))
+    assert cli("prefill", "--dry-run")[0] == ExitCode.OK
+    assert cli("prefill", "--status")[0] == ExitCode.OK
+    from jobhunt.cli.main import cli as group
+
+    [opt] = [o for o in group.commands["prefill"].params if o.name == "from_apply"]
+    assert opt.hidden  # not shown in --help either

@@ -35,8 +35,9 @@ and citation, and only then does anything reach the store.
 2. Read one task file. Follow its `instructions` and its `result_schema`. Details and an example
    are in [the result format](references/result-format.md).
 3. If `extract_requirements` is true, list the posting's requirements yourself (exact quotes,
-   `id: null`, with `importance` and `type`). Otherwise give a verdict for every requirement id
-   in the task.
+   `id: null`, with `importance` and `type`). Pay, benefits, equal-opportunity, accommodation,
+   fraud-warning and privacy text is not a requirement: leave it out (ingest rejects it).
+   Otherwise give a verdict for every requirement id in the task.
 4. Resolve every `unclear_gates` item (`pass` or `fail`, with a quote) and check every
    dealbreaker (`hit` true needs a quote).
 5. Narrative: up to 3 `reasons` (each cites a profile line), `gaps`, a one-line `pitch`, and

@@ -31,7 +31,13 @@ from jobhunt.fit.profile_lines import (
 from jobhunt.fit.rank import TIERS, RankInput, rank, role_match, soft_matches, title_related
 from jobhunt.fit.rank import has_text as rank_has_text
 from jobhunt.fit.recall import Embedder, recall
-from jobhunt.fit.requirements import Requirement, extract, prematch, required_years
+from jobhunt.fit.requirements import (
+    Requirement,
+    extract,
+    is_boilerplate,
+    prematch,
+    required_years,
+)
 from jobhunt.fit.scoring import Qualification, preference, qualify
 from jobhunt.fit.tasks import TASK_KIND, basis_hash, write_task
 from jobhunt.forms.due import form_read_due
@@ -237,6 +243,7 @@ def _ai_requirements(conn: sqlite3.Connection, job_id: int) -> list[Requirement]
             evidence_ref=r["evidence_ref"],
         )
         for r in rows
+        if not is_boilerplate(r["text"])  # judged before boilerplate was filtered out
     ]
 
 

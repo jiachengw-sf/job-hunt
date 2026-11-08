@@ -118,6 +118,11 @@ docs/            JOURNEY.md (capabilities, known gaps, build history), demo GIF 
 
 ## Pre-fill rules
 
+- `jobhunt prefill` opens a browser only with `--from-apply-skill` (hidden), which only the
+  explicit-only jobhunt-apply skill passes. Without it, any other caller gets exit 8 and is told
+  to ask the user for `/jobhunt-apply`; `--dry-run`, `--status` and `--stop` need no flag.
+- Agreements (a code of conduct or ethics; "agree to / have read and agree to" a specific
+  document) are always `human_only`: never filled, never offered in the setup form.
 - Values come only from answers.json, which code builds from the profile and bank and validates
   against the form (required present, options exact, limits, files exist) before a tab opens.
 - Adapters click only through `prefill/guard.py:safe_click`; a test fails on any other click,
@@ -150,6 +155,9 @@ docs/            JOURNEY.md (capabilities, known gaps, build history), demo GIF 
   Nothing tunes itself: `jobhunt calibrate` only suggests, and an application with no reply is
   never counted against fit.
 - Recall relevance picks the tier but is never shown or described as "fit".
+- Pay, benefits, equal-opportunity, accommodation, fraud-warning and privacy text is never a
+  requirement (`fit/requirements.py:is_boilerplate`): extraction ends a requirement list there,
+  ingest rejects it from the AI, and older judged rows holding it no longer count.
 - Code marks a requirement `stated` only when a profile line literally names the skill; the
   evidence is that line's exact text and `ref`. An `inferred` match never satisfies a must-have.
 - Bands are `provisional` until judgment tasks (`~/.jobhunt/work/tasks/`) are ingested. An

@@ -25,7 +25,7 @@ from jobhunt.cli.onboarding import (
 )
 from jobhunt.discovery.text import utc_now
 from jobhunt.drafts.essays import approved_essays
-from jobhunt.errors import BadUsage, LockBusy, NotFound, ValidationFailed
+from jobhunt.errors import BadUsage, LockBusy, NeedsUser, NotFound, ValidationFailed
 from jobhunt.fit.jobview import load_jobs
 from jobhunt.fit.rank import RANK_ORDER
 from jobhunt.forms.classify import classify
@@ -280,6 +280,13 @@ def register(cli: click.Group) -> None:
         "path); kept for those jobs. Default: the one picked for the job before, else your "
         "default resume.",
     )
+    @click.option(
+        "--from-apply-skill",
+        "from_apply",
+        is_flag=True,
+        hidden=True,
+        help="Set by the jobhunt-apply skill, which runs only when the user asks for it.",
+    )
     def prefill_cmd(
         job_ids: tuple[int, ...],
         batch: int | None,
@@ -288,6 +295,7 @@ def register(cli: click.Group) -> None:
         fixtures: Path | None,
         headless: bool,
         resume_name: str | None,
+        from_apply: bool,
         dry_run: bool,
     ) -> Result:
         """Fill Ready jobs' application forms in a browser window and stop before Submit.
@@ -310,6 +318,17 @@ def register(cli: click.Group) -> None:
             if not dry_run:
                 driver.stop(paths)
             return status_result(paths, dry_run=dry_run)
+        if not dry_run and not from_apply:
+            # Opening application pages is the user's call: only the explicit-only apply skill
+            # does it. Any other caller (another skill, a misread request) stops here.
+            raise NeedsUser(
+                "Pre-fill opens application pages only when you ask for it with the apply "
+                "skill. Nothing was opened.",
+                user_actions=[
+                    "To pre-fill, type /jobhunt-apply in Claude Code ($jobhunt-apply in Codex)."
+                ],
+                next_actions=["`jobhunt prefill --dry-run` checks the answers without a browser."],
+            )
         if (st := driver.running(paths)) is not None:
             raise LockBusy(
                 f"A pre-fill batch is already open (driver pid {st.get('pid')}).",

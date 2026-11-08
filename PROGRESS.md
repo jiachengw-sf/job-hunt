@@ -1250,3 +1250,31 @@ With `CLAUDE_CONFIG_DIR` set, the Claude Code CLI reads user skills from
 Tagged **v0.3.0**: Workday pre-fill, ranking v2, look-alike question checks, resumes in any
 layout, the setup form pre-filled from the resume, and the fixes since v0.2.0.
 
+## Three rule fixes from the first real run (2026-11-08)
+
+Found by the user's first daily run on v0.3.0.
+
+1. **Pre-fill only through `/jobhunt-apply`.** The daily skill read "just open up the page" as
+   an application and ran `jobhunt prefill`, which its written rules forbid but
+   nothing enforced. `prefill` now opens a browser only with the hidden `--from-apply-skill`
+   flag that the explicit-only apply skill passes; anything else gets exit 8 and "type
+   /jobhunt-apply". `--dry-run`, `--status` and `--stop` still work. This stops mistakes, not
+   a determined caller: a model that reads the apply skill could pass the flag. Submitting stays
+   blocked in code as before. The daily skill now asks which page when "the page" is ambiguous.
+2. **Agreements are yours.** "Do you agree to the Interview Code of Conduct?" wasn't caught (the
+   check knew certify / attest / acknowledge, not "agree to"), so it reached the setup form and
+   the chat. A code of conduct or ethics, "agree / consent to the|our|this…", "agree with the
+   above / terms / statement" and "have read and agree / understand" now make a field
+   `human_only` even when the bank has an answer for it. "Do you agree to relocate?" doesn't.
+3. **Boilerplate isn't a requirement.** Pay ranges, benefits, EEO, accommodation, fraud-warning
+   and privacy paragraphs right after a requirement list were read as more items of that
+   list. Such a line now ends the list; ingest
+   rejects it from the AI; judged rows from before are ignored when counting, without
+   re-judging.
+
+Tests on the four personas: agreements (6 wordings, saved answer present) stay human_only and
+are never filled; three ordinary "agree" questions aren't; a pay/benefits/EEO/fraud/privacy block
+yields only the real items and requirements naming nearby words (fraud detection, benefits
+systems, privacy engineering) stay; ingest rejects AI-listed pay text; prefill without the flag
+opens nothing for every persona.
+

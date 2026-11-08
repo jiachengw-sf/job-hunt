@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from jobhunt.fit.profile_lines import deidentified_resume, profile_lines, years_of_experience
 from jobhunt.fit.requirements import extract, find_skills, prematch, required_years
 from tests.fit_helpers import TODAY, persona_ctx
@@ -105,3 +107,40 @@ def test_years_of_experience():
     ctx = persona_ctx("first-year-intern")
     ctx.answers.experience.years = None
     assert 0 < years_of_experience(ctx.profile, ctx.answers, TODAY) < 1
+
+
+BOILERPLATE_POSTING = """About the role
+You will build data tools for our newsroom.
+Basic Qualifications
+- 2+ years of Python
+- Experience with SQL
+Preferred Qualifications
+- Experience with dbt
+The annual base pay range for this role is between $120,000 and $150,000.
+Benefits include medical, dental and 401(k) matching.
+Ledgerline is an equal opportunity employer. We decide without regard to race or religion.
+If you need a reasonable accommodation during the application process, contact us.
+Beware of recruitment fraud: we will never ask you to pay to apply.
+Read our candidate privacy notice before applying.
+Nice to have
+- Airflow"""
+
+
+def test_boilerplate_after_a_list_is_never_a_requirement():
+    texts = [r.text for r in extract(BOILERPLATE_POSTING).requirements]
+    assert texts == ["2+ years of Python", "Experience with SQL", "Experience with dbt", "Airflow"]
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Experience with benefits administration systems",
+        "Familiar with payroll APIs",
+        "Comfortable with ambiguity and fast-changing priorities",
+        "Experience building fraud detection models",
+        "Knowledge of privacy engineering (differential privacy)",
+    ],
+)
+def test_real_requirements_that_mention_nearby_words_stay(line):
+    ex = extract(f"Requirements\n- {line}\n- Python")
+    assert [r.text for r in ex.requirements] == [line, "Python"]

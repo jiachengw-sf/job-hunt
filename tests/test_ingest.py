@@ -354,3 +354,87 @@ def test_every_persona_judged_end_to_end(cli, persona_home, persona):
         user_unclear = [g for g in shown["data"]["gates"] if g["result"] == "unclear"]
         if fit["band"] is not None and not user_unclear:
             assert fit["provisional"] is False, (jid, fit)
+
+
+PAY = "The annual base pay range for this role is $150,000 to $190,000."
+
+
+def test_ai_listed_boilerplate_is_rejected(cli, persona_home):
+    home = _setup(cli, persona_home, rich=True)
+    task = _task(home, 1)
+    res = _good(task)
+    res["requirements"].append(
+        {
+            "id": None,
+            "text": "Our on-call rotation is one week in six.",
+            "importance": "preferred",
+            "type": "other",
+            "status": "unmet",
+            "tier": "none",
+        }
+    )
+    db = sqlite3.connect(home / "jobhunt.db")
+    db.execute("UPDATE jobs SET description=? WHERE id=1", (RICH + "\n" + PAY,))
+    db.commit()
+    db.close()
+    res["requirements"].append(
+        {
+            "id": None,
+            "text": PAY,
+            "importance": "preferred",
+            "type": "other",
+            "status": "unmet",
+            "tier": "none",
+        }
+    )
+    _write(task, res)
+    code, env, _ = cli("ingest")
+    assert code == ExitCode.VALIDATION
+    [rej] = env["data"]["rejected"]
+    pay_idx = len(res["requirements"]) - 1
+    assert any(
+        e["path"] == f"$.requirements[{pay_idx}].text" and "not a requirement" in e["message"]
+        for e in rej["errors"]
+    ), rej["errors"]
+    assert not any(
+        e["path"] == f"$.requirements[{pay_idx - 1}].text" and "not a requirement" in e["message"]
+        for e in rej["errors"]
+    )
+
+
+@pytest.mark.parametrize("persona", PERSONAS)
+def test_boilerplate_never_stored_or_counted_as_a_requirement(cli, persona_home, persona):
+    from jobhunt.fit.engine import _ai_requirements
+
+    home = persona_home(persona)
+    (home / "config.yaml").write_text("fit:\n  ready_tier: weak\n", encoding="utf-8")
+    cli("run", "--fixtures", BASE, "--no-sync", "--no-inspect")
+    db = sqlite3.connect(home / "jobhunt.db")
+    db.row_factory = sqlite3.Row
+    posting = (
+        "Requirements\n- Experience with SQL\n- Python\nNice to have\n- dbt\n"
+        + PAY
+        + "\nWe are an equal opportunity employer."
+    )
+    db.execute("UPDATE jobs SET description=?", (posting,))
+    db.commit()
+    cli("match")
+    # any job that passed this persona's gates has its requirements extracted
+    job_id = db.execute("SELECT MIN(job_id) FROM requirements WHERE source='code'").fetchone()[0]
+    assert job_id is not None
+    texts = [r[0] for r in db.execute("SELECT text FROM requirements WHERE job_id=?", (job_id,))]
+    assert texts and not [t for t in texts if "pay range" in t or "equal opportunity" in t]
+    # a judgment ingested before this filter existed: its boilerplate rows no longer count
+    db.execute(
+        "INSERT INTO requirements (job_id, seq, text, importance, type, status, tier, source) "
+        "VALUES (?, 900, ?, 'preferred', 'other', 'unmet', 'none', 'ai')",
+        (job_id, PAY),
+    )
+    db.execute(
+        "INSERT INTO requirements (job_id, seq, text, importance, type, status, tier, source) "
+        "VALUES (?, 901, 'Strong Go experience', 'must', 'skill', 'met', 'inferred', 'ai')",
+        (job_id,),
+    )
+    db.commit()
+    assert [r.text for r in _ai_requirements(db, job_id)] == ["Strong Go experience"]
+    db.close()

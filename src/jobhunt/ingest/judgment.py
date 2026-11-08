@@ -17,7 +17,7 @@ from pydantic import ValidationError
 from jobhunt.fit import gates as gt
 from jobhunt.fit.jobview import JobView, load_jobs
 from jobhunt.fit.profile_lines import ProfileLine, profile_lines
-from jobhunt.fit.requirements import extract, find_skills
+from jobhunt.fit.requirements import extract, find_skills, is_boilerplate
 from jobhunt.fit.tasks import TASK_KIND, RequirementEvidenceResult, ReqVerdict
 from jobhunt.ingest.core import Ctx, register, schema_problems
 from jobhunt.ingest.verify import Problem, check_line, clean_text, quote_in
@@ -51,6 +51,14 @@ def _check_requirement(
             )
         if r.importance is None or r.type is None:
             problems.append(Problem(path, "a new requirement needs importance and type"))
+    if is_boilerplate(r.text):
+        problems.append(
+            Problem(
+                f"{path}.text",
+                "pay, benefits, equal-opportunity, fraud-warning or privacy text is not a "
+                "requirement; leave it out",
+            )
+        )
     if not quote_in(r.text, job.text):
         problems.append(Problem(f"{path}.text", "not found in the posting; quote it exactly"))
     if r.tier == "none" and r.status != "unmet":

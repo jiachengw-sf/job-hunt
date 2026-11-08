@@ -19,7 +19,10 @@ contract: every command prints one JSON envelope; relay `hints.user_actions` ver
 - Sensitive answers (work authorization, visa, salary, EEO, disability, veteran, background
   checks) go only in the local form: `jobhunt setup form`. Never collect them in chat.
 - Never run `jobhunt prefill` from this skill and never submit anything. Pre-fill is the
-  explicit-only jobhunt-apply skill.
+  explicit-only jobhunt-apply skill; the command refuses to open a browser from here anyway.
+- When the user asks to "open the page", ask which one if it could mean the setup form
+  (`jobhunt setup form`, to edit their information) or an application (they type
+  `/jobhunt-apply`).
 - "Relevance" is search ranking, not fit. Each job's `reason` says why it ranks where it does
   ("Strong match · Remote ✓ · posted 2 days ago"); quote it rather than inventing your own.
 
