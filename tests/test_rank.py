@@ -280,3 +280,14 @@ def test_doctor_names_settings_ranking_ignores(tmp_path):
     c = check_config(Paths(tmp_path))
     assert c.status == "warn" and "fit.priority_threshold" in c.summary
     assert "notifications.alert_priority" in c.summary
+
+
+def test_human_output_survives_a_legacy_windows_console():
+    from jobhunt.cli.framework import console_safe
+
+    line = 'Strong match · Remote ✓ · "senior" ✗ · posted 2 days ago'
+    assert console_safe(line, "utf-8") == line
+    assert (
+        console_safe(line, "cp1252") == 'Strong match · Remote + · "senior" x · posted 2 days ago'
+    )
+    assert console_safe("日本", "cp1252") == "??"
