@@ -33,6 +33,7 @@ def test_migrate_is_idempotent(tmp_path: Path):
         "0007_drafts.sql",
         "0008_notifications.sql",
         "0009_application_records.sql",
+        "0010_ranking.sql",
     ]
     assert migrate(c) == []
     assert current_version(c) == SCHEMA_VERSION
@@ -140,7 +141,7 @@ def test_application_records_migration_keeps_existing_data(tmp_path: Path):
         '(?, \'status_changed\', ?, \'mark\', \'{"from": "New", "to": "Applied"}\')',
         (jid, NOW),
     )
-    assert migrate(c) == ["0009_application_records.sql"]
+    assert migrate(c) == ["0009_application_records.sql", "0010_ranking.sql"]
     app = c.execute("SELECT status, applied_on, notes FROM applications").fetchone()
     assert tuple(app) == ("Applied", "2026-10-01", "kept")
     assert c.execute("SELECT count(*) FROM events").fetchone()[0] == 1

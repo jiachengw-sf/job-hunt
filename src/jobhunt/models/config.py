@@ -75,6 +75,8 @@ class QualificationWeights(Strict):
 
 
 class PriorityWeights(Strict):
+    """Ignored: ranking is a fixed order of keys now (fit.tiers). Kept so old configs load."""
+
     band: float = 0.35
     relevance: float = Field(0.15, description="Recall rank. Used for ranking, never shown as fit.")
     preference: float = 0.15
@@ -93,20 +95,48 @@ class PreferenceWeights(Strict):
     industry: float = 0.10
 
 
+class TierCutoffs(Strict):
+    strong: float = Field(
+        0.5, ge=0, le=1, description="Relevance a role-matched job with posting text needs."
+    )
+    possible: float = Field(
+        0.15, ge=0, le=1, description="Relevance below which a job with no role match is weak."
+    )
+
+
+Tier = Literal["strong", "possible", "weak"]
+
+
 class FitConfig(Strict):
     recall_top_k: int = Field(50, ge=1)
-    priority_threshold: float = Field(0.5, ge=0, le=1)
+    recall_description_tokens: int = Field(
+        150, ge=0, description="Description words recall reads per job, after the title."
+    )
+    tiers: TierCutoffs = Field(default_factory=TierCutoffs)
+    ready_tier: Tier = Field(
+        "strong", description="Jobs in this tier or better get forms read and judgment first."
+    )
+    hide_weak: bool = Field(False, description="Leave weak matches out of lists and the digest.")
+    stale_after_days: int = Field(
+        30, ge=1, description="A posting date older than this sorts after unknown dates."
+    )
+    min_text_words: int = Field(
+        3, ge=1, description="Description words a job needs to count as having posting text."
+    )
+    priority_threshold: float = Field(
+        0.5, ge=0, le=1, description="Ignored (ranking v2): see fit.ready_tier."
+    )
     describe_top_k: int = Field(
         20, ge=0, description="Top recalled jobs with no posting text whose text `run` reads."
     )
     judge_top_k: int = Field(
-        10, ge=0, description="Top recalled jobs judged even below priority_threshold."
+        10, ge=0, description="Top recalled jobs judged even when not in fit.ready_tier."
     )
     higher_degree_factor: float = Field(
-        0.5, ge=0, le=1, description="Priority factor when a listing names only higher degrees."
+        0.5, ge=0, le=1, description="Ignored (ranking v2): such a job drops one tier."
     )
     form_filter_factor: float = Field(
-        0.5, ge=0, le=1, description="Priority factor for forms your deprioritize filter names."
+        0.5, ge=0, le=1, description="Ignored (ranking v2): such a job drops one tier."
     )
     use_embeddings: Literal["auto", "off"] = Field(
         "auto", description="auto: use sentence-transformers when the [recall] extra is installed."
@@ -118,7 +148,9 @@ class FitConfig(Strict):
     yoe_gate_slack_years: float = Field(
         2, ge=0, description="Required years above yours that fail the experience gate."
     )
-    freshness_half_life_days: float = Field(7, gt=0)
+    freshness_half_life_days: float = Field(
+        7, gt=0, description="Ignored (ranking v2): see fit.stale_after_days."
+    )
     bands: BandThresholds = Field(default_factory=BandThresholds)
     qualification: QualificationWeights = Field(default_factory=QualificationWeights)
     priority: PriorityWeights = Field(default_factory=PriorityWeights)
@@ -211,8 +243,11 @@ class NotificationsConfig(Strict):
     digest: Literal["every_run", "daily", "off"] = Field(
         "daily", description="When `jobhunt run` pushes the digest to the channels above."
     )
-    alerts: bool = Field(True, description="Push high-priority new postings right away.")
-    alert_priority: float = Field(0.75, ge=0, le=1)
+    alerts: bool = Field(True, description="Push new matches in alert_tier right away.")
+    alert_tier: Tier = Field("strong", description="New matches this good or better alert.")
+    alert_priority: float = Field(
+        0.75, ge=0, le=1, description="Ignored (ranking v2): see alert_tier."
+    )
 
 
 class CalibrationConfig(Strict):

@@ -136,7 +136,7 @@ def _public(v: dict[str, Any]) -> dict[str, Any]:
             "status_check_note", "login_email", "confirmation_id", "referral_contact",
             "recruiter", "next_step", "followup_due_on", "outcome", "notes", "resume_file",
             "posting_url", "folder", "has_screenshot", "has_jd", "attention", "dates",
-            "stale", "followup_due"]  # fmt: skip
+            "stale", "followup_due", "ranked"]  # fmt: skip
     out = {k: v[k] for k in keys}
     out["followup_due_text"] = _due(v["followup_due_on"])
     out["history"] = [{k: h[k] for k in ("when", "from", "to", "who", "note")}
@@ -378,6 +378,7 @@ ol.timeline li::before { content: ""; position: absolute; left: -20px; top: 7px;
     row("Location", a.location);
     row("Type", a.employment);
     row("Pay (as posted)", a.pay);
+    row("Why it ranked", a.ranked);
     row("Confirmation ID", a.confirmation_id);
     row("Referral", a.referral_contact);
     row("Recruiter", a.recruiter);

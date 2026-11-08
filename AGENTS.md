@@ -83,8 +83,9 @@ src/jobhunt/
   discovery/      sources (Simplify, Greenhouse, Lever, Ashby), ATS resolver, ingest pipeline,
                   legitimacy signals
   fit/            Stage 0 gates, Stage 1 recall (BM25 + optional embeddings), Stage 2
-                  requirement extraction + pre-match, Stage 3 band/preference/priority, judgment
-                  task files, eval-fit, calibrate (band vs. outcomes; suggests, never tunes)
+                  requirement extraction + pre-match, Stage 3 band/preference, rank.py (the
+                  ranking: tier, Nice preferences met, date), judgment task files, eval-fit,
+                  calibrate (band vs. outcomes; suggests, never tunes)
   tracker/        states.yml state machine, XLSX / Google Sheets backends, three-way sync,
                   application records (applications.py), status portals, local-time
                   formatting, views (dashboard, APPLICATIONS.md, per-application folders)
@@ -137,10 +138,18 @@ docs/            JOURNEY.md (capabilities, known gaps, build history), demo GIF 
 
 ## Fit and tracker rules
 
-- Qualification band and preference score are separate outputs; priority combines them. Every
-  weight lives in `defaults/config.yaml`. Nothing tunes itself: `jobhunt calibrate` only
-  suggests, and an application with no reply is never counted against fit.
-- Recall relevance helps ranking but is never shown or described as "fit".
+- Ranking is a fixed order of keys, never one blended score (`fit/rank.py`): match tier
+  (strong / possible / weak), then Nice preferences met, then date (upcoming internship
+  deadline, recent date, unknown, stale). Each ranked job stores `rank` and `rank_reason`;
+  every list sorts by `rank` and shows the reason. Must preferences are gates and never rank.
+- A tier needs a role match (`defaults/role_families.yaml`) to be strong; a title-only row is
+  at most possible. Tier cutoffs live in `defaults/config.yaml` (`fit.tiers`), chosen on
+  `jobhunt eval-fit`; change them only with a re-run of eval-fit and say why.
+- Qualification band and preference score are separate outputs and don't sort the list (a
+  `not_a_fit` band makes a job weak). Every weight and cutoff lives in `defaults/config.yaml`.
+  Nothing tunes itself: `jobhunt calibrate` only suggests, and an application with no reply is
+  never counted against fit.
+- Recall relevance picks the tier but is never shown or described as "fit".
 - Code marks a requirement `stated` only when a profile line literally names the skill; the
   evidence is that line's exact text and `ref`. An `inferred` match never satisfies a must-have.
 - Bands are `provisional` until judgment tasks (`~/.jobhunt/work/tasks/`) are ingested. An

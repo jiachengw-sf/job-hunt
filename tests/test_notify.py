@@ -53,7 +53,7 @@ CFG = "notifications:\n  ntfy_topic: jh-test-topic\n  discord_webhook: https://d
 def test_digest_lists_what_waits_on_you_and_moves_on(cli, persona_home, world):
     home = persona_home("intl-sponsorship")
     (home / "config.yaml").write_text(
-        "fit:\n  priority_threshold: 0\n", encoding="utf-8"
+        "fit:\n  ready_tier: weak\n", encoding="utf-8"
     )  # read every form
     assert cli("run", "--fixtures", str(world), "--no-sync")[0] == ExitCode.OK
     code, env, _ = cli("digest")
@@ -72,7 +72,7 @@ def test_digest_lists_what_waits_on_you_and_moves_on(cli, persona_home, world):
 
 def test_run_pushes_alerts_once_and_the_digest_daily(cli, persona_home, world, posts):
     home = persona_home("first-year-intern")
-    (home / "config.yaml").write_text(CFG + "  alert_priority: 0\n", encoding="utf-8")
+    (home / "config.yaml").write_text(CFG + "  alert_tier: weak\n", encoding="utf-8")
     code, env, _ = cli("run", "--fixtures", str(world), "--no-sync")
     assert code == ExitCode.OK
     n = env["data"]["notify"]

@@ -46,7 +46,7 @@ def setup_home(root: Path, persona: str) -> tuple[Path, Path]:
             shutil.copy(src / f, home / f)
     shutil.copy(src / "resume.md", home / "resume" / "resume.md")
     # small enough to finish in one session: a judgment task for every recalled job
-    (home / "config.yaml").write_text("fit:\n  priority_threshold: 0\n", encoding="utf-8")
+    (home / "config.yaml").write_text("fit:\n  ready_tier: weak\n", encoding="utf-8")
     fx = root / "fixtures"
     shutil.copytree(REPO / "tests" / "fixtures" / "sources" / "base", fx)
     shutil.copytree(REPO / "tests" / "fixtures" / "forms" / "overlay", fx, dirs_exist_ok=True)

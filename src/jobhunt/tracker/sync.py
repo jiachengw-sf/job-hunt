@@ -20,6 +20,7 @@ from datetime import date
 
 from pydantic import BaseModel, Field
 
+from jobhunt.fit.rank import RANK_ORDER
 from jobhunt.models.config import Config
 from jobhunt.paths import Paths
 from jobhunt.tracker.backends import Backend, Grid
@@ -40,7 +41,8 @@ COLUMNS: list[Column] = [
     Column("Company", "agent"),
     Column("Role", "agent"),
     Column("Status", "user", "status"),
-    Column("Priority", "agent"),
+    Column("Rank", "agent"),
+    Column("Why ranked", "agent"),
     Column("Qualification band", "agent"),
     Column("Preference score", "agent"),
     Column("Locations", "agent"),
@@ -156,7 +158,8 @@ def _essay_text(conn: sqlite3.Connection, job_id: int) -> str:
 
 def agent_values(conn: sqlite3.Connection, job_id: int) -> dict[str, str]:
     j = conn.execute(
-        "SELECT j.*, f.band, f.provisional, f.priority, f.preference_score, f.gate_status, "
+        "SELECT j.*, f.band, f.provisional, f.rank, f.rank_reason, f.preference_score, "
+        "f.gate_status, "
         "f.gate_reasons_json, f.recalled, f.flags_json, f.narrative_json, a.class FROM jobs j "
         "LEFT JOIN fits f ON f.job_id=j.id LEFT JOIN applications a ON a.job_id=j.id WHERE j.id=?",
         (job_id,),
@@ -193,7 +196,8 @@ def agent_values(conn: sqlite3.Connection, job_id: int) -> dict[str, str]:
         ID_COL: str(j["id"]),
         "Company": j["company"],
         "Role": j["title"],
-        "Priority": f"{j['priority']:.2f}" if j["priority"] is not None else "",
+        "Rank": str(j["rank"]) if j["rank"] is not None else "",
+        "Why ranked": j["rank_reason"] or "",
         "Qualification band": band,
         "Preference score": f"{j['preference_score']:.2f}"
         if j["preference_score"] is not None
@@ -235,18 +239,22 @@ _ACTED_ON = (
 
 
 def tracked_job_ids(
-    conn: sqlite3.Connection, include_gated_out: bool, max_jobs: int | None = None
+    conn: sqlite3.Connection,
+    include_gated_out: bool,
+    max_jobs: int | None = None,
+    hide_weak: bool = False,
 ) -> list[int]:
     """Jobs that belong in the sheet: every job you've acted on (applied, or wrote in one of
-    your columns), plus the top ``max_jobs`` matched (not gated out) jobs by priority; None or 0
+    your columns), plus the top ``max_jobs`` matched (not gated out) jobs by rank; None or 0
     lists every match. A first sync after a big fetch no longer writes thousands of rows."""
     gate_clause = "" if include_gated_out else "AND coalesce(f.gate_status,'') != 'failed'"
+    weak = "coalesce(f.tier, '') != 'weak'" if hide_weak else "1=1"
     acted = [
         r[0]
         for r in conn.execute(
             "SELECT j.id FROM jobs j LEFT JOIN fits f ON f.job_id=j.id "
             f"LEFT JOIN applications a ON a.job_id=j.id WHERE {_ACTED_ON} "
-            "ORDER BY coalesce(f.priority, 0) DESC, j.id"
+            f"ORDER BY {RANK_ORDER}, j.id"
         )
     ]
     limit = f" LIMIT {int(max_jobs)}" if max_jobs else ""
@@ -254,7 +262,7 @@ def tracked_job_ids(
         r[0]
         for r in conn.execute(
             "SELECT j.id FROM jobs j JOIN fits f ON f.job_id=j.id "
-            f"WHERE j.live=1 {gate_clause} ORDER BY coalesce(f.priority, 0) DESC, j.id{limit}"
+            f"WHERE j.live=1 {gate_clause} AND {weak} ORDER BY {RANK_ORDER}, j.id{limit}"
         )
     ]
     return list(dict.fromkeys(matched + acted))
@@ -345,6 +353,10 @@ def _ensure_header(grid: Grid, rows: list[list[str]]) -> dict[str, int]:
         rows.append([c.header for c in COLUMNS])
     header = rows[0]
     colmap = {h.strip(): i + 1 for i, h in enumerate(header) if h.strip()}
+    if "Priority" in colmap and "Rank" not in colmap:  # ranking v2 renamed the column
+        grid.set_cells([(1, colmap["Priority"], "Rank")])
+        header[colmap["Priority"] - 1] = "Rank"
+        colmap["Rank"] = colmap.pop("Priority")
     missing = [c.header for c in COLUMNS if c.header not in colmap]
     if missing:
         start = len(header) + 1
@@ -362,6 +374,7 @@ def sync_jobs(
     *,
     include_gated_out: bool,
     max_jobs: int | None = None,
+    hide_weak: bool = False,
 ) -> None:
     rows = grid.values()
     colmap = _ensure_header(grid, rows)
@@ -432,7 +445,7 @@ def sync_jobs(
 
     new_rows = []
     width = max(colmap.values())
-    for job_id in tracked_job_ids(conn, include_gated_out, max_jobs):
+    for job_id in tracked_job_ids(conn, include_gated_out, max_jobs, hide_weak):
         if job_id in in_sheet:
             continue
         app = _ensure_application(conn, job_id, now)
@@ -588,11 +601,12 @@ def companies_rows(conn: sqlite3.Connection, today: date, window_days: int) -> l
 
     applied = recent_applications(conn, today, window_days)
     rows = conn.execute(
-        "SELECT j.company, sum(j.live) AS live, count(*) AS total, max(f.priority) AS top, "
-        "group_concat(DISTINCT f.band) AS bands, c.brief_json FROM jobs j "
+        "SELECT j.company, sum(j.live) AS live, count(*) AS total, min(f.rank) AS top, "
+        "min(CASE f.tier WHEN 'strong' THEN 1 WHEN 'possible' THEN 2 WHEN 'weak' THEN 3 END) "
+        "AS best_tier, group_concat(DISTINCT f.band) AS bands, c.brief_json FROM jobs j "
         "LEFT JOIN fits f ON f.job_id=j.id LEFT JOIN companies c ON lower(c.name)=lower(j.company) "
-        "WHERE coalesce(f.gate_status,'') != 'failed' GROUP BY j.company ORDER BY top DESC, "
-        "j.company"
+        "WHERE coalesce(f.gate_status,'') != 'failed' GROUP BY j.company "
+        "ORDER BY top IS NULL, top, j.company"
     ).fetchall()
     out = [
         [
@@ -601,7 +615,7 @@ def companies_rows(conn: sqlite3.Connection, today: date, window_days: int) -> l
             "Jobs seen",
             f"Applied ({window_days}d)",
             "Best band",
-            "Top priority",
+            "Best match",
             "Brief",
         ]
     ]
@@ -617,7 +631,7 @@ def companies_rows(conn: sqlite3.Connection, today: date, window_days: int) -> l
                 str(r["total"]),
                 str(applied.get(_norm_company(r["company"]), 0)),
                 best,
-                f"{r['top']:.2f}" if r["top"] is not None else "",
+                {1: "strong", 2: "possible", 3: "weak"}.get(r["best_tier"], ""),
                 brief,
             ]
         )
@@ -722,6 +736,7 @@ def sync(
     record gets one, timed at this sync and flagged approximate; ``paths`` lets it write the
     application's folder (left out in a dry run)."""
     report = SyncReport(backend=backend.name, location=backend.location, dry_run=dry_run)
+    hide_weak = bool(cfg and cfg.fit.hide_weak)
 
     def tab(title: str, **kw: object) -> Grid:
         g = backend.tab(title, **kw)  # type: ignore[arg-type]
@@ -730,7 +745,8 @@ def sync(
     conn.execute("BEGIN IMMEDIATE")
     try:
         jobs = tab("Jobs", user_columns=[c.header for c in USER_COLUMNS])
-        sync_jobs(conn, jobs, now, report, include_gated_out=include_gated_out, max_jobs=max_jobs)
+        sync_jobs(conn, jobs, now, report, include_gated_out=include_gated_out, max_jobs=max_jobs,
+                  hide_weak=hide_weak)  # fmt: skip
         if cfg is not None:
             report.applications_recorded = _records_from_sheet(conn, cfg, paths, now, report)
             apps = tab(APP_TAB, user_columns=[h for h, _ in APP_USER])
@@ -738,7 +754,8 @@ def sync(
                 # an edit in the Applications tab: show it in the Jobs tab too
                 sync_jobs(conn, jobs, now, SyncReport(backend=backend.name,
                           location=backend.location, dry_run=False),
-                          include_gated_out=include_gated_out, max_jobs=max_jobs)  # fmt: skip
+                          include_gated_out=include_gated_out, max_jobs=max_jobs,
+                          hide_weak=hide_weak)  # fmt: skip
         tab("Companies").replace_all(companies_rows(conn, today, window_days))
         tab("Runs").replace_all(runs_rows(conn))
         if dry_run:

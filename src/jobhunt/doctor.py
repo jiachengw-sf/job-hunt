@@ -13,7 +13,13 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from jobhunt.config import USER_FILES, load_config, load_user_file, tracker_xlsx_path
+from jobhunt.config import (
+    USER_FILES,
+    load_config,
+    load_user_file,
+    read_yaml,
+    tracker_xlsx_path,
+)
 from jobhunt.errors import ConfigError, OnboardingIncomplete
 from jobhunt.http import probe
 from jobhunt.install import detect_install_method, reinstall_command, upgrade_hint
@@ -121,7 +127,33 @@ def check_config(paths: Paths) -> Check:
             fix="Run `jobhunt doctor --fix` to write a starter config.",
             fixable=True,
         )
+    old = ignored_settings(read_yaml(paths.config) or {})
+    if old:
+        return Check(
+            name="config",
+            status="warn",
+            summary=f"{paths.config} sets {', '.join(old)}, which ranking no longer uses",
+            fix="Remove them. Jobs now rank by match tier, Nice preferences met, then date; "
+            "see fit.ready_tier, fit.tiers and notifications.alert_tier in the defaults.",
+        )
     return Check(name="config", status="ok", summary=f"{paths.config} is valid")
+
+
+# Settings ranking v2 replaced: still accepted so old configs load, but they change nothing.
+IGNORED_SETTINGS = {
+    "fit": ("priority_threshold", "priority", "higher_degree_factor", "form_filter_factor",
+            "freshness_half_life_days"),
+    "notifications": ("alert_priority",),
+}  # fmt: skip
+
+
+def ignored_settings(raw: dict) -> list[str]:
+    return [
+        f"{section}.{key}"
+        for section, keys in IGNORED_SETTINGS.items()
+        for key in keys
+        if isinstance(raw.get(section), dict) and key in raw[section]
+    ]
 
 
 def check_store(paths: Paths) -> Check:

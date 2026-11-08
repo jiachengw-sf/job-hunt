@@ -15,6 +15,7 @@ import sqlite3
 from pydantic import BaseModel, Field
 
 from jobhunt.discovery.resolver import SUPPORTED
+from jobhunt.fit.rank import RANK_ORDER
 from jobhunt.forms.classify import BLOCKING
 from jobhunt.forms.inspect import JobForm, unanswered_groups
 
@@ -51,11 +52,10 @@ class CoverageReport(BaseModel):
 
 
 def sample_jobs(conn: sqlite3.Connection, n: int, *, supported_only: bool = True) -> list[int]:
-    """The top recalled, not gated-out, live matches by priority (supported ATSs first)."""
+    """The top-ranked live matches (supported ATSs first)."""
     sql = (
         "SELECT j.id, j.ats FROM jobs j JOIN fits f ON f.job_id=j.id WHERE j.live=1 AND "
-        "f.recalled=1 AND coalesce(f.gate_status,'') != 'failed' "
-        "ORDER BY coalesce(f.priority, 0) DESC, j.id"
+        f"f.rank IS NOT NULL ORDER BY {RANK_ORDER}, j.id"
     )
     rows = conn.execute(sql).fetchall()
     if supported_only:

@@ -19,7 +19,7 @@ BASE = str(REPO / "tests" / "fixtures" / "sources" / "base")
 @pytest.fixture
 def home(cli, persona_home) -> Path:
     h = persona_home("first-year-intern")
-    (h / "config.yaml").write_text("fit:\n  priority_threshold: 0\n", encoding="utf-8")
+    (h / "config.yaml").write_text("fit:\n  ready_tier: weak\n", encoding="utf-8")
     cli("run", "--fixtures", BASE, "--no-sync", "--no-inspect")
     return h
 

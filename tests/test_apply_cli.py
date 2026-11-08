@@ -116,11 +116,10 @@ def test_simplify_job_gets_posting_text_and_a_band(cli, persona_home, fx):
 
 
 def test_run_reads_text_for_top_matches_without_one_and_judges_them(cli, persona_home, fx):
-    """Simplify rows carry no description: their band stayed unknown and their priority under
-    the threshold, so no judgment task was ever written. `run` now reads the ATS posting for the
-    top recalled jobs with no text, and the top recalled jobs get a task below the threshold."""
+    """Simplify rows carry no description: as title-only rows they are at most a possible
+    match, so no judgment task was ever written. `run` now reads the ATS posting for the top
+    recalled jobs with no text, and the top recalled jobs get a task outside the ready tier."""
     home = persona_home("first-year-intern")
-    (home / "config.yaml").write_text("fit:\n  priority_threshold: 0.99\n", encoding="utf-8")
     code, env, _ = cli("run", "--fixtures", str(fx), "--no-sync", "--no-inspect")
     assert code == ExitCode.OK, env
     with db(home) as c:
@@ -139,8 +138,7 @@ def test_run_reads_text_for_top_matches_without_one_and_judges_them(cli, persona
             "SELECT status FROM tasks WHERE job_id=? AND kind='requirement_evidence'", (jid,)
         ).fetchone()
         assert task and task["status"] == "pending"
-        prio = c.execute("SELECT priority FROM fits WHERE job_id=?", (jid,)).fetchone()[0]
-    assert prio < 0.99  # judged although under the threshold
+        assert c.execute("SELECT rank FROM fits WHERE job_id=?", (jid,)).fetchone()[0]
     assert env["data"]["match"]["tasks"]["no_posting_text"] == 0
 
 
@@ -184,7 +182,6 @@ def test_a_failed_form_read_is_retried_only_after_the_posting_changes_or_a_while
 def test_no_posting_text_hint_skips_forms_already_read(cli, persona_home, fx):
     """A form read OK with no text gives none on the next run either: it isn't counted."""
     home = persona_home("first-year-intern")
-    (home / "config.yaml").write_text("fit:\n  priority_threshold: 0.99\n", encoding="utf-8")
     _, env, _ = cli("run", "--fixtures", str(fx), "--no-sync", "--no-inspect")
     before = env["data"]["match"]["tasks"]["no_posting_text"]
     assert before >= 1
@@ -331,7 +328,11 @@ def test_form_filters_show_in_jobs_and_the_digest_and_rank_lower(cli, persona_ho
     rows = {r["id"]: r for r in env["data"]["jobs"]}
     for j in flagged:
         row = rows[j["job_id"]]
-        assert row["form_filter"] == "skip" and row["priority"] == 0
+        assert row["form_filter"] == "skip" and row["tier"] == "weak"
+        assert "your form filter skips it" in row["reason"]
+    skipped_ranks = [rows[j["job_id"]]["rank"] for j in flagged]
+    others = [r["rank"] for r in rows.values() if r["rank"] and not r["form_filter"]]
+    assert min(skipped_ranks) > max(others)  # skipped jobs sort last
     _, env, _ = cli("digest")
     skipped = {i["job_id"] for i in env["data"]["digest"]["sections"].get("form_skipped", [])}
     assert {j["job_id"] for j in flagged} <= skipped

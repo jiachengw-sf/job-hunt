@@ -217,13 +217,12 @@ def _band_suggestions(
     return out
 
 
+# Ranking counts Nice preferences met (it has no weights to raise), so a reason you keep skipping
+# for is worth making a Must: those jobs are then gated out.
 SKIP_ADVICE = {
-    "location": ("fit.preference.location", "Or make your locations a Must in preferences.yaml."),
-    "pay": ("fit.preference.pay", "Or set a pay floor as a Must in preferences.yaml."),
-    "domain": (
-        "fit.preference.industry",
-        "Or add the industries to avoid, or title keywords to exclude, in preferences.yaml.",
-    ),
+    "location": "Make your locations a Must in preferences.yaml.",
+    "pay": "Set a pay floor as a Must in preferences.yaml.",
+    "domain": "Add the industries to avoid, or title keywords to exclude, in preferences.yaml.",
 }
 
 
@@ -258,17 +257,8 @@ def _skip_suggestions(skips: dict[str, list[int]], cfg: Config) -> list[Suggesti
                     )
                 )
         elif reason in SKIP_ADVICE:
-            key, alt = SKIP_ADVICE[reason]
-            cur = getattr(cfg.fit.preference, key.rsplit(".", 1)[1])
             out.append(
-                Suggestion(
-                    kind="config",
-                    key=key,
-                    current=cur,
-                    suggested=round(cur + c.step, 2),
-                    reason=why + f" More weight lowers the priority of jobs that miss it. {alt}",
-                    job_ids=ids,
-                )
+                Suggestion(kind="review", reason=f"{why} {SKIP_ADVICE[reason]}", job_ids=ids)
             )
         else:
             out.append(

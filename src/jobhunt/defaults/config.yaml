@@ -9,7 +9,7 @@ tracker:
     spreadsheet_id: null
     service_account_file: null
   include_gated_out: false   # also list jobs that failed a Must gate (with the reason)
-  max_jobs: 200              # top matches in the Jobs tab by priority (0 = every match); jobs you acted on always appear
+  max_jobs: 200              # top matches in the Jobs tab by rank (0 = every match); jobs you acted on always appear
 
 http:
   # Sent on every request. Add a way to reach you if you like (it stays in your config file).
@@ -32,17 +32,33 @@ schedule:
   interval_hours: 4     # recruiting-season default; new postings matter most in their first 48-96h
 
 fit:
-  recall_top_k: 50           # jobs kept after recall (watchlist companies always kept)
-  priority_threshold: 0.5    # jobs at or above this get application forms inspected (Milestone 3)
+  # Ranking: jobs sort on a fixed order of keys, not one blended score.
+  #   1. tier: strong / possible / weak match (role match + relevance, below)
+  #   2. how many of your Nice preferences the job meets (more first)
+  #   3. date: an upcoming application deadline (internships), a recent posting date (newest
+  #      first), an unknown date (none given, or an always-open post), then a stale date
+  tiers:
+    # Relevance = the job's search score against your resume over the best score this run
+    # (0-1). Chosen on `jobhunt eval-fit` (evals/fit, 4 personas, one row per distinct title):
+    # strong = the value with the most grade-2 jobs among strong while keeping >= 90% of them;
+    # possible = the value with the fewest errors, a plausible job left weak counting double.
+    # Only 11 grade-2 jobs decide `strong`: leaving one persona out moves it 0.25-0.48, and
+    # `possible` 0.09-0.18. Re-check both when the eval set grows.
+    strong: 0.5              # needs a role match (defaults/role_families.yaml) and posting text
+    possible: 0.15           # with no role match: below this, or a title sharing no word with
+                             # your resume, roles or keywords, a job is a weak match
+  ready_tier: strong         # jobs this good or better get forms read and judged first
+  hide_weak: false           # true: weak matches stay out of `jobs`, the sheet and the digest
+  stale_after_days: 30       # a posting date older than this sorts after unknown dates
+  min_text_words: 3          # fewer description words than this: "title only" (at most possible)
+  recall_top_k: 50           # top recalled jobs get judgment tasks and posting reads (watchlist always)
+  recall_description_tokens: 150  # description words recall reads per job, after the title
   describe_top_k: 20         # top recalled jobs with no posting text (e.g. Simplify rows): `run` reads it from the ATS
-  judge_top_k: 10            # top recalled jobs (by relevance) that get a judgment task even below the threshold
-  higher_degree_factor: 0.5  # priority x this when the listing names only degrees above yours (until judged)
-  form_filter_factor: 0.5    # priority x this when the form requires what preferences.forms.deprioritize_if_required names (skip: x 0)
+  judge_top_k: 10            # top recalled jobs (by relevance) that get a judgment task even outside ready_tier
   use_embeddings: auto       # auto | off. auto uses sentence-transformers if the [recall] extra is installed
   embedding_model: sentence-transformers/all-MiniLM-L6-v2
   level_mismatch_years: 3    # role wants this many more years than you have -> band at most stretch
   yoe_gate_slack_years: 2    # role wants more than this many extra years -> fails the experience gate
-  freshness_half_life_days: 7
   # The weights below are visible on purpose. `jobhunt calibrate` suggests changes;
   # nothing tunes itself.
   bands: {strong: 0.8, good: 0.6, stretch: 0.3}
@@ -53,8 +69,7 @@ fit:
     partial: 0.5
     unassessed: 0.4          # not judged yet (band stays provisional)
     unmet: 0.0
-  priority:                  # relevance = recall rank (used to rank, never shown as fit)
-    {band: 0.35, relevance: 0.15, preference: 0.15, freshness: 0.10, deadline: 0.10, referral: 0.10, watchlist: 0.05}
+  # The preference score (shown by `jobhunt show`, not used to rank): weights per Nice preference.
   preference: {pay: 0.30, location: 0.20, work_mode: 0.15, term: 0.10, keywords: 0.15, industry: 0.10}
 
 volume_guard:
@@ -97,8 +112,8 @@ notifications:               # the terminal digest is always on: `jobhunt digest
   discord_webhook: null        # a webhook URL for a private channel
   smtp: null                   # {host, port, username, password_env, to}: email to yourself
   digest: daily                # every_run | daily | off: when `jobhunt run` pushes the digest
-  alerts: true                 # push high-priority new postings right away
-  alert_priority: 0.75
+  alerts: true                 # push new matches right away
+  alert_tier: strong           # strong | possible | weak: new matches this good or better alert
 
 calibration:                 # `jobhunt calibrate` only reports and suggests; nothing tunes itself
   min_responses: 5             # replies a band needs before it gets a label (no reply never counts)

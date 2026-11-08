@@ -2,7 +2,7 @@
 
 Sections: new Ready jobs, questions only the user can answer, Essay jobs with prompts and
 deadlines, Manual jobs (hand-off packets), closures, legitimacy flags, follow-ups due, referral
-questions, and pending AI tasks. Fast alerts are separate: one push per high-priority new posting.
+questions, and pending AI tasks. Fast alerts are separate: one push per new strong match.
 """
 
 from __future__ import annotations
@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 
 from jobhunt.drafts.essays import essay_prompts
 from jobhunt.drafts.outreach import due_followups, referral_candidates
+from jobhunt.fit.rank import RANK_ORDER, hide_weak_clause, tier_clause
 from jobhunt.models import Config
 from jobhunt.notify.channels import Channel, NotifyError
 
@@ -50,15 +51,15 @@ def last_digest(conn: sqlite3.Connection) -> str:
 
 def _job_line(r: sqlite3.Row) -> str:
     band = f", {r['band']}" if r["band"] else ""
-    prio = f", priority {r['priority']:.2f}" if r["priority"] is not None else ""
     cols = r.keys()  # a sqlite3.Row: `in` would test its values
     note = _form_note(r) if "form_why" in cols else ""
-    return f"{r['company']} — {r['title']}{band}{prio}{note}"
+    why = f" — {r['rank_reason']}" if r["rank_reason"] else ""
+    return f"{r['company']} — {r['title']}{band}{note}{why}"
 
 
 _ALL_JOBS = (
     "SELECT j.id, j.company, j.title, j.canonical_url, j.deadline, j.first_seen, f.band, "
-    "f.priority, json_extract(fs.details_json, '$.filter') AS form_filter, "
+    "f.rank, f.tier, f.rank_reason, json_extract(fs.details_json, '$.filter') AS form_filter, "
     "json_extract(fs.details_json, '$.filter_reasons') AS form_why FROM jobs j "
     "LEFT JOIN fits f ON f.job_id=j.id "
     "LEFT JOIN form_specs fs ON fs.job_id=j.id LEFT JOIN applications a ON a.job_id=j.id "
@@ -93,7 +94,8 @@ def build_digest(
     new = _new_ids(conn, since)
     s: dict[str, list[Item]] = {}
 
-    ready = conn.execute(_JOBS + "AND fs.class='ready' ORDER BY f.priority DESC").fetchall()
+    jobs = _JOBS + f"AND {hide_weak_clause(cfg.fit)} "
+    ready = conn.execute(jobs + f"AND fs.class='ready' ORDER BY {RANK_ORDER}").fetchall()
     s["ready"] = [
         Item(job_id=r["id"], text=("NEW " if r["id"] in new else "") + _job_line(r),
              url=r["canonical_url"])
@@ -104,7 +106,7 @@ def build_digest(
         for q in questions
         if q.get("required_in")
     ]
-    essays = conn.execute(_JOBS + "AND fs.class='essay' ORDER BY f.priority DESC").fetchall()
+    essays = conn.execute(jobs + f"AND fs.class='essay' ORDER BY {RANK_ORDER}").fetchall()
     s["essays"] = []
     for r in essays:
         prompts = [p.label for p in essay_prompts(conn, r["id"]) if p.required]
@@ -113,9 +115,9 @@ def build_digest(
             Item(job_id=r["id"], text=f"{_job_line(r)}{due}: " + " | ".join(prompts),
                  url=r["canonical_url"])
         )  # fmt: skip
+    ready_cond, ready_tiers = tier_clause(cfg.fit.ready_tier)
     manual = conn.execute(
-        _JOBS + "AND fs.class='manual' AND f.priority >= ? ORDER BY f.priority DESC",
-        (cfg.fit.priority_threshold,),
+        jobs + f"AND fs.class='manual' AND {ready_cond} ORDER BY {RANK_ORDER}", ready_tiers
     ).fetchall()
     s["manual"] = [
         Item(job_id=r["id"], text=f"{_job_line(r)} — `jobhunt packet {r['id']}`",
@@ -123,7 +125,7 @@ def build_digest(
         for r in manual
     ]  # fmt: skip
     closed = conn.execute(
-        "SELECT j.id, j.company, j.title, j.canonical_url, f.band, f.priority FROM jobs j "
+        "SELECT j.id, j.company, j.title, j.canonical_url, f.band, f.rank_reason FROM jobs j "
         "LEFT JOIN fits f ON f.job_id=j.id WHERE j.closed_at > ? AND "
         "coalesce(f.gate_status,'') != 'failed'",
         (since,),
@@ -152,7 +154,7 @@ def build_digest(
     ]  # fmt: skip
     s["referrals"] = [
         Item(job_id=r["job_id"], text=f"{r['question']} ({r['title']})")
-        for r in referral_candidates(conn, max(cfg.fit.priority_threshold, 0.6), limit=3)
+        for r in referral_candidates(conn, cfg.fit.ready_tier, limit=3)
     ]
     pending = conn.execute(
         "SELECT kind, count(*) FROM tasks WHERE status='pending' GROUP BY kind"
@@ -246,15 +248,17 @@ def push(
 def fast_alerts(
     conn: sqlite3.Connection, channels: list[Channel], cfg: Config, new_ids: list[int], now: str
 ) -> list[dict[str, Any]]:
-    """One urgent push per new (non-baseline) posting at or above alert_priority, once per job."""
+    """One urgent push per new (non-baseline) match in ``alert_tier`` or better, once per job."""
     if not cfg.notifications.alerts or not channels or not new_ids:
         return []
     sent = []
+    cond, tiers = tier_clause(cfg.notifications.alert_tier)
     rows = conn.execute(
-        f"SELECT j.id, j.company, j.title, j.canonical_url, f.band, f.priority FROM jobs j "
+        f"SELECT j.id, j.company, j.title, j.canonical_url, f.band, f.rank_reason FROM jobs j "
         f"JOIN fits f ON f.job_id=j.id WHERE j.id IN ({','.join('?' * len(new_ids))}) "
-        f"AND f.priority >= ? AND coalesce(f.gate_status,'') != 'failed' ORDER BY f.priority DESC",
-        (*new_ids, cfg.notifications.alert_priority),
+        f"AND {cond} AND coalesce(f.gate_status,'') != 'failed' "
+        f"ORDER BY {RANK_ORDER}",
+        (*new_ids, *tiers),
     ).fetchall()
     for r in rows:
         if conn.execute(

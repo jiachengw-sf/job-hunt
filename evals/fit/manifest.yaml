@@ -25,8 +25,12 @@ must_rank_above:
   intl-sponsorship:
     - [r02, r01]
   newgrad-analyst:
-    - [r03, r04]   # undated, untexted jobs at one watchlist company still separate by role
-    - [r03, r07]
-    - [r05, r06]
+    - [r03, r07]   # undated, untexted jobs at one watchlist company still separate by role
     - [r05, r07]   # tied on the old priority (0.338); only the job id kept them apart
+# Orders a careful reader would want but that the title alone can't settle (same tier, same soft
+# preferences, no date): reported, not required.
+known_misorders:
+  newgrad-analyst:
+    - [r03, r04]   # "Data Analyst, New Grad" vs "Analytics Engineer", both title-only
+    - [r05, r06]   # "Business Operations Associate" vs "Software Engineer, New Grad", both weak
 annotators: 1

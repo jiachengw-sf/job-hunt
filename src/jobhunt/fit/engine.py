@@ -1,4 +1,4 @@
-"""Run the fit stages over the store: gates → recall → requirements → scores → priority → tasks.
+"""Run the fit stages over the store: gates → recall → requirements → scores → rank → tasks.
 
 Writes gate_results, requirements (code rows), fits, tasks, and a runs row. Re-running is safe:
 everything code-derived is recomputed in place. Ingested AI results (requirement rows and
@@ -28,9 +28,11 @@ from jobhunt.fit.profile_lines import (
     profile_lines,
     years_of_experience,
 )
+from jobhunt.fit.rank import TIERS, RankInput, rank, role_match, soft_matches, title_related
+from jobhunt.fit.rank import has_text as rank_has_text
 from jobhunt.fit.recall import Embedder, recall
 from jobhunt.fit.requirements import Requirement, extract, prematch, required_years
-from jobhunt.fit.scoring import Qualification, preference, priority, qualify
+from jobhunt.fit.scoring import Qualification, preference, qualify
 from jobhunt.fit.tasks import TASK_KIND, basis_hash, write_task
 from jobhunt.forms.due import form_read_due
 from jobhunt.models import Answers, Config, Preferences, Profile, Watchlist
@@ -78,9 +80,11 @@ class FitBrief(BaseModel):
     id: int
     company: str
     title: str
+    rank: int
+    tier: str = Field(description="strong | possible | weak match: how well the role fits.")
+    reason: str = Field(description='Why it ranks here, e.g. "Strong match · Remote ✓ · ...".')
     band: str | None
     provisional: bool
-    priority: float
     preference: float | None
     relevance_rank: int | None
     flags: list[str] = Field(default_factory=list)
@@ -94,6 +98,7 @@ class MatchReport(BaseModel):
     bands: dict[str, int]
     provisional: int
     tasks: dict[str, int]
+    tiers: dict[str, int] = Field(default_factory=dict)
     top: list[FitBrief]
     warnings: list[str] = Field(default_factory=list)
 
@@ -310,8 +315,10 @@ class _Scored:
     job: JobView
     qual: Qualification
     pref: float | None
-    prio: float
     flags: list[str] = field(default_factory=list)
+    tier: str = "weak"
+    rank: int = 0
+    reason: str = ""
 
 
 def run_match(
@@ -361,6 +368,7 @@ def run_match(
             )
         }
         scored: list[_Scored] = []
+        items: list[RankInput] = []
         reqs_by_job: dict[int, tuple[list[Requirement], bool]] = {}
         for job in eligible:
             r = rec.by_job.get(job.id)
@@ -376,28 +384,39 @@ def run_match(
             need, _ = required_years(job.description)
             q = qualify(reqs, gate_results[job.id], cfg, required_years=need, your_years=your_years)
             p = preference(job, inp.prefs, cfg)
-            rel = max(0.0, 1 - (r.rank - 1) / cfg.recall_top_k) if (r and r.recalled) else 0.0
             unclear_degree = any(
                 g.gate == "degree" and g.result == "unclear" for g in gate_results[job.id]
             )
-            pr, pflags = priority(
-                job,
-                q.band,
-                p.score,
-                cfg,
-                inp.today,
-                referral=job.id in referrals,
-                watchlist=job.company.lower() in watch,
-                relevance=rel,
-                degree_above=gt.degree_above(job, inp.ctx) if unclear_degree else None,
-            )
-            flags = p.flags + pflags
+            above = gt.degree_above(job, inp.ctx) if unclear_degree else None
+            flags = list(p.flags)
+            if above:
+                flags.append(
+                    f"listing names {above}, above your degree: one tier lower until judged"
+                )
+            if job.deadline and _past(job.deadline, inp.today):
+                flags.append("deadline passed")
+            mode = None
             if job.id in form_filter:  # your form filters: the form needs what you lack
                 mode, why = form_filter[job.id]
-                factor = 0.0 if mode == "skip" else cfg.form_filter_factor
-                pr.score = round(pr.score * factor, 3)
-                pr.components["form_filter"] = factor
                 flags += [str(w) for w in why]
+            items.append(
+                RankInput(
+                    job,
+                    relevance=rec.relevance.get(job.id, 0.0),
+                    role=role_match(job.title, inp.prefs),
+                    text=rank_has_text(job, cfg.min_text_words),
+                    related=title_related(job.title, rec.query_terms),
+                    soft=soft_matches(
+                        p.components,
+                        p.labels,
+                        referral=job.id in referrals,
+                        watchlist=job.company.lower() in watch,
+                    ),
+                    band=q.band,
+                    degree_above=above,
+                    form_filter="skip" if mode == "skip" else ("deprioritize" if mode else None),
+                )
+            )
             n_apps = applied.get(_norm_company(job.company), 0)
             if n_apps >= inp.cfg.volume_guard.max_applications_per_company:
                 flags.append(
@@ -414,14 +433,22 @@ def run_match(
                 band=q.band,
                 provisional=1 if q.provisional else 0,
                 preference_score=p.score,
-                priority=pr.score,
+                priority=None,
                 qualification_json=json.dumps(q.as_dict()),
                 preference_json=json.dumps(p.components),
-                priority_json=json.dumps(pr.components),
+                priority_json=None,
                 flags_json=json.dumps(flags),
             )
-            scored.append(_Scored(job, q, p.score, pr.score, flags))
-        for job in jobs:  # gated-out jobs: no score, priority 0
+            scored.append(_Scored(job, q, p.score, flags))
+        ranked = rank(items, inp.today, cfg)
+        for s in scored:
+            rk = ranked[s.job.id]
+            s.tier, s.rank, s.reason = rk.tier, rk.rank, rk.reason
+            conn.execute(
+                "UPDATE fits SET tier=?, soft_matches=?, rank=?, rank_reason=? WHERE job_id=?",
+                (rk.tier, rk.soft, rk.rank, rk.reason, s.job.id),
+            )
+        for job in jobs:  # gated-out jobs: no score, no rank
             if gt.overall(gate_results[job.id]) == "failed":
                 _upsert_fit(
                     conn,
@@ -433,11 +460,16 @@ def run_match(
                     band=None,
                     provisional=0,
                     preference_score=None,
-                    priority=0.0,
+                    priority=None,
                     qualification_json=None,
                     preference_json=None,
                     priority_json=None,
                     flags_json="[]",
+                )
+                conn.execute(
+                    "UPDATE fits SET tier=NULL, soft_matches=NULL, rank=NULL, rank_reason=NULL "
+                    "WHERE job_id=?",
+                    (job.id,),
                 )
 
         task_counts: Counter[str] = Counter()
@@ -449,9 +481,9 @@ def run_match(
             has_text = bool(s.job.description.strip())
             if not has_text and r.rank <= cfg.describe_top_k and s.job.ats in SUPPORTED:
                 untexted.append(s.job.id)
-            # the top recalled jobs are judged even below the threshold: an unjudged band holds
-            # their priority down, so the threshold alone would never let them be judged
-            if s.prio < cfg.priority_threshold and not (has_text and r.rank <= cfg.judge_top_k):
+            # jobs in the ready tier are judged, and the top recalled ones with text even below it
+            ready = TIERS.index(s.tier) <= TIERS.index(cfg.ready_tier)
+            if not ready and not (has_text and r.rank <= cfg.judge_top_k):
                 continue
             if drop_stale_judgments(conn, s.job, lines):  # already judged on this posting
                 continue
@@ -480,7 +512,7 @@ def run_match(
         raise
 
     bands = Counter(s.qual.band or "unknown" for s in scored)
-    top = sorted(scored, key=lambda s: (-s.prio, s.job.id))[:TOP_SHOWN]
+    top = sorted(scored, key=lambda s: s.rank)[:TOP_SHOWN]
     warnings = sorted({f for s in scored for f in s.flags if f.startswith("volume guard")})
     if rec.note:
         warnings.append(rec.note)
@@ -511,6 +543,7 @@ def run_match(
         recall=recall_info,
         bands=dict(bands),
         provisional=sum(1 for s in scored if s.qual.provisional),
+        tiers=dict(Counter(s.tier for s in scored)),
         tasks={
             "written": task_counts["written"],
             "replaced": task_counts["replaced"],
@@ -523,9 +556,11 @@ def run_match(
                 id=s.job.id,
                 company=s.job.company,
                 title=s.job.title,
+                rank=s.rank,
+                tier=s.tier,
+                reason=s.reason,
                 band=s.qual.band,
                 provisional=s.qual.provisional,
-                priority=s.prio,
                 preference=s.pref,
                 relevance_rank=rec.by_job[s.job.id].rank if s.job.id in rec.by_job else None,
                 flags=s.flags,
@@ -534,6 +569,13 @@ def run_match(
         ],
         warnings=warnings,
     )
+
+
+def _past(ts: str, today: date) -> bool:
+    try:
+        return date.fromisoformat(ts[:10]) < today
+    except ValueError:
+        return False
 
 
 def update_gated_out(conn: sqlite3.Connection) -> None:
