@@ -24,6 +24,7 @@ from jobhunt.errors import ConfigError, OnboardingIncomplete
 from jobhunt.http import probe
 from jobhunt.install import detect_install_method, reinstall_command, upgrade_hint
 from jobhunt.paths import Paths, package_file, secure_file
+from jobhunt.skills import claude_skill_dirs
 from jobhunt.store import SCHEMA_VERSION, connect, current_version, migrate
 
 Status = Literal["ok", "warn", "fail", "skip"]
@@ -264,14 +265,15 @@ def check_browser() -> Check:
     )
 
 
-def detect_ai_tools() -> dict[str, Path]:
-    """Detected tool -> its user-level skills directory."""
+def detect_ai_tools() -> dict[str, list[Path]]:
+    """Detected tool -> its user-level skills directories."""
     home = Path.home()
-    tools: dict[str, Path] = {}
-    if (home / ".claude").is_dir() or shutil.which("claude"):
-        tools["claude-code"] = home / ".claude" / "skills"
+    tools: dict[str, list[Path]] = {}
+    claude = claude_skill_dirs()
+    if any(d.parent.is_dir() for d in claude) or shutil.which("claude"):
+        tools["claude-code"] = claude
     if (home / ".codex").is_dir() or shutil.which("codex"):
-        tools["codex"] = home / ".agents" / "skills"
+        tools["codex"] = [home / ".agents" / "skills"]
     return tools
 
 
@@ -287,11 +289,13 @@ def check_skills() -> list[Check]:
             )
         ]
     out = []
-    for tool, skills_dir in tools.items():
+    for tool, skills_dir, extra in (
+        (tool, d, i > 0) for tool, dirs in tools.items() for i, d in enumerate(dirs)
+    ):
         from jobhunt.skills import EXPLICIT_ONLY, explicit_ok
 
         present = [s for s in SKILL_NAMES if (skills_dir / s / "SKILL.md").exists()]
-        name = f"skills.{tool}"
+        name = f"skills.{tool}" + (f" ({skills_dir.parent})" if extra else "")
         loose = [s for s in EXPLICIT_ONLY if s in present and not explicit_ok(tool, skills_dir / s)]
         if loose:
             out.append(
