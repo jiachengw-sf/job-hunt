@@ -39,10 +39,16 @@ parts that need judgment. Everything stays in `~/.jobhunt/` on your computer.
 
 - **Gates** drop jobs you can't or won't take (seniority, location, pay floor, term, work mode,
   sponsorship, blocklist) and always show the reason.
-- **Ranking** in stages: keyword search (BM25, optional embeddings), requirement extraction
-  against your profile, then a **qualification band** (strong, good, stretch, not a fit) kept
-  separate from a **preference score**. Priority combines them with freshness, deadline,
-  referral and watchlist. `jobhunt show <id>` explains every number.
+- **Ranking** is three keys in a fixed order, not one blended score:
+  1. a **match tier**: strong, possible (related, or only a title to go on) or weak;
+  2. how many of your **Nice preferences** the job meets (location, remote, pay, term,
+     keywords, industry, watchlist, referral);
+  3. the **date**, only to break ties: an upcoming internship deadline, then newest first, with
+     undated or always-open posts after recent ones and before old ones.
+  Every job shows the reason ("Strong match · Remote ✓ · Chicago ✓ · posted 2 days ago") in
+  `jobs`, the digest, the sheet and the dashboard. Weak matches can be hidden.
+- Separately, requirements are matched against your profile for a **qualification band**
+  (strong, good, stretch, not a fit). `jobhunt show <id>` explains all of it.
 - Your AI tool reads the requirements ("judgment tasks"). The CLI accepts a judgment only if it
   quotes the posting and your profile accurately.
 - `jobhunt calibrate` compares the bands with your real interview outcomes and suggests config
@@ -125,9 +131,12 @@ parts that need judgment. Everything stays in `~/.jobhunt/` on your computer.
   real information hasn't happened yet. Language proficiency, phone type and subsidiary
   questions are left to you. Workday jobs are found through Simplify or `jobhunt add`; there is
   no direct Workday job feed.
-- **Ranking:** recall favors title-only Simplify rows, and watchlist jobs are ordered mostly by
-  freshness. A fix is planned (score the title plus part of the description, and rank watchlist
-  jobs too).
+- **Ranking tiers are fitted on a small, synthetic, single-annotator eval set** (4 personas).
+  Only 11 grade-2 jobs decide the "strong" cutoff. Two orders a careful reader would want still
+  come out wrong on title-only rows (listed in `evals/fit/manifest.yaml`). Company size can't be
+  a preference yet: no job source gives it.
+- Deadlines come only from Greenhouse's `application_deadline` field; posting text isn't
+  searched for deadlines.
 - `jobhunt coverage` is slow (about 50–80 seconds), because it reads around 30 live forms.
 - **Codex CLI is untested**, and real day-to-day use on Windows is untested (CI passes there).
 - Lever and Ashby confirmation pages are best guesses, since tests never submit.
@@ -153,6 +162,8 @@ parts that need judgment. Everything stays in `~/.jobhunt/` on your computer.
 | 2026-11-06 | Resumes in any layout | 16 synthetic resume layouts (PDF, LaTeX, two-column, scanned, DOCX, Markdown) all parse correctly; OCR for scans; setup form pre-filled from the resume |
 | 2026-11-06 | Combined system check | Every command for all four test personas; live fetch and live form reading; fixed live inspect reading zero forms |
 | 2026-11-07 | Merged (PR #1) | All of the above on `main`; CI green on all six platform and Python combinations |
+| 2026-11-07 | Look-alike questions (PR #3) | A question asking the opposite or another number never reuses an answer; sensitive ones only from confirmed wordings; age questions from your age |
+| 2026-11-07 | Ranking v2 | Tier, then Nice preferences met, then date, with a reason on every job; recall reads title plus a bounded description, so title-only rows no longer crowd out full postings and watchlist jobs; 168 ranking cases added to `eval-fit` |
 
 ### What the latest check measured (2026-11-06)
 
@@ -160,11 +171,13 @@ parts that need judgment. Everything stays in `~/.jobhunt/` on your computer.
   clean.
 - **Resumes:** 224 of 224 expected fields read correctly across 16 layouts, scans included. It
   was 134 of 224 before this round.
-- **Fit eval:**
-  - gate accuracy 0.975, with 0 jobs wrongly gated out;
-  - recall ranking quality (nDCG@10) 0.982;
-  - final ranking quality (nDCG@10) 0.959;
-  - band: 54% exactly right, and 100% within one band.
+- **Fit eval** (updated 2026-11-07 for ranking v2):
+  - with the 168 ranking cases: gate accuracy 0.995, 0 wrongly gated, recall 0.878 → 0.906,
+    final 0.873 → 0.923, ranking pairs broken 4 → 0, ties between jobs of different grades
+    31 → 0;
+  - 40 original postings: gate accuracy 0.975, 0 wrongly gated, recall 0.982 → 0.979, final
+    0.978 → 0.976 (both with watchlists loaded; a small dip, explained in PROGRESS.md);
+  - band: 54% exactly right, and 100% within one band (unchanged).
 - **Live:** 7,029 postings fetched with 0 errors; 15 of 15 real application forms read.
 - **Answer reuse:** on a real answer bank, the questions still waiting on the user fell from
   43 to 30.

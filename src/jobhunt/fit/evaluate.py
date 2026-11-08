@@ -111,7 +111,7 @@ def final_order(conn: sqlite3.Connection) -> list[int]:
     return [r["job_id"] for r in conn.execute(ORDER_SQL)]
 
 
-ORDER_SQL = "SELECT job_id FROM fits ORDER BY coalesce(priority, 0) DESC, job_id"
+ORDER_SQL = "SELECT job_id FROM fits ORDER BY rank IS NULL, rank, job_id"
 
 
 def _persona_metrics(
@@ -119,6 +119,7 @@ def _persona_metrics(
     ids: dict[str, int],
     labels: dict[str, dict[str, Any]],
     above: list[list[str]] | None = None,
+    soft_above: list[list[str]] | None = None,
 ) -> dict[str, Any]:
     fits = {r["job_id"]: r for r in conn.execute("SELECT * FROM fits")}
     grade = {
@@ -148,6 +149,7 @@ def _persona_metrics(
     by_pri = sorted(labels, key=lambda pid: pos[ids[pid]])
     all_g = list(grade.values())
     broken = [[a, b] for a, b in above or [] if pos[ids[a]] > pos[ids[b]]]
+    misordered = [[a, b] for a, b in soft_above or [] if pos[ids[a]] > pos[ids[b]]]
     # jobs labeled with different grades that the ranking can't tell apart
     shown = {pid: _sort_key(fits[ids[pid]]) for pid in labels if not labels[pid].get("gated")}
     groups: dict[Any, set[int]] = {}
@@ -199,6 +201,7 @@ def _persona_metrics(
         "recall_ndcg10": ndcg_at([grade[p] for p in by_rel], all_g),
         "final_ndcg10": ndcg_at([grade[p] for p in by_pri], all_g),
         "must_rank_above": {"checked": len(above or []), "broken": broken},
+        "known_misorders": misordered,
         "mixed_grade_ties": ties,
         "top10": sorted(shown, key=lambda p: pos[ids[p]])[:10],
         "band": {
@@ -218,7 +221,7 @@ def _persona_metrics(
 
 def _sort_key(fit: sqlite3.Row) -> Any:
     """What the ranking sorts on; equal keys are a tie that only the job id breaks."""
-    return fit["priority"]
+    return (fit["tier"], fit["soft_matches"], fit["rank_reason"], fit["relevance"])
 
 
 def _load_list(set_dir: Path, names: str | list[str]) -> Any:
@@ -254,6 +257,7 @@ def evaluate_set(set_dir: Path, cfg: Config | None = None) -> dict[str, Any]:
     postings = _load_list(set_dir, manifest["postings"])
     labels = _load_list(set_dir, manifest["labels"])
     order_checks = manifest.get("must_rank_above") or {}
+    soft_checks = manifest.get("known_misorders") or {}
     personas_dir = (set_dir / manifest["personas_dir"]).resolve()
     if cfg is None:
         with tempfile.TemporaryDirectory() as td:
@@ -281,7 +285,9 @@ def evaluate_set(set_dir: Path, cfg: Config | None = None) -> dict[str, Any]:
                 embed_note=None,
                 dry_run=True,
             )
-        per[persona] = _persona_metrics(conn, ids, plabels, order_checks.get(persona))
+        per[persona] = _persona_metrics(
+            conn, ids, plabels, order_checks.get(persona), soft_checks.get(persona)
+        )
         per[persona]["top10_titles"] = [
             f"{pid} {next(p['company'] for p in postings if p['id'] == pid)}: "
             f"{next(p['title'] for p in postings if p['id'] == pid)}"
@@ -336,9 +342,9 @@ def evaluate_personal(paths: Paths, cfg: Config) -> dict[str, Any]:
     from jobhunt.store import open_store
 
     with open_store(paths.db, dry_run=True) as conn:
-        rows = {r["job_id"]: r for r in conn.execute("SELECT job_id, priority, band FROM fits")}
+        rows = {r["job_id"]: r for r in conn.execute("SELECT job_id, rank, band FROM fits")}
     known = [j for j in labels if j in rows]
-    by_pri = sorted(known, key=lambda j: (-(rows[j]["priority"] or 0), j))
+    by_pri = sorted(known, key=lambda j: (rows[j]["rank"] is None, rows[j]["rank"] or 0, j))
     by_band: dict[str, list[int]] = {}
     for j in known:
         by_band.setdefault(rows[j]["band"] or "none", []).append(labels[j])

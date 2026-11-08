@@ -100,12 +100,26 @@ def conn():
             (i, f"k{i}", company, title, NOW, NOW),
         )
         c.execute(
-            "INSERT INTO fits (job_id, gate_status, priority, band, provisional, computed_at) "
-            "VALUES (?, 'passed', ?, 'good', 1, ?)",
-            (i, 0.9 - i / 10, NOW),
+            "INSERT INTO fits (job_id, gate_status, rank, tier, rank_reason, band, provisional, "
+            "computed_at) VALUES (?, 'passed', ?, 'strong', 'Strong match', 'good', 1, ?)",
+            (i, i, NOW),
         )
     yield c
     c.close()
+
+
+def test_an_old_priority_column_becomes_rank(conn, tmp_path: Path):
+    """Sheets made before ranking v2 have a Priority column; it is renamed, not left stale."""
+    path = tmp_path / "tracker.xlsx"
+    do_sync(conn, XlsxBackend(path))
+    wb = load_workbook(path)
+    ws = wb["Jobs"]
+    header = [c.value for c in ws[1]]
+    ws.cell(1, header.index("Rank") + 1, "Priority")
+    wb.save(path)
+    do_sync(conn, XlsxBackend(path))
+    header = [c.value for c in load_workbook(path)["Jobs"][1]]
+    assert "Priority" not in header and header.count("Rank") == 1 and "Why ranked" in header
 
 
 def do_sync(conn, backend, dry_run=False):
@@ -257,7 +271,7 @@ def test_xlsx_user_edits_survive_sync(conn, tmp_path: Path):
     ws.cell(rown, len(header) + 1, "mine")
     wb.save(path)
 
-    conn.execute("UPDATE fits SET priority=0.99 WHERE job_id=1")  # agent data changes too
+    conn.execute("UPDATE fits SET rank=7, rank_reason='Possible match' WHERE job_id=1")
     do_sync(conn, XlsxBackend(path))
     do_sync(conn, XlsxBackend(path))  # and again: nothing is lost on repeat syncs
 
@@ -268,7 +282,7 @@ def test_xlsx_user_edits_survive_sync(conn, tmp_path: Path):
     assert vals["Notes"] == "Referred by a TA"
     assert str(vals["Follow-up on"])[:10] == "2026-10-25"
     assert vals["My column"] == "mine"
-    assert vals["Priority"] == "0.99"
+    assert vals["Rank"] == "7" and vals["Why ranked"] == "Possible match"  # agent data moved
     app = conn.execute(
         "SELECT status, notes, follow_up_on FROM applications WHERE job_id=1"
     ).fetchone()

@@ -33,7 +33,7 @@ KINDS = ["referral", "coffee_chat", "followup"]
 class DueReport(BaseModel):
     followups: list[dict[str, Any]]
     referrals: list[dict[str, Any]] = Field(
-        description="Top-priority jobs with no referral contact: ask the user if they know anyone."
+        description="Top-ranked jobs with no referral contact: ask the user if they know anyone."
     )
 
 
@@ -82,7 +82,7 @@ def register(cli: click.Group) -> None:
         today = _today(utc_now())
         with open_store(paths.db, dry_run=True) as conn:
             f = due_followups(conn, cfg.followups, today)
-            r = referral_candidates(conn, cfg.fit.priority_threshold)
+            r = referral_candidates(conn, cfg.fit.ready_tier)
         user = [f"{c['question']} ({c['title']}) If so, add them in the tracker's Referral contact "
                 "column or ask for a referral draft." for c in r]  # fmt: skip
         nxt = [

@@ -38,4 +38,5 @@ submissions. You draft; the user edits and sends from their own account.
    and send it themselves.
 5. After the user says they sent it, run `jobhunt outreach mark-sent <job> --kind <kind>` (this
    only records it, so follow-up timing works). If they now have a referral contact, they can
-   put the name in the tracker's Referral contact column, which raises the job's priority.
+   put the name in the tracker's Referral contact column, which counts as one more preference
+   met when the job is ranked.

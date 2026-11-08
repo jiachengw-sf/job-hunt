@@ -74,7 +74,7 @@ def _sensitive_values(persona: str) -> list[str]:
 def test_judgment_tasks_hold_no_personal_data(cli, persona_home, persona):
     home = persona_home(persona)
     (home / "config.yaml").write_text(
-        "fit:\n  priority_threshold: 0\n", encoding="utf-8"
+        "fit:\n  ready_tier: weak\n", encoding="utf-8"
     )  # a task for every job
     cli("run", "--fixtures", BASE, "--no-sync")
     tasks = list((home / "work" / "tasks").glob("*.json"))
@@ -151,7 +151,6 @@ def test_eval_fit_gates_and_bands(cli):
     assert m["band_within_one"] >= 0.9
 
 
-@pytest.mark.xfail(strict=True, reason="baseline: the ranking fix lands in the next commit")
 def test_eval_fit_ranking(cli):
     m = _eval_fit(cli)
     assert m["must_rank_above_broken"] == 0  # e.g. a watchlist internship above a sales job

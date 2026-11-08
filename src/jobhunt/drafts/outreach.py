@@ -23,6 +23,7 @@ from pydantic import BaseModel, Field
 from jobhunt.drafts.essays import safe_name
 from jobhunt.drafts.grounding import Sentence, Sources
 from jobhunt.fit.jobview import JobView
+from jobhunt.fit.rank import RANK_ORDER, tier_clause
 from jobhunt.fit.tasks import wrap_untrusted
 from jobhunt.models.config import FollowupsConfig
 from jobhunt.paths import secure_file
@@ -121,22 +122,26 @@ def due_followups(
 
 
 def referral_candidates(
-    conn: sqlite3.Connection, threshold: float, limit: int = 5
+    conn: sqlite3.Connection, ready_tier: str, limit: int = 5
 ) -> list[dict[str, Any]]:
-    """Top-priority open jobs with no referral contact yet: "Know anyone at {company}?"."""
+    """Top-ranked open jobs in ``ready_tier`` or better with no referral contact yet: "Know
+    anyone at {company}?"."""
+    cond, tiers = tier_clause(ready_tier)
     rows = conn.execute(
-        "SELECT j.id, j.company, j.title, f.priority FROM jobs j JOIN fits f ON f.job_id=j.id "
+        "SELECT j.id, j.company, j.title, f.rank, f.rank_reason FROM jobs j "
+        "JOIN fits f ON f.job_id=j.id "
         "LEFT JOIN applications a ON a.job_id=j.id WHERE j.live=1 AND "
-        "coalesce(f.gate_status,'') != 'failed' AND f.priority >= ? AND "
+        f"coalesce(f.gate_status,'') != 'failed' AND {cond} AND "
         "coalesce(a.status,'New') IN ('New','Prefilled') AND "
         "coalesce(trim(a.referral_contact),'') = '' AND NOT EXISTS (SELECT 1 FROM drafts d "
         "WHERE d.job_id=j.id AND d.kind IN ('referral','coffee_chat')) "
-        "ORDER BY f.priority DESC, j.id LIMIT ?",
-        (threshold, limit),
+        f"ORDER BY {RANK_ORDER}, j.id LIMIT ?",
+        (*tiers, limit),
     ).fetchall()
     return [
         {"job_id": r["id"], "company": r["company"], "title": r["title"],
-         "priority": r["priority"], "question": f"Know anyone at {r['company']}?"}
+         "rank": r["rank"], "reason": r["rank_reason"],
+         "question": f"Know anyone at {r['company']}?"}
         for r in rows
     ]  # fmt: skip
 

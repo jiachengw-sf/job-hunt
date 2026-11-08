@@ -28,7 +28,7 @@ Our on-call rotation is one week in six."""
 
 def _setup(cli, persona_home, persona: str = "senior-backend", rich: bool = False) -> Path:
     home = persona_home(persona)
-    (home / "config.yaml").write_text("fit:\n  priority_threshold: 0\n", encoding="utf-8")
+    (home / "config.yaml").write_text("fit:\n  ready_tier: weak\n", encoding="utf-8")
     cli("run", "--fixtures", BASE, "--no-sync", "--no-inspect")
     if rich:
         db = sqlite3.connect(home / "jobhunt.db")

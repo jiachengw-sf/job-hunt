@@ -98,6 +98,7 @@ def app_view(
     where = "; ".join(locations) or "Not listed"
     if mode and mode.lower() not in where.lower():
         where += f" ({mode})"
+    fit = conn.execute("SELECT rank_reason FROM fits WHERE job_id=?", (rec["job_id"],)).fetchone()
     flags = []
     if stale:
         flags.append(f"likely no response ({days_quiet} days with no update)")
@@ -114,6 +115,7 @@ def app_view(
         "location": where,
         "employment": ", ".join(x for x in (rec["employment_type"], rec["term"]) if x),
         "pay": _pay(rec["pay_json"]),
+        "ranked": (fit["rank_reason"] if fit else None) or "",  # how it ranks now, not then
         "ats": rec["ats"] or "unknown",
         "ats_job_id": rec["ats_job_id"] or "",
         "posting_url": rec["posting_url"] or "",

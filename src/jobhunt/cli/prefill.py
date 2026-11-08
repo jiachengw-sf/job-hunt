@@ -27,6 +27,7 @@ from jobhunt.discovery.text import utc_now
 from jobhunt.drafts.essays import approved_essays
 from jobhunt.errors import BadUsage, LockBusy, NotFound, ValidationFailed
 from jobhunt.fit.jobview import load_jobs
+from jobhunt.fit.rank import RANK_ORDER
 from jobhunt.forms.classify import classify
 from jobhunt.forms.inspect import Inputs
 from jobhunt.forms.model import FormSpec
@@ -72,8 +73,8 @@ class PrefillReport(BaseModel):
 
 
 def ready_jobs(conn: sqlite3.Connection, limit: int) -> list[int]:
-    """Ready jobs (and Essay jobs with approved essays) not yet pre-filled or applied to, highest
-    priority first."""
+    """Ready jobs (and Essay jobs with approved essays) not yet pre-filled or applied to, in rank
+    order."""
     rows = conn.execute(
         "SELECT fs.job_id FROM form_specs fs JOIN jobs j ON j.id = fs.job_id "
         "LEFT JOIN applications a ON a.job_id = fs.job_id LEFT JOIN fits f ON f.job_id = fs.job_id "
@@ -81,7 +82,7 @@ def ready_jobs(conn: sqlite3.Connection, limit: int) -> list[int]:
         "WHERE d.job_id = fs.job_id AND d.kind = 'essay' AND d.status = 'approved'))) "
         "AND j.live = 1 AND coalesce(a.status, 'New') = 'New' "
         "AND coalesce(json_extract(fs.details_json, '$.filter'), '') != 'skip' "
-        "ORDER BY coalesce(f.priority, 0) DESC, j.id LIMIT ?",
+        f"ORDER BY {RANK_ORDER}, j.id LIMIT ?",
         (limit,),
     ).fetchall()
     return [r["job_id"] for r in rows]

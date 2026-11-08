@@ -155,8 +155,10 @@ def test_dashboard_command_and_sheet_edit_in_timeline(cli, persona_home):
     cli("sync")
     code, env, _ = cli("dashboard", "--no-open")
     assert code == ExitCode.OK and env["data"]["applications"] == 1 and not env["data"]["opened"]
-    app = _embedded((home / "dashboard.html").read_text(encoding="utf-8"))["apps"][0]
+    page = (home / "dashboard.html").read_text(encoding="utf-8")
+    app = _embedded(page)["apps"][0]
     assert app["status"] == "Rejected"
+    assert "ranked" in app and 'row("Why it ranked", a.ranked)' in page  # the detail panel
     assert app["history"][-1] | {"when": None} == {
         "when": None, "from": "Applied", "to": "Rejected", "who": "you, in the sheet",
         "note": None,

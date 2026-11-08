@@ -3,6 +3,11 @@
 BM25 always runs. When the optional ``[recall]`` extra (sentence-transformers) is installed and
 ``fit.use_embeddings`` is ``auto``, a small sentence-embedding model ranks too, and the two
 rankings are fused with reciprocal rank fusion. The result is *relevance*, never "fit".
+
+Every job is scored on its title plus the first ``fit.recall_description_tokens`` words of its
+description, so a title-only row and a long posting compete on the same terms. Every eligible job
+gets a rank and a relevance (its BM25 score over the best score in the run, 0..1); ``recall_top_k``
+only limits which jobs get judgment tasks and posting reads.
 """
 
 from __future__ import annotations
@@ -16,7 +21,7 @@ import re
 import sqlite3
 from collections import Counter
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from jobhunt.fit.jobview import JobView
@@ -138,9 +143,27 @@ class BM25:
         return out
 
 
-def job_document(job: JobView) -> str:
-    """Title weighted three times; the description is capped so long postings don't dominate."""
-    return "\n".join([job.title] * 3 + job.categories + [job.description[:4000]])
+DEFAULT_DESCRIPTION_TOKENS = 150
+# BM25 length normalization: off. Every document is already bounded (title + N words), and
+# normalizing on top of that rewards a short title-only row just for being short; the usual 0.75
+# is what let 88 of the top 100 recall ranks go to title-only rows. Chosen on `jobhunt eval-fit`.
+LENGTH_NORM = 0.0
+
+
+def description_slice(text: str, tokens: int = DEFAULT_DESCRIPTION_TOKENS) -> list[str]:
+    """The first ``tokens`` search words of a description (stopwords don't count)."""
+    return tokenize(text[: tokens * 40])[:tokens]
+
+
+def job_tokens(job: JobView, tokens: int = DEFAULT_DESCRIPTION_TOKENS) -> list[str]:
+    """Title and categories, plus a bounded slice of the description."""
+    head = tokenize("\n".join([job.title, *job.categories]))
+    return head * 2 + description_slice(job.description, tokens)
+
+
+def job_document(job: JobView, tokens: int = DEFAULT_DESCRIPTION_TOKENS) -> str:
+    """The text the embedding model sees: the same bounded view as BM25."""
+    return " ".join(job_tokens(job, tokens))
 
 
 def query_text(resume: str, prefs: Preferences) -> str:
@@ -192,9 +215,9 @@ def _unpack(b: bytes) -> list[float]:
 
 
 def _cached_vectors(
-    conn: sqlite3.Connection, embedder: Embedder, jobs: list[JobView]
+    conn: sqlite3.Connection, embedder: Embedder, jobs: list[JobView], tokens: int
 ) -> dict[int, list[float]]:
-    want = {j.id: job_document(j)[:2000] for j in jobs}
+    want = {j.id: job_document(j, tokens)[:2000] for j in jobs}  # cache key: changes re-embed
     hashes = {jid: hashlib.sha256(t.encode()).hexdigest()[:24] for jid, t in want.items()}
     have: dict[int, list[float]] = {}
     for r in conn.execute(
@@ -234,6 +257,8 @@ class RecallResult:
     mode: str  # "bm25" | "bm25+embeddings"
     by_job: dict[int, Recalled]
     note: str | None = None
+    relevance: dict[int, float] = field(default_factory=dict)  # BM25 / best BM25, 0..1
+    query_terms: frozenset[str] = frozenset()  # the search words (resume + roles + keywords)
 
 
 def recall(
@@ -249,14 +274,17 @@ def recall(
     if not jobs:
         return RecallResult("bm25", {})
     query = query_text(resume, prefs)
-    bm = BM25([tokenize(job_document(j)) for j in jobs]).scores(tokenize(query))
+    n = cfg.recall_description_tokens
+    bm = BM25([job_tokens(j, n) for j in jobs], b=LENGTH_NORM).scores(tokenize(query))
+    best = max(bm) or 1.0
+    relevance = {j.id: round(bm[i] / best, 4) for i, j in enumerate(jobs)}
     order_bm = [jobs[i].id for i in sorted(range(len(jobs)), key=lambda i: (-bm[i], jobs[i].id))]
     rankings = [order_bm]
     mode, note = "bm25", None
     if embedder is not None:
         try:
             qv = embedder.encode([query[:2000]])[0]
-            vecs = _cached_vectors(conn, embedder, jobs)
+            vecs = _cached_vectors(conn, embedder, jobs, n)
             sims = {jid: _dot(qv, v) for jid, v in vecs.items()}
             rankings.append(sorted(sims, key=lambda jid: (-sims[jid], jid)))
             mode = "bm25+embeddings"
@@ -271,7 +299,7 @@ def recall(
     for rank, jid in enumerate(ordered, start=1):
         keep = rank <= cfg.recall_top_k or company[jid] in watch
         out[jid] = Recalled(rank=rank, score=round(fused[jid], 6), recalled=keep)
-    return RecallResult(mode, out, note)
+    return RecallResult(mode, out, note, relevance, frozenset(tokenize(query)))
 
 
 def make_embedder(cfg: FitConfig) -> tuple[Embedder | None, str | None]:

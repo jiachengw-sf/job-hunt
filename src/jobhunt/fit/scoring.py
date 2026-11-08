@@ -1,11 +1,10 @@
-"""Stage 3: qualification band, preference score, priority and the volume guard. All code, all
+"""Stage 3: qualification band and preference score. All code, all
 weights visible in config. Nothing here tunes itself."""
 
 from __future__ import annotations
 
 import re
 from dataclasses import asdict, dataclass, field
-from datetime import date, datetime
 
 from jobhunt.fit import normalize as nz
 from jobhunt.fit.gates import GateResult
@@ -127,6 +126,10 @@ class Preference:
     score: float | None
     components: dict[str, float | None]
     flags: list[str]
+    labels: dict[str, str] = field(default_factory=dict)  # what matched, for the rank reason
+
+
+_MODE_LABEL = {"remote": "Remote", "hybrid": "Hybrid", "onsite": "On-site"}
 
 
 def _contains(term: str, text: str) -> bool:
@@ -136,6 +139,7 @@ def _contains(term: str, text: str) -> bool:
 def preference(job: JobView, prefs: Preferences, cfg: FitConfig) -> Preference:
     comps: dict[str, float | None] = {}
     flags: list[str] = []
+    labels: dict[str, str] = {"pay": "Pay"}
     # pay
     lo, hi, note = nz.annual_pay(job.pay)
     if lo is None and hi is None:
@@ -160,11 +164,16 @@ def preference(job: JobView, prefs: Preferences, cfg: FitConfig) -> Preference:
     modes = nz.work_modes(job.work_mode, job.locations, job.title, job.description)
     wm = prefs.location.work_modes
     comps["work_mode"] = (1.0 if modes & set(wm.value) else 0.0) if wm and modes else None
+    if wm and modes & set(wm.value):
+        labels["work_mode"] = next(
+            _MODE_LABEL[m] for m in _MODE_LABEL if m in modes & set(wm.value)
+        )
     # location
     places = prefs.location.places
     if places and places.value:
         if "remote" in modes and (wm is None or "remote" in wm.value):
             comps["location"] = 1.0
+            labels["location"] = "Remote"
         else:
             best: float | None = None
             for loc in job.locations:
@@ -176,6 +185,8 @@ def preference(job: JobView, prefs: Preferences, cfg: FitConfig) -> Preference:
                         if d is not None:
                             v = 1.0 if d <= (pl.radius_miles or 25) else 0.0
                             best = v if best is None else max(best, v)
+                    if best == 1.0 and "location" not in labels:
+                        labels["location"] = pl.name.split(",")[0].strip()
             if best == 0.0 and prefs.location.relocation and prefs.location.relocation.value:
                 best = 0.3
             comps["location"] = best
@@ -187,15 +198,24 @@ def preference(job: JobView, prefs: Preferences, cfg: FitConfig) -> Preference:
     if tp and tp.value and terms:
         wanted = {t for t in (nz.norm_term(v) for v in tp.value) if t}
         comps["term"] = 1.0 if wanted & set(terms) else 0.0
+        hit = next((v for v in tp.value if nz.norm_term(v) in set(terms)), None)
+        if hit:
+            labels["term"] = hit
     else:
         comps["term"] = None
     # keywords (Nice include/exclude; Must ones are gates)
     inc, exc = prefs.roles.include_keywords, prefs.roles.exclude_keywords
     kw: float | None = None
     if inc and not inc.must and inc.value:
-        kw = 1.0 if any(_contains(k, job.title) for k in inc.value) else 0.5
-    if exc and not exc.must and exc.value and any(_contains(k, job.title) for k in exc.value):
-        kw = 0.0
+        hit = next((k for k in inc.value if _contains(k, job.title)), None)
+        kw = 1.0 if hit else 0.5
+        if hit:
+            labels["keywords"] = f'"{hit}"'
+    if exc and not exc.must and exc.value:
+        hit = next((k for k in exc.value if _contains(k, job.title)), None)
+        if hit:
+            kw = 0.0
+            labels["keywords"] = f'"{hit}"'
     comps["keywords"] = kw
     # industry
     hay = f"{job.company}\n{job.title}\n{job.description}"
@@ -203,79 +223,19 @@ def preference(job: JobView, prefs: Preferences, cfg: FitConfig) -> Preference:
     ind: float | None = None
     if (pi and pi.value) or (ai and ai.value and not ai.must):
         ind = 0.5
-        if pi and any(_contains(t, hay) for t in pi.value):
+        good = next((t for t in pi.value if _contains(t, hay)), None) if pi else None
+        if good:
             ind = 1.0
-        if ai and not ai.must and any(_contains(t, hay) for t in ai.value):
+            labels["industry"] = good
+        bad = next((t for t in ai.value if _contains(t, hay)), None) if ai and not ai.must else None
+        if bad:
             ind = 0.0
+            labels["industry"] = bad
     comps["industry"] = ind
     weights = cfg.preference.model_dump()
     used = {k: v for k, v in comps.items() if v is not None}
     if not used:
-        return Preference(None, comps, flags)
+        return Preference(None, comps, flags, labels)
     total = sum(weights[k] for k in used)
     score = sum(weights[k] * v for k, v in used.items()) / total if total else None
-    return Preference(round(score, 3) if score is not None else None, comps, flags)
-
-
-# --- priority -------------------------------------------------------------------------------
-
-
-def _days_since(ts: str | None, today: date) -> float | None:
-    if not ts:
-        return None
-    try:
-        d = datetime.fromisoformat(ts.replace("Z", "+00:00")).date()
-    except ValueError:
-        return None
-    return (today - d).days
-
-
-@dataclass
-class Priority:
-    score: float
-    components: dict[str, float]
-
-
-def priority(
-    job: JobView,
-    band: str | None,
-    pref_score: float | None,
-    cfg: FitConfig,
-    today: date,
-    *,
-    referral: bool,
-    watchlist: bool,
-    relevance: float = 0.0,
-    degree_above: str | None = None,
-) -> tuple[Priority, list[str]]:
-    """``degree_above``: the listing names only degrees above yours (an unclear degree gate),
-    so the job ranks lower until a judgment resolves it."""
-    flags: list[str] = []
-    age = _days_since(job.posted_at, today)
-    if age is None:
-        age = _days_since(job.first_seen, today) or 0.0
-    fresh = 0.5 ** (max(age, 0) / cfg.freshness_half_life_days)
-    deadline = 0.0
-    if job.deadline:
-        left = -(_days_since(job.deadline, today) or 0)
-        if left < 0:
-            flags.append("deadline passed")
-        else:
-            deadline = max(0.0, 1 - left / 30)
-    comps = {
-        "band": BAND_VALUE.get(band or "", UNKNOWN_BAND_VALUE),
-        "relevance": round(relevance, 3),
-        "preference": pref_score if pref_score is not None else 0.5,
-        "freshness": round(fresh, 3),
-        "deadline": round(deadline, 3),
-        "referral": 1.0 if referral else 0.0,
-        "watchlist": 1.0 if watchlist else 0.0,
-    }
-    w = cfg.priority.model_dump()
-    total = sum(w.values())
-    score = sum(w[k] * comps[k] for k in comps) / total if total else 0.0
-    if degree_above:
-        score *= cfg.higher_degree_factor
-        comps["higher_degree"] = cfg.higher_degree_factor
-        flags.append(f"listing names {degree_above}, above your degree: ranked lower until judged")
-    return Priority(round(score, 3), comps), flags
+    return Preference(round(score, 3) if score is not None else None, comps, flags, labels)
