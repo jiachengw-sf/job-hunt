@@ -1236,5 +1236,5 @@ run, so in a 40-job set "Data Engineering Intern" falls just under strong for th
 persona. The cutoffs were not tuned to undo it.
 Still wrong, reported as `known_misorders`: two title-only Ledgerline pairs for the new-grad
 persona that only the title could settle. Not done: deadlines from posting text (only
-Greenhouse's field is read), company size (no source gives it). Suite: 1104 tests, 0 failures,
+Greenhouse's field is read), company size (no source gives it). Suite: 1105 tests, 0 failures,
 1 skipped.
